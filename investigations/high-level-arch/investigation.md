@@ -14,7 +14,6 @@ To document our architecture decisions and establish clear ownership boundaries 
 
 1. A documented architecture that the whole team understands
 2. Clear module boundaries and ownership for parallel development
-3. Defined contracts between components
 
 ## Architecture Overview
 
@@ -31,7 +30,6 @@ A static single-page application built with Vite.
 - Simulation configuration UI
 - Results visualization
 - User authentication flow (WorkOS OAuth)
-- Polling for simulation status
 
 **Deployment:** Static hosting (GCS bucket or Cloud Run)
 
@@ -57,31 +55,47 @@ Client-side only OAuth flow using WorkOS.
 
 A single deployable backend with clear internal module boundaries.
 
-**Modules:**
+**Main Modules/Sercvices:**
 
-| Module                 | Responsibility                                  |
-| ---------------------- | ----------------------------------------------- |
-| **Auth Validation**    | Validate WorkOS JWTs, extract user context      |
-| **API Handlers**       | REST endpoints for simulations, CRUD operations |
-| **Storage Manager**    | Postgres queries, GCS file operations           |
-| **Task/Job Q Manager** | Simulation job lifecycle, status management     |
+| Module                   | Responsibility                                  |
+| ------------------------ | ----------------------------------------------- |
+| **Auth Validation**      | Validate WorkOS JWTs, extract user context      |
+| **API Handlers**         | REST endpoints for simulations, CRUD operations |
+| **File Storage Manager** | GCS file operations                             |
+| **Store Manager**        | DB queries                                      |
+| **Task/Job Q Manager**   | Simulation job lifecycle, status management     |
 
 **Why monolith:** Simpler deployment, easier debugging, sufficient for MVP scale. Internal modules still enable parallel development.
 
 ---
 
-### Database: Postgres
+### Database Consideraions
 
-**Tables:**
+**Tables/Collections:**
 
 | Table             | Purpose                                           |
 | ----------------- | ------------------------------------------------- |
 | `users`           | User info, WorkOS ID, preferences                 |
 | `simulation_jobs` | Simulation metadata, status, config, results path |
 
-**Why Postgres:** Reliable, team familiarity, handles both relational data and JSONB for flexible simulation configs.
+### Database choice
 
----
+Option 1: Postgres
+The team is familiar with Postgres and handles both relational data and JSONB for flexible simulation configs.
+The schema is not yet known so flexibility is required.
+
+Option 2: MongoDB
+Object store database with flexible schemas by default.
+
+| Criteria                     | Postgres                          | MongoDB                     |
+| ---------------------------- | --------------------------------- | --------------------------- |
+| 1. Can we model the data ?   | Yes, the model is simple          | Yes, the model is simple    |
+| 2. Flexible config storage   | JSONB handles it                  | Native                      |
+| 3.Atomic operations for JobQ | `FOR UPDATE SKIP LOCKED` built-in | Not built-in                |
+| 4. Team familiarity          | Team is mostly familiar           | Team is mostly not familiar |
+| **Decision**                 | ** Use Postgres**                 |                             |
+
+(NOTE: Point 4 might not be needed if we use a separate JobQ like Pub/Sub, RabbitMQ, Apache Kafka, or something else, but this will expand the infrastructure complexity)
 
 ### Tracing & Logging: Wide event logging via OpenTelemetry
 
@@ -119,7 +133,7 @@ Separate service that runs our simulation engine of choice
 
 **Why separate service:** Two reasons:
 
-1. Seperation of concerns: This will allows to parallelize the work between the backend and simulation engine.
+1. Separation of concerns: This will allows to parallelize the work between the backend and simulation engine.
 2. Isolation: Simulation engine is resource-intensive (CPU/memory). Isolation prevents simulation load from affecting API performance. And we can always scale the engine seperately from the backend.
 
 ---
