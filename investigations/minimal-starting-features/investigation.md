@@ -1,4 +1,4 @@
-# Feature Investigation
+# [Feature Investigation](https://linear.app/traffic-jam/issue/TRA-6/investigation-research-what-are-plausible-features-we-can-implement)
 
 # Frame the Problem
 
