@@ -1,4 +1,4 @@
-[TRA-10: Architecture Investigation]
+[TRA-10: Architecture Investigation](https://linear.app/traffic-jam/issue/TRA-10/investigation-map-out-a-high-level-architecture-of-the-system)
 
 # Frame the Problem
 
