@@ -81,6 +81,8 @@ The population can be configured by the config files like `population.xml` and a
     <act type="home" x="5.0" y="8.0" />
   </plan>
 </person>
+We need to write the config for the agents ourself if we want to be more specific when dealing with different cities. (there are some defaults for cities like Berlin)
+Will need some converter from public data to the format above or a way to just generate general data for most cities.
 ```
 
 MATSim will take care of:
@@ -94,7 +96,7 @@ MATSim will take care of:
 
 ---
 
-### Why Choose a Microscopic Simulation?
+### Why Choose a Meso/Macro Simulation?
 
 This allows us to see the traffic as a whole block, a flow of cars all with the intention of eventually getting somewhere and all equally contributing to the traffic and treating each road as a simple FIFO queue. By not focusing on every single car (agent) and its decision, we make it less computationally intense.
 
@@ -103,6 +105,10 @@ This allows us to see the traffic as a whole block, a flow of cars all with the 
 ### What About Roads with Multiple Lanes?
 
 All roads, no matter the amount of lanes, are treated as queues for the sake of efficiency and simplicity of displaying the important information like congestion, delays, capacity limits (the amount of cars that can fit on that road).
+Each direction for a single road is treated as a different queue.
+So a road with one lane in each direction with be simply represented like :
+  link1 A-B(permlanes=1)
+  link2 B-A(permlanes=1)
 
 #### Is a Queue Per Lane Worth It?
 
@@ -132,12 +138,12 @@ Rule of thumb (adjustable):
 | OSM highway type | Typical freespeed | Typical capacity | Typical lanes |
 |------------------|-------------------|------------------|---------------|
 | `motorway` | 33.33 m/s (120 km/h) | 2000/lane | 2-3 |
-| `primary` | 22.22 m/s (80 km/h) | 1500/lane | 1-2 |
+| `primary` | 22.22 m/s (80 km/h) | 1500/lane | 1-2 
 | `residential` | 8.33 m/s (30 km/h) | 600/lane | 1 |
 
 So a 2-lane motorway might get `capacity="4000"`.
 
-By simply using a single queue instead, we can still see the flow of the traffic and change its capacity and number of lanes in cases where there is road work and one lane has to close or the opposite where we might try to add more lanes for a big enough road.
+By simply using a single queue instead, we can still see the flow of the traffic and change its capacity and number of lanes in cases where there is road work and one lane has to close or the opposite where we might try to add more lanes for a big enough road. 
 
 ---
 
@@ -166,6 +172,7 @@ A bus with PCE=3.0 takes up 3x the storage capacity of a car. This affects how m
 Very configurable. The sim allows us to represent different scenarios like buses, trains and possibly car pooling, by just changing the capacity (standing and seating capacity). It also gives us the chance to see what happens when boarding (access) time for a vehicle changes.
 
 #### Carpooling
+[Currently ignored for the sake of simplicity]
 
 In standard MATSim, a "car" mode means one person drives their own car. For carpooling/ride-sharing, you need:
 - The **DRT (Demand Responsive Transport) contrib**, or
