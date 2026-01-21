@@ -8,7 +8,8 @@ import { NetworkLayer } from "./network-layer";
 
 const DEFAULT_CENTER: [number, number] = [42.698, 23.322];
 const DEFAULT_ZOOM = 15;
-const TILE_URL = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
+const TILE_URL =
+  "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
 
 interface MapControllerProps {
   network: Network | null;
@@ -46,8 +47,15 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
 
   return (
-    <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="map-container">
-      <TileLayer attribution="&copy; OpenStreetMap contributors" url={TILE_URL} />
+    <MapContainer
+      center={DEFAULT_CENTER}
+      zoom={DEFAULT_ZOOM}
+      className="map-container"
+    >
+      <TileLayer
+        attribution="&copy; OpenStreetMap contributors"
+        url={TILE_URL}
+      />
       <MapController
         network={network}
         onStatusChange={onStatusChange}
