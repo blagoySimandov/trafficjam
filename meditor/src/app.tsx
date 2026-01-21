@@ -1,16 +1,14 @@
 import { useState, useCallback } from "react";
-import { MapView } from "./components/map-view.tsx";
-import { InfoPanel } from "./components/info-panel.tsx";
-import { StatusBar } from "./components/status-bar.tsx";
+import { MapView, InfoPanel, StatusBar } from "./components";
 import type { TrafficLink } from "./types";
 
-export interface InfoData {
+interface InfoData {
   title: string;
   data: Record<string, unknown>;
 }
 
 export default function App() {
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState("");
   const [info, setInfo] = useState<InfoData | null>(null);
 
   const handleLinkClick = useCallback((link: TrafficLink) => {
