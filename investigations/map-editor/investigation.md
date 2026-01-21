@@ -28,9 +28,9 @@ Ideally: A way to edit the map and be really pleasing to look at while doing so.
 
    Here are screenshots:
 
-![basic map view map](./view.png "basic map view")
+![basic map view map](view.png "basic map view")
 
-![after edit](./editting.png.png "after edit map view")
+![after edit](editting.png "after edit map view")
 
 In the second screenshot you can see that the tiles haven't updated and it looks a bit weird...
 
