@@ -10,9 +10,9 @@ html {
   font-family: system-ui, sans-serif;
 }
 
-#map {
+#root {
   width: 100vw;
-  height: 100%;
+  height: 100vh;
 }
 
 #status {
@@ -25,6 +25,7 @@ html {
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 14px;
+  z-index: 1000;
 }
 
 #info {
@@ -37,6 +38,7 @@ html {
   border-radius: 6px;
   font-size: 13px;
   max-width: 300px;
+  z-index: 1000;
 }
 
 #info pre {
@@ -44,4 +46,35 @@ html {
   font-size: 11px;
   white-space: pre-wrap;
   color: #aaa;
+}
+
+.map-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+.map-controls {
+  position: absolute;
+  top: 80px;
+  left: 10px;
+  z-index: 1000;
+}
+
+.map-control-btn {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+}
+
+.link-tooltip {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.link-tooltip-details {
+  color: #666;
+  margin-top: 2px;
 }
