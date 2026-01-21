@@ -31,13 +31,19 @@ After testing both microscopic and mesoscopic I found that they had nearly ident
 I think going with microscopic will allow us to have more freedom with choices we want to make with the visualiser but it might also add to the complexity so the choice is ours which one we want regardless of performance
 
 ### Microscopic times
+<img width="1024" height="768" alt="MicroStopwatch100" src="https://github.com/user-attachments/assets/76d4611f-177e-480d-8df0-8233a82440a3" />
+<img width="1024" height="768" alt="MicroStopwatch1k" src="https://github.com/user-attachments/assets/f10d25dc-36fe-4b5d-b37a-bbc4e3b67937" />
+<img width="1024" height="768" alt="Microstopwatch10K" src="https://github.com/user-attachments/assets/b77d093b-164c-43e9-aa4d-3424a73107dd" />
+
 
 
 
 
 
 ### Mesoscopic times
-
+<img width="1024" height="768" alt="stopwatch100" src="https://github.com/user-attachments/assets/f3e2c824-1483-4357-ac3b-bda3a6d7f767" />
+<img width="1024" height="768" alt="stopwatch1,000" src="https://github.com/user-attachments/assets/276040cf-f76f-4b76-bc81-3b946ad005bc" />
+<img width="1024" height="768" alt="stopwatch10,000" src="https://github.com/user-attachments/assets/8cac1bff-5fa2-4944-855d-64d2f85bbd7f" />
 
 
 ## Recommendation
