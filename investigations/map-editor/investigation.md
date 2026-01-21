@@ -1,57 +1,61 @@
-# [Map Editor](https://linear.app/traffic-jam/issue/TRA-27/investigation-investigate-how-we-can-edit-maps-and-pass-them-back-as)
-
-# Frame the Problem
-
-We are building a traffic simulation service and for that we would need to edit the map to
-simulate different scenarios.
+Here's the improved version with better formatting, clearer structure, and fixed typos:
 
 ---
 
-### What outcome are we looking for?
+# [Map Editor](https://linear.app/traffic-jam/issue/TRA-27/investigation-investigate-how-we-can-edit-maps-and-pass-them-back-as)
 
-Minimally: An editable map that can be passed back to the server.
-Ideally: A way to edit the map and be really pleasing to look at while doing so.
+## Frame the Problem
 
-## Propose solutions
+We are building a traffic simulation service and need the ability to edit maps to simulate different scenarios.
 
-1. Rapidv2.5
-   Rapid v2.5 is the current OSM editor.
-   It is built by facebook and is open source.
-   The editor is power and fast.
-   The only problem that I have encountered while using it is that it is not exactly pretty to look at.
-   The map is a 2d top down view and when you add links the tiles do not change at all.
-   You just add the link though the forest/park and the background tiles do not update in any way.
-   So although the user can clearly see the link, the tiles haven't changed...
+---
 
-   From a usability perspective, this shouldn't be a big prbolem, but it does look a bit weird.
-   We can use a variation of the Rapid editor, fork it and try to add some features to make it look nicer.
+## What outcome are we looking for?
 
-   Here are screenshots:
+**Minimally:** An editable map that can be passed back to the server.
 
-![basic map view map](view.png "basic map view")
+**Ideally:** A way to edit the map that is also visually pleasing.
 
-![after edit](editting.png "after edit map view")
+---
 
-In the second screenshot you can see that the tiles haven't updated and it looks a bit weird...
+## Proposed Solutions
 
-Some ideas:
+### 1. Rapid v2.5
 
-1.  Newly added links should be highlighted. (The user should be able clearly differentiate between links he added)
-    and once that are currently there). This is an option of Rapid so we just need to enable it.
-2.  We should by default disable a lot of the icons and shapes, the map is too overwhelming at first sight.
+Rapid v2.5 is the current OSM editor, built by Facebook and fully open source. The editor is powerful and fast.
 
-3.  Optional: We can think of a way to make the background tiles update when the user adds, removes or modifies links. One way to implement this would be to ditch the background tiles fully and instead always have some kind of generated background from the osm data that adapts to our changes.
+The main issue I've encountered is that it's not exactly pretty to look at. The map is a 2D top-down view, and when you add links, the background tiles do not update at all. You simply add a link through a forest or park, and the underlying tiles remain unchanged. While the user can clearly see the new link, the visual disconnect looks a bit odd.
 
-4.  DIY Editor
+From a usability perspective this shouldn't be a major problem, but it does affect the overall polish.
 
-Start from scratch and build a custom editor.
-I do not recommend this this, but it is an option.
+We could fork the Rapid editor and add features to improve its appearance.
 
-### Recommendation
+**Screenshots:**
 
-Rapid v2.5 is a good start that we can build on.
+![basic map view](view.png "Basic map view")
 
-Since it is entirely written in typescript and is open source it shouldn't be that hard
-to fork and improve.
+![after edit](editting.png "After edit - tiles unchanged")
 
-In any case it will give us a good base
+In the second screenshot, you can see that the tiles haven't updated, which looks a bit weird.
+
+**Ideas for improvement:**
+
+- **a.** Newly added links should be highlighted so users can clearly differentiate between existing links and ones they've added. This is already an option in Rapid—we just need to enable it.
+- **b.** We should disable many of the default icons and shapes; the map is too overwhelming at first glance.
+- **c.** _(Optional)_ We could explore ways to make background tiles update when the user adds, removes, or modifies links. One approach would be to ditch the background tiles entirely and instead generate the background dynamically from OSM data, adapting to our changes in real time.
+
+### 2. DIY Editor
+
+Build a custom editor from scratch. I do not recommend this approach, but it remains an option.
+
+---
+
+## Recommendation
+
+**Rapid v2.5** is a solid foundation to build on. Since it's entirely written in TypeScript and is open source, forking and improving it should be straightforward. At minimum, it gives us a strong base to work from.
+
+---
+
+## Tasks
+
+- [ ] Fork Rapid and integrate it into the frontend project under an `/editor` route. This will position us to improve it in the future as needed.
