@@ -7,14 +7,14 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
 
-    /* Bundler mode */
+    "jsx": "react-jsx",
+
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
 
-    /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
