@@ -13,6 +13,7 @@ Dependencies:
 import networkx as nx
 import osmnx as ox
 import xml.etree.ElementTree as ET
+import os
 
 # ============================================================================
 # CONFIGURATION
@@ -20,7 +21,7 @@ import xml.etree.ElementTree as ET
 
 PLACE_NAME = "Cork City, Cork, Ireland"
 NETWORK_TYPE = "drive"  # Options: 'drive', 'walk', 'bike', 'all'
-OUTPUT_FILE = "cork_network.xml"
+OUTPUT_FILE = os.path.join(os.path.dirname(__file__), "cork_network.xml")
 CRS_EPSG = "EPSG:2157"  # Irish Transverse Mercator projection
 
 
