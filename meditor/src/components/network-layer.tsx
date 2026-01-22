@@ -1,7 +1,7 @@
 import { LayerGroup } from "react-leaflet";
 import type { Network, TrafficLink, BusRoute } from "../types";
 import { LinkLayer } from "./link-layer";
-import { BuildingLayer } from "./building-layer";
+import { BuildingClusterLayer } from "./building-cluster-layer";
 import { BusRouteLayer } from "./bus-route-layer";
 
 interface NetworkLayerProps {
@@ -23,9 +23,7 @@ export function NetworkLayer({ network, onLinkClick, onRouteClick }: NetworkLaye
       {busRoutes.map((route) => (
         <BusRouteLayer key={route.id} route={route} onClick={onRouteClick} />
       ))}
-      {buildings.map((building) => (
-        <BuildingLayer key={building.id} building={building} />
-      ))}
+      <BuildingClusterLayer buildings={buildings} />
     </LayerGroup>
   );
 }

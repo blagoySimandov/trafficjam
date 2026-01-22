@@ -21,8 +21,9 @@ export function buildOverpassQuery(bbox: string): string {
     [out:json][timeout:30];
     (
       way["highway"~"^(${highwayFilter})"](${bbox});
-      // way["building"](${bbox});
-      // node["amenity"](${bbox});
+      way["building"~"^(house|apartments|residential)"](${bbox});
+      way["amenity"~"^(hospital|clinic|doctors|supermarket|school|kindergarten|hairdresser|beauty_salon)"](${bbox});
+      node["amenity"~"^(hospital|clinic|doctors|supermarket|school|kindergarten|hairdresser|beauty_salon)"](${bbox});
       relation["type"="route"]["route"~"^(bus|tram|subway|train)"](${bbox});
       node(w);
       way(r);
