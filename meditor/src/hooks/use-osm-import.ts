@@ -1,25 +1,28 @@
 import { useState, useCallback } from "react";
-import type { Map } from "leaflet";
+import type { MapRef } from "react-map-gl";
 import type { Network } from "../types";
+import { MIN_IMPORT_ZOOM } from "../constants";
 import { fetchOSMData } from "../osm";
-
-const MIN_ZOOM = 14;
 
 interface UseOSMImportOptions {
   onStatusChange: (status: string) => void;
   onNetworkChange: (network: Network | null) => void;
 }
 
-export function useOSMImport(map: Map, options: UseOSMImportOptions) {
+export function useOSMImport(
+  mapRef: React.RefObject<MapRef | null>,
+  options: UseOSMImportOptions
+) {
   const { onStatusChange, onNetworkChange } = options;
   const [loading, setLoading] = useState(false);
 
   const importData = useCallback(async () => {
-    if (loading) return;
+    const map = mapRef.current;
+    if (loading || !map) return;
 
     const zoom = map.getZoom();
-    if (zoom < MIN_ZOOM) {
-      alert(`Zoom in more to import (min zoom: ${MIN_ZOOM})`);
+    if (zoom < MIN_IMPORT_ZOOM) {
+      alert(`Zoom in more to import (min zoom: ${MIN_IMPORT_ZOOM})`);
       return;
     }
 
@@ -27,16 +30,19 @@ export function useOSMImport(map: Map, options: UseOSMImportOptions) {
     onStatusChange("Loading OSM data...");
 
     try {
-      const data = await fetchOSMData(map.getBounds());
+      const bounds = map.getBounds();
+      const data = await fetchOSMData(bounds);
       onNetworkChange(data);
-      onStatusChange(`Loaded: ${data.links.size} links, ${data.nodes.size} nodes`);
+      onStatusChange(
+        `Loaded: ${data.links.size} links, ${data.nodes.size} nodes`
+      );
     } catch (err) {
       console.error(err);
       onStatusChange("Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [map, loading, onStatusChange, onNetworkChange]);
+  }, [mapRef, loading, onStatusChange, onNetworkChange]);
 
   const clear = useCallback(() => {
     onNetworkChange(null);

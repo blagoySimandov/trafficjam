@@ -55,7 +55,7 @@ html {
 
 .map-controls {
   position: absolute;
-  top: 80px;
+  top: 40px;
   left: 10px;
   z-index: 1000;
 }
@@ -67,6 +67,9 @@ html {
   justify-content: center;
   width: 34px;
   height: 34px;
+  margin-bottom: 15px;
+  background: #fff;
+  border: 1px solid #ccc;
 }
 
 .link-tooltip {

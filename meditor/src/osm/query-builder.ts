@@ -1,3 +1,5 @@
+import type { LngLatBounds } from "../types";
+
 const HIGHWAY_TYPES = [
   "motorway",
   "motorway_link",
@@ -29,7 +31,7 @@ export function buildOverpassQuery(bbox: string): string {
   `;
 }
 
-export function formatBbox(bounds: L.LatLngBounds): string {
+export function formatBbox(bounds: LngLatBounds): string {
   return [
     bounds.getSouth(),
     bounds.getWest(),
