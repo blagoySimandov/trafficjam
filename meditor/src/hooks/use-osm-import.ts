@@ -29,7 +29,9 @@ export function useOSMImport(map: Map, options: UseOSMImportOptions) {
     try {
       const data = await fetchOSMData(map.getBounds());
       onNetworkChange(data);
-      onStatusChange(`Loaded: ${data.links.size} links, ${data.nodes.size} nodes`);
+      onStatusChange(
+        `Loaded: ${data.links.size} links, ${data.nodes.size} nodes, ${data.buildings.size} buildings, ${data.busRoutes.size} bus routes`
+      );
     } catch (err) {
       console.error(err);
       onStatusChange("Failed to load data");

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import type { Network, TrafficLink } from "../types";
+import type { Network, TrafficLink, BusRoute } from "../types";
 import { useOSMImport } from "../hooks/use-osm-import";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
@@ -16,6 +16,7 @@ interface MapControllerProps {
   onStatusChange: (status: string) => void;
   onNetworkChange: (network: Network | null) => void;
   onLinkClick: (link: TrafficLink) => void;
+  onRouteClick: (route: BusRoute) => void;
 }
 
 function MapController({
@@ -23,6 +24,7 @@ function MapController({
   onStatusChange,
   onNetworkChange,
   onLinkClick,
+  onRouteClick,
 }: MapControllerProps) {
   const map = useMap();
   const { loading, importData, clear } = useOSMImport(map, {
@@ -33,7 +35,7 @@ function MapController({
   return (
     <>
       <MapControls onImport={importData} onClear={clear} loading={loading} />
-      {network && <NetworkLayer network={network} onLinkClick={onLinkClick} />}
+      {network && <NetworkLayer network={network} onLinkClick={onLinkClick} onRouteClick={onRouteClick} />}
     </>
   );
 }
@@ -41,9 +43,10 @@ function MapController({
 interface MapViewProps {
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink) => void;
+  onRouteClick: (route: BusRoute) => void;
 }
 
-export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
+export function MapView({ onStatusChange, onLinkClick, onRouteClick }: MapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
 
   return (
@@ -61,6 +64,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
         onStatusChange={onStatusChange}
         onNetworkChange={setNetwork}
         onLinkClick={onLinkClick}
+        onRouteClick={onRouteClick}
       />
     </MapContainer>
   );
