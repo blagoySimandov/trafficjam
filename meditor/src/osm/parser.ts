@@ -1,5 +1,5 @@
-import type { Network, TrafficNode, TrafficLink } from "../types";
-import type { OSMElement, OSMNode } from "../types/osm";
+import type { Network, TrafficNode, TrafficLink, TransportRoute } from "../types";
+import type { OSMElement, OSMNode, OSMWay } from "../types/osm";
 
 function indexNodes(elements: OSMElement[]): Map<number, OSMNode> {
   const osmNodes = new Map<number, OSMNode>();
@@ -9,6 +9,16 @@ function indexNodes(elements: OSMElement[]): Map<number, OSMNode> {
     }
   }
   return osmNodes;
+}
+
+function indexWays(elements: OSMElement[]): Map<number, OSMWay> {
+  const osmWays = new Map<number, OSMWay>();
+  for (const el of elements) {
+    if (el.type === "way") {
+      osmWays.set(el.id, el);
+    }
+  }
+  return osmWays;
 }
 
 function countNodeUsage(elements: OSMElement[]): Map<number, number> {
@@ -73,38 +83,80 @@ function createNode(
   };
 }
 
+function createTransportRoute(
+  relationId: number,
+  wayId: number,
+  geometry: L.LatLngTuple[],
+  tags: Record<string, string>
+): TransportRoute {
+  return {
+    id: `transport_${relationId}_way_${wayId}`,
+    osmId: relationId,
+    wayId,
+    geometry,
+    tags: {
+      route: tags.route,
+      ref: tags.ref,
+      name: tags.name,
+      network: tags.network,
+      operator: tags.operator,
+      colour: tags.colour,
+    },
+  };
+}
+
 export function parseOSMResponse(elements: OSMElement[]): Network {
   const nodes = new Map<string, TrafficNode>();
   const links = new Map<string, TrafficLink>();
+  const transportRoutes = new Map<string, TransportRoute>();
   const osmNodes = indexNodes(elements);
+  const osmWays = indexWays(elements);
   const nodeUsage = countNodeUsage(elements);
 
   for (const el of elements) {
-    if (el.type !== "way" || !el.tags?.highway) continue;
+    if (el.type === "way" && el.tags?.highway) {
+      const geometry = buildGeometry(el.nodes, osmNodes);
+      if (geometry.length < 2) continue;
 
-    const geometry = buildGeometry(el.nodes, osmNodes);
-    if (geometry.length < 2) continue;
+      const link = createLink(
+        { id: el.id, nodes: el.nodes, tags: el.tags },
+        geometry
+      );
+      links.set(link.id, link);
 
-    const link = createLink(
-      { id: el.id, nodes: el.nodes, tags: el.tags },
-      geometry
-    );
-    links.set(link.id, link);
+      const endpoints = [el.nodes[0], el.nodes[el.nodes.length - 1]];
+      for (const osmId of endpoints) {
+        const nodeId = `node_${osmId}`;
+        if (nodes.has(nodeId)) continue;
 
-    const endpoints = [el.nodes[0], el.nodes[el.nodes.length - 1]];
-    for (const osmId of endpoints) {
-      const nodeId = `node_${osmId}`;
-      if (nodes.has(nodeId)) continue;
+        const osmNode = osmNodes.get(osmId);
+        if (osmNode) {
+          nodes.set(
+            nodeId,
+            createNode(osmId, osmNode, nodeUsage.get(osmId) || 1)
+          );
+        }
+      }
+    } else if (el.type === "relation" && el.tags?.route) {
+      for (const member of el.members) {
+        if (member.type !== "way") continue;
 
-      const osmNode = osmNodes.get(osmId);
-      if (osmNode) {
-        nodes.set(
-          nodeId,
-          createNode(osmId, osmNode, nodeUsage.get(osmId) || 1)
+        const way = osmWays.get(member.ref);
+        if (!way || way.nodes.length < 2) continue;
+
+        const geometry = buildGeometry(way.nodes, osmNodes);
+        if (geometry.length < 2) continue;
+
+        const route = createTransportRoute(
+          el.id,
+          member.ref,
+          geometry,
+          el.tags
         );
+        transportRoutes.set(route.id, route);
       }
     }
   }
 
-  return { nodes, links };
+  return { nodes, links, transportRoutes };
 }

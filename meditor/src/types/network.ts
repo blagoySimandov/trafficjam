@@ -22,9 +22,25 @@ export interface TrafficLink {
   };
 }
 
+export interface TransportRoute {
+  id: string;
+  osmId: number;
+  wayId: number;
+  geometry: LngLatTuple[];
+  tags: {
+    route: string;
+    ref?: string;
+    name?: string;
+    network?: string;
+    operator?: string;
+    colour?: string;
+  };
+}
+
 export interface Network {
   nodes: Map<string, TrafficNode>;
   links: Map<string, TrafficLink>;
+  transportRoutes?: Map<string, TransportRoute>;
 }
 
 export interface LngLatBounds {

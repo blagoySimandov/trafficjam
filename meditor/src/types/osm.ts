@@ -13,7 +13,18 @@ export interface OSMWay {
   tags?: Record<string, string>;
 }
 
-export type OSMElement = OSMNode | OSMWay;
+export interface OSMRelation {
+  type: "relation";
+  id: number;
+  members: Array<{
+    type: "node" | "way" | "relation";
+    ref: number;
+    role: string;
+  }>;
+  tags?: Record<string, string>;
+}
+
+export type OSMElement = OSMNode | OSMWay | OSMRelation;
 
 export interface OSMResponse {
   elements: OSMElement[];

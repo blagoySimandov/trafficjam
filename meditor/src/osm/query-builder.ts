@@ -16,14 +16,17 @@ const HIGHWAY_TYPES = [
   "unclassified",
 ] as const;
 
+const TRANSPORT_TYPES = ["bus", "tram", "subway", "train", "light_rail"] as const;
+
 export function buildOverpassQuery(bbox: string): string {
   const highwayFilter = HIGHWAY_TYPES.join("|");
+  const transportFilter = TRANSPORT_TYPES.join("|");
 
   return `
     [out:json][timeout:30];
     (
       way["highway"~"^(${highwayFilter})"](${bbox});
-      node(w);
+      relation["type"="route"]["route"~"^(${transportFilter})"](${bbox});
     );
     out body;
     >;
