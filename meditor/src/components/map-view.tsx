@@ -5,6 +5,7 @@ import type { Network, TrafficLink } from "../types";
 import { useOSMImport } from "../hooks/use-osm-import";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
+import { networkToMatsim } from "../osm/matsim";
 
 const DEFAULT_CENTER: [number, number] = [42.698, 23.322];
 const DEFAULT_ZOOM = 15;
@@ -30,9 +31,38 @@ function MapController({
     onNetworkChange,
   });
 
+  const exportNetwork = () => {
+    if (!network) {
+      onStatusChange("No network to export");
+      return;
+    }
+    try {
+      const xml = networkToMatsim(network);
+      const blob = new Blob([xml], { type: "application/xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const filename = `network_${Date.now()}.xml`;
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      onStatusChange(`Exported ${network.links.size} links, ${network.nodes.size} nodes`);
+    } catch (err) {
+      console.error(err);
+      onStatusChange("Export failed");
+    }
+  };
+
   return (
     <>
-      <MapControls onImport={importData} onClear={clear} loading={loading} />
+      <MapControls
+        onImport={importData}
+        onClear={clear}
+        onExport={exportNetwork}
+        loading={loading}
+      />
       {network && <NetworkLayer network={network} onLinkClick={onLinkClick} />}
     </>
   );
