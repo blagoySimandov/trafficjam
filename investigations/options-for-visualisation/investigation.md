@@ -122,4 +122,31 @@ Implement a **combined road heatmap and grouped vehicle animation** approach.
 In short:
 **Even with performance and development tradeoffs, animated traffic flow is not optional. It is required for the product to be good enough for submission.**
 
+## Mapping Library / Frontend Resource Comparison
+
+| Feature / Resource             | Mapbox GL JS                               | MapLibre GL JS       | Leaflet             |
+| ------------------------------ | ------------------------------------------ | -------------------- | ------------------- |
+| Cost                           | Free tier (50k map loads/month), then paid | Free, open-source    | Free, open-source   |
+| API key required               | Yes                                        | No                   | No                  |
+| WebGL support                  | Yes                                        | Yes                  | No                  |
+| Performance (large datasets)   | Excellent                                  | Excellent            | Good                |
+| 3D support                     | Yes                                        | Yes                  | Limited             |
+| Ease of integration with React | Very easy                                  | Easy                 | Moderate            |
+| Documentation quality          | Excellent                                  | Good                 | Excellent           |
+| Best use case                  | Production-ready interactive maps          | Open-source projects | Simple maps / demos |
+
+### Verdict
+
+For this project:
+
+* **Frontend framework:** React + TypeScript
+* **Mapping library:** Mapbox GL JS 
+
+**Reasoning:**
+
+* React + Mapbox GL JS provides **smooth WebGL rendering**, handles **thousands of road and agent objects**, and integrates easily with UI components like sliders, panels, and charts.
+* Supports **both heatmaps and animated vehicle groups**, which is required for the combined visualisation.
+* Free tier is sufficient for the expected scale of the project.
+
+
 Next step is to see how exactly the agents can be animated. This would require analysing the data they hold after a matsim simulation and translating that to position them on an edge and how fast they would move between nodes at that edge.
