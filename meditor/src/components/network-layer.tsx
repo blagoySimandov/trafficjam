@@ -1,20 +1,42 @@
-import { LayerGroup } from "react-leaflet";
+import { useMemo } from "react";
+import { Source, Layer, Popup } from "react-map-gl";
 import type { Network, TrafficLink } from "../types";
-import { LinkLayer } from "./link-layer";
+import { glowLayer, casingLayer, mainLayer, dividersLayer } from "../constants";
+import { networkToGeoJSON } from "../utils";
+import { LinkTooltip } from "./link-tooltip";
 
 interface NetworkLayerProps {
   network: Network;
-  onLinkClick: (link: TrafficLink) => void;
+  hoverInfo: {
+    link: TrafficLink;
+    longitude: number;
+    latitude: number;
+  } | null;
 }
 
-export function NetworkLayer({ network, onLinkClick }: NetworkLayerProps) {
-  const links = Array.from(network.links.values());
+export function NetworkLayer({ network, hoverInfo }: NetworkLayerProps) {
+  const geojson = useMemo(() => networkToGeoJSON(network), [network]);
 
   return (
-    <LayerGroup>
-      {links.map((link) => (
-        <LinkLayer key={link.id} link={link} onClick={onLinkClick} />
-      ))}
-    </LayerGroup>
+    <>
+      <Source id="network" type="geojson" data={geojson}>
+        <Layer {...glowLayer} />
+        <Layer {...casingLayer} />
+        <Layer {...mainLayer} />
+        <Layer {...dividersLayer} />
+      </Source>
+      {hoverInfo && (
+        <Popup
+          longitude={hoverInfo.longitude}
+          latitude={hoverInfo.latitude}
+          closeButton={false}
+          closeOnClick={false}
+          anchor="bottom"
+          offset={10}
+        >
+          <LinkTooltip link={hoverInfo.link} />
+        </Popup>
+      )}
+    </>
   );
 }
