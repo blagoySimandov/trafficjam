@@ -1,37 +1,43 @@
-import { useState } from "react";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState, useRef, useCallback } from "react";
+import Map from "react-map-gl";
+import type { MapRef } from "react-map-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../types";
+import {
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  MAP_STYLE,
+  MAPBOX_TOKEN,
+  INTERACTIVE_LAYER_IDS,
+} from "../constants";
 import { useOSMImport } from "../hooks/use-osm-import";
+import { useNetworkInteraction } from "../hooks/use-network-interaction";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
 import { networkToMatsim } from "../osm/matsim";
 
-const DEFAULT_CENTER: [number, number] = [42.698, 23.322];
-const DEFAULT_ZOOM = 15;
-const TILE_URL =
-  "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
-
-interface MapControllerProps {
-  network: Network | null;
+interface MapViewProps {
   onStatusChange: (status: string) => void;
-  onNetworkChange: (network: Network | null) => void;
   onLinkClick: (link: TrafficLink) => void;
 }
 
-function MapController({
-  network,
-  onStatusChange,
-  onNetworkChange,
-  onLinkClick,
-}: MapControllerProps) {
-  const map = useMap();
-  const { loading, importData, clear } = useOSMImport(map, {
+export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
+  const [network, setNetwork] = useState<Network | null>(null);
+  const mapRef = useRef<MapRef | null>(null);
+
+  const { loading, importData, clear } = useOSMImport(mapRef, {
     onStatusChange,
-    onNetworkChange,
+    onNetworkChange: setNetwork,
   });
 
-  const exportNetwork = () => {
+  const { hoverInfo, handleClick, handleMouseMove, handleMouseLeave } =
+    useNetworkInteraction(network, mapRef, onLinkClick);
+
+  const handleMapRef = useCallback((ref: MapRef | null) => {
+    mapRef.current = ref;
+  }, []);
+
+  const exportNetwork = useCallback(() => {
     if (!network) {
       onStatusChange("No network to export");
       return;
@@ -48,50 +54,38 @@ function MapController({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      onStatusChange(`Exported ${network.links.size} links, ${network.nodes.size} nodes`);
+      onStatusChange(
+        `Exported ${network.links.size} links, ${network.nodes.size} nodes`
+      );
     } catch (err) {
       console.error(err);
       onStatusChange("Export failed");
     }
-  };
+  }, [network, onStatusChange]);
 
   return (
-    <>
+    <Map
+      ref={handleMapRef}
+      initialViewState={{
+        longitude: DEFAULT_CENTER[0],
+        latitude: DEFAULT_CENTER[1],
+        zoom: DEFAULT_ZOOM,
+      }}
+      style={{ width: "100%", height: "100%" }}
+      mapStyle={MAP_STYLE}
+      mapboxAccessToken={MAPBOX_TOKEN}
+      interactiveLayerIds={network ? INTERACTIVE_LAYER_IDS : []}
+      onClick={handleClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       <MapControls
         onImport={importData}
         onClear={clear}
         onExport={exportNetwork}
         loading={loading}
       />
-      {network && <NetworkLayer network={network} onLinkClick={onLinkClick} />}
-    </>
-  );
-}
-
-interface MapViewProps {
-  onStatusChange: (status: string) => void;
-  onLinkClick: (link: TrafficLink) => void;
-}
-
-export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
-  const [network, setNetwork] = useState<Network | null>(null);
-
-  return (
-    <MapContainer
-      center={DEFAULT_CENTER}
-      zoom={DEFAULT_ZOOM}
-      className="map-container"
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url={TILE_URL}
-      />
-      <MapController
-        network={network}
-        onStatusChange={onStatusChange}
-        onNetworkChange={setNetwork}
-        onLinkClick={onLinkClick}
-      />
-    </MapContainer>
+      {network && <NetworkLayer network={network} hoverInfo={hoverInfo} />}
+    </Map>
   );
 }

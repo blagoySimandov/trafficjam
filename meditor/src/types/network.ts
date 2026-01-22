@@ -1,9 +1,9 @@
-import type * as L from "leaflet";
+export type LngLatTuple = [number, number];
 
 export interface TrafficNode {
   id: string;
   osmId: number;
-  position: L.LatLngTuple;
+  position: LngLatTuple;
   connectionCount: number;
 }
 
@@ -12,7 +12,7 @@ export interface TrafficLink {
   osmId: number;
   from: string;
   to: string;
-  geometry: L.LatLngTuple[];
+  geometry: LngLatTuple[];
   tags: {
     highway: string;
     lanes?: number;
@@ -25,4 +25,11 @@ export interface TrafficLink {
 export interface Network {
   nodes: Map<string, TrafficNode>;
   links: Map<string, TrafficLink>;
+}
+
+export interface LngLatBounds {
+  getSouth(): number;
+  getWest(): number;
+  getNorth(): number;
+  getEast(): number;
 }
