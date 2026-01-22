@@ -1,2 +1,2 @@
-export type { TrafficNode, TrafficLink, Network } from "./network";
-export type { OSMNode, OSMWay, OSMElement, OSMResponse } from "./osm";
+export type { TrafficNode, TrafficLink, Building, BusRoute, Network } from "./network";
+export type { OSMNode, OSMWay, OSMRelation, OSMElement, OSMResponse } from "./osm";

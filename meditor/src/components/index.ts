@@ -5,3 +5,6 @@ export { MapControls } from "./map-controls";
 export { MapView } from "./map-view";
 export { NetworkLayer } from "./network-layer";
 export { StatusBar } from "./status-bar";
+export { BuildingLayer } from "./building-layer";
+export { BusRouteLayer } from "./bus-route-layer";
+export { BusRouteTooltip } from "./bus-route-tooltip";

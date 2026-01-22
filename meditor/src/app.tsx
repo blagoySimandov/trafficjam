@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { MapView, InfoPanel, StatusBar } from "./components";
-import type { TrafficLink } from "./types";
+import type { TrafficLink, BusRoute } from "./types";
 
 interface InfoData {
   title: string;
@@ -24,9 +24,23 @@ export default function App() {
     });
   }, []);
 
+  const handleRouteClick = useCallback((route: BusRoute) => {
+    setInfo({
+      title: `Route: ${route.name}`,
+      data: {
+        id: route.id,
+        type: route.routeType,
+        ref: route.ref,
+        operator: route.operator,
+        from: route.from,
+        to: route.to,
+      },
+    });
+  }, []);
+
   return (
     <>
-      <MapView onStatusChange={setStatus} onLinkClick={handleLinkClick} />
+      <MapView onStatusChange={setStatus} onLinkClick={handleLinkClick} onRouteClick={handleRouteClick} />
       {info && <InfoPanel title={info.title} data={info.data} />}
       {status && <StatusBar message={status} />}
     </>
