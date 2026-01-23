@@ -12,6 +12,7 @@ import {
 } from "../constants";
 import { useOSMImport } from "../hooks/use-osm-import";
 import { useNetworkInteraction } from "../hooks/use-network-interaction";
+import { useNetworkExport } from "../hooks/use-network-export";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
 import { networkToMatsim } from "../osm/matsim";
@@ -24,6 +25,7 @@ interface MapViewProps {
 export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
   const mapRef = useRef<MapRef | null>(null);
+  const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
   const { loading, importData, clear } = useOSMImport(mapRef, {
     onStatusChange,
@@ -36,32 +38,6 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
   }, []);
-
-  const exportNetwork = useCallback(() => {
-    if (!network) {
-      onStatusChange("No network to export");
-      return;
-    }
-    try {
-      const xml = networkToMatsim(network);
-      const blob = new Blob([xml], { type: "application/xml" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      const filename = `network_${Date.now()}.xml`;
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      onStatusChange(
-        `Exported ${network.links.size} links, ${network.nodes.size} nodes`
-      );
-    } catch (err) {
-      console.error(err);
-      onStatusChange("Export failed");
-    }
-  }, [network, onStatusChange]);
 
   return (
     <Map
