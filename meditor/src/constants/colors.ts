@@ -33,3 +33,13 @@ export const COLORS = {
   defaultGray: "#ced4da",
   defaultGrayDark: "#868e96",
 } as const;
+
+export const TRANSPORT_COLORS: Record<string, string> = {
+  subway: "#0066cc",
+  tram: "#cc6600",
+  bus: "#cc0000",
+  train: "#009933",
+  light_rail: "#9933cc",
+};
+
+export const DEFAULT_TRANSPORT_COLOR = "#666666";
