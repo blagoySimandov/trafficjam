@@ -1,4 +1,5 @@
 import type { TransportRoute } from "../../types";
+import { DEFAULT_TRANSPORT_COLOR } from "../../constants";
 import styles from "./combined-tooltip.module.css";
 
 interface RouteInfoProps {
@@ -15,7 +16,7 @@ export function RouteInfo({ routes }: RouteInfoProps) {
         <div
           key={route.id}
           className={styles.routeItem}
-          style={{ borderLeftColor: route.tags.colour || "#666" }}
+          style={{ borderLeftColor: route.tags.colour || DEFAULT_TRANSPORT_COLOR }}
         >
           <span className={styles.routeType}>{route.tags.route}</span>
           {route.tags.ref && ` ${route.tags.ref}`}
