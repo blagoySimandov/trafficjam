@@ -15,6 +15,7 @@ export const UI_LABELS = {
 export const CONTROL_ICONS = {
   IMPORT: "📥",
   CLEAR: "🗑️",
+  EXPORT: "🚀",
   BUILDINGS_SHOW: "🏗️",
   BUILDINGS_HIDE: "🏢",
 };
@@ -22,6 +23,7 @@ export const CONTROL_ICONS = {
 export const CONTROL_TITLES = {
   IMPORT: "Import OSM data",
   CLEAR: "Clear network",
+  EXPORT: "Export network",
   BUILDINGS_SHOW: "Show buildings",
   BUILDINGS_HIDE: "Hide buildings",
 };

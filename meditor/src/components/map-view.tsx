@@ -71,7 +71,6 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
       />
-      {network && <NetworkLayer network={network} hoverInfo={hoverInfo} />}
-    </Map>
+    {network && <NetworkLayer network={network} hoverInfo={hoverInfo} showBuildings={showBuildings} />}</Map>
   );
 }

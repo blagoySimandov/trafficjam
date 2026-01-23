@@ -28,6 +28,7 @@ function ControlButton({ title, icon, onClick, disabled }: ControlButtonProps) {
 interface MapControlsProps {
   onImport: () => void;
   onClear: () => void;
+  onExport: () => void;
   loading: boolean;
   showBuildings: boolean;
   onToggleBuildings: () => void;
@@ -36,6 +37,7 @@ interface MapControlsProps {
 export function MapControls({
   onImport,
   onClear,
+  onExport,
   loading,
   showBuildings,
   onToggleBuildings,
@@ -47,6 +49,11 @@ export function MapControls({
         icon={CONTROL_ICONS.IMPORT}
         onClick={onImport}
         disabled={loading}
+      />
+      <ControlButton
+        title={CONTROL_TITLES.EXPORT}
+        icon={CONTROL_ICONS.EXPORT}
+        onClick={onExport}
       />
       <ControlButton
         title={CONTROL_TITLES.CLEAR}
