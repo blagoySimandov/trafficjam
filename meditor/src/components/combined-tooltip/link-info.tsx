@@ -1,4 +1,5 @@
 import type { TrafficLink } from "../../types";
+import { UI_LABELS } from "../../constants";
 import styles from "./combined-tooltip.module.css";
 
 interface LinkInfoProps {
@@ -12,9 +13,9 @@ export function LinkInfo({ link }: LinkInfoProps) {
         {link.tags.name || link.tags.highway}
       </strong>
       <div className={styles.linkDetails}>
-        Type: {link.tags.highway}
-        {link.tags.lanes && ` • Lanes: ${link.tags.lanes}`}
-        {link.tags.maxspeed && ` • Speed: ${link.tags.maxspeed}`}
+        {UI_LABELS.TYPE_LABEL}{link.tags.highway}
+        {link.tags.lanes && `${UI_LABELS.LANES_LABEL}${link.tags.lanes}`}
+        {link.tags.maxspeed && `${UI_LABELS.SPEED_LABEL}${link.tags.maxspeed}`}
       </div>
     </div>
   );

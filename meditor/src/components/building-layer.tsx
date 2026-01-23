@@ -5,7 +5,6 @@ import { buildingToGeoJSON } from "../utils";
 import {
   BUILDING_SOURCE_ID,
   BUILDING_CIRCLE_LAYER,
-  BUILDING_ICON_LAYER,
 } from "../constants";
 
 interface BuildingLayerProps {
@@ -18,7 +17,6 @@ export function BuildingLayer({ buildings }: BuildingLayerProps) {
   return (
     <Source id={BUILDING_SOURCE_ID} type="geojson" data={geojson}>
       <Layer {...BUILDING_CIRCLE_LAYER} />
-      <Layer {...BUILDING_ICON_LAYER} />
     </Source>
   );
 }

@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import type { MapLayerMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint } from "../utils/feature-detection";
-import { NETWORK_LAYER_ID, BUILDING_LAYER_ID } from "../constants";
 
 interface UseMapInteractionsParams {
   network: Network | null;
