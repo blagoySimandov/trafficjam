@@ -1,5 +1,6 @@
 import type { FeatureCollection, Feature, LineString } from "geojson";
 import type { TransportRoute } from "../types";
+import { TRANSPORT_COLORS, DEFAULT_TRANSPORT_COLOR } from "../constants";
 
 export interface TransportFeatureProperties {
   id: string;
@@ -11,21 +12,13 @@ export interface TransportFeatureProperties {
   colour?: string;
 }
 
-const TRANSPORT_COLORS: Record<string, string> = {
-  subway: "#0066cc",
-  tram: "#cc6600",
-  bus: "#cc0000",
-  train: "#009933",
-  light_rail: "#9933cc",
-};
-
 export function transportRoutesToGeoJSON(
   routes: Map<string, TransportRoute>
 ): FeatureCollection<LineString, TransportFeatureProperties> {
   const features: Feature<LineString, TransportFeatureProperties>[] = [];
 
   for (const route of routes.values()) {
-    const color = route.tags.colour || TRANSPORT_COLORS[route.tags.route] || "#666666";
+    const color = route.tags.colour || TRANSPORT_COLORS[route.tags.route] || DEFAULT_TRANSPORT_COLOR;
 
     features.push({
       type: "Feature",

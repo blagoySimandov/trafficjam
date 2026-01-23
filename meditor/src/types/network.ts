@@ -49,3 +49,10 @@ export interface LngLatBounds {
   getNorth(): number;
   getEast(): number;
 }
+
+export interface CombinedHoverInfo {
+  link?: TrafficLink;
+  routes: TransportRoute[];
+  longitude: number;
+  latitude: number;
+}
