@@ -37,10 +37,27 @@ export interface TransportRoute {
   };
 }
 
+export type BuildingType = "retail" | "apartments" | "supermarket" | "school" | "kindergarten" | "parking";
+
+export interface Building {
+  id: string;
+  osmId: number;
+  position: LngLatTuple;
+  geometry?: LngLatTuple[];
+  type: BuildingType;
+  tags: {
+    name?: string;
+    building?: string;
+    shop?: string;
+    amenity?: string;
+  };
+}
+
 export interface Network {
   nodes: Map<string, TrafficNode>;
   links: Map<string, TrafficLink>;
   transportRoutes?: Map<string, TransportRoute>;
+  buildings?: Map<string, Building>;
 }
 
 export interface LngLatBounds {
@@ -53,6 +70,7 @@ export interface LngLatBounds {
 export interface CombinedHoverInfo {
   link?: TrafficLink;
   routes: TransportRoute[];
+  building?: Building;
   longitude: number;
   latitude: number;
 }

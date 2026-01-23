@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import type { MapLayerMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint } from "../utils/feature-detection";
-import { NETWORK_LAYER_ID } from "../constants";
+import { NETWORK_LAYER_ID, BUILDING_LAYER_ID } from "../constants";
 
 interface UseMapInteractionsParams {
   network: Network | null;
@@ -20,12 +20,18 @@ export function useMapInteractions({
   const handleClick = useCallback(
     (event: MapLayerMouseEvent) => {
       if (!network) return;
-      const feature = event.features?.[0];
-      if (feature?.layer?.id === NETWORK_LAYER_ID && feature.properties) {
-        const link = network.links.get(feature.properties.id);
-        if (link && onLinkClick) {
-          onLinkClick(link);
-        }
+
+      const detected = detectFeaturesAtPoint(event, network);
+
+      if (detected.building) {
+        setHoverInfo({
+          building: detected.building,
+          routes: [],
+          longitude: event.lngLat.lng,
+          latitude: event.lngLat.lat,
+        });
+      } else if (detected.link && onLinkClick) {
+        onLinkClick(detected.link);
       }
     },
     [network, onLinkClick]
@@ -38,7 +44,6 @@ export function useMapInteractions({
 
       if (features.length === 0) {
         if (map) map.getCanvas().style.cursor = "";
-        setHoverInfo(null);
         return;
       }
 

@@ -1,5 +1,6 @@
-import type { Network, TrafficNode, TrafficLink, TransportRoute } from "../types";
+import type { Network, TrafficNode, TrafficLink, TransportRoute, Building, BuildingType } from "../types";
 import type { OSMElement, OSMNode, OSMWay } from "../types/osm";
+import { BUILDING_TAG_MAPPINGS } from "../constants";
 
 function indexNodes(elements: OSMElement[]): Map<number, OSMNode> {
   const osmNodes = new Map<number, OSMNode>();
@@ -105,10 +106,44 @@ function createTransportRoute(
   };
 }
 
+function determineBuildingType(tags: Record<string, string>): BuildingType | null {
+  for (const mapping of BUILDING_TAG_MAPPINGS) {
+    if (tags[mapping.tag] === mapping.value) {
+      return mapping.type as BuildingType;
+    }
+  }
+  return null;
+}
+
+function createBuilding(
+  osmId: number,
+  position: L.LatLngTuple,
+  tags: Record<string, string>,
+  geometry?: L.LatLngTuple[]
+): Building | null {
+  const type = determineBuildingType(tags);
+  if (!type) return null;
+
+  return {
+    id: `building_${osmId}`,
+    osmId,
+    position,
+    geometry,
+    type,
+    tags: {
+      name: tags.name,
+      building: tags.building,
+      shop: tags.shop,
+      amenity: tags.amenity,
+    },
+  };
+}
+
 export function parseOSMResponse(elements: OSMElement[]): Network {
   const nodes = new Map<string, TrafficNode>();
   const links = new Map<string, TrafficLink>();
   const transportRoutes = new Map<string, TransportRoute>();
+  const buildings = new Map<string, Building>();
   const osmNodes = indexNodes(elements);
   const osmWays = indexWays(elements);
   const nodeUsage = countNodeUsage(elements);
@@ -155,8 +190,26 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
         );
         transportRoutes.set(route.id, route);
       }
+    } else if (el.type === "node" && el.tags) {
+      const building = createBuilding(el.id, [el.lat, el.lon], el.tags);
+      if (building) {
+        buildings.set(building.id, building);
+      }
+    } else if (el.type === "way" && el.tags && !el.tags.highway) {
+      const geometry = buildGeometry(el.nodes, osmNodes);
+      if (geometry.length < 3) continue;
+
+      const centroid: L.LatLngTuple = [
+        geometry.reduce((sum, p) => sum + p[0], 0) / geometry.length,
+        geometry.reduce((sum, p) => sum + p[1], 0) / geometry.length,
+      ];
+
+      const building = createBuilding(el.id, centroid, el.tags, geometry);
+      if (building) {
+        buildings.set(building.id, building);
+      }
     }
   }
 
-  return { nodes, links, transportRoutes };
+  return { nodes, links, transportRoutes, buildings };
 }

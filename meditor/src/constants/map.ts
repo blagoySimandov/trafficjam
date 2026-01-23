@@ -1,4 +1,5 @@
 import { NETWORK_LAYER_ID, TRANSPORT_LAYER_IDS } from "./transport-layers";
+import { BUILDING_LAYER_ID } from "./building-icons";
 
 export const DEFAULT_CENTER: [number, number] = [23.322, 42.698];
 export const DEFAULT_ZOOM = 15;
@@ -12,4 +13,5 @@ export const INTERACTIVE_LAYER_IDS = [
   TRANSPORT_LAYER_IDS.TRAM,
   TRANSPORT_LAYER_IDS.TRAIN,
   TRANSPORT_LAYER_IDS.LIGHT_RAIL,
+  BUILDING_LAYER_ID,
 ];

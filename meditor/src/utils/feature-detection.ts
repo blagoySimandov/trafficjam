@@ -1,10 +1,11 @@
 import type { MapLayerMouseEvent } from "react-map-gl";
-import type { Network, TrafficLink, TransportRoute } from "../types";
-import { NETWORK_LAYER_ID, TRANSPORT_LAYER_PREFIX } from "../constants";
+import type { Network, TrafficLink, TransportRoute, Building } from "../types";
+import { NETWORK_LAYER_ID, TRANSPORT_LAYER_PREFIX, BUILDING_LAYER_ID } from "../constants";
 
 interface DetectedFeatures {
   link?: TrafficLink;
   routes: TransportRoute[];
+  building?: Building;
 }
 
 export function detectFeaturesAtPoint(
@@ -17,6 +18,7 @@ export function detectFeaturesAtPoint(
 
   const features = event.features || [];
   let link: TrafficLink | undefined;
+  let building: Building | undefined;
   const routes: TransportRoute[] = [];
 
   for (const feature of features) {
@@ -31,8 +33,14 @@ export function detectFeaturesAtPoint(
       if (route) {
         routes.push(route);
       }
+    } else if (
+      feature.layer?.id === BUILDING_LAYER_ID &&
+      feature.properties &&
+      network.buildings
+    ) {
+      building = network.buildings.get(feature.properties.id);
     }
   }
 
-  return { link, routes };
+  return { link, routes, building };
 }

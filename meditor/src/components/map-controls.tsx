@@ -27,9 +27,17 @@ interface MapControlsProps {
   onImport: () => void;
   onClear: () => void;
   loading: boolean;
+  showBuildings: boolean;
+  onToggleBuildings: () => void;
 }
 
-export function MapControls({ onImport, onClear, loading }: MapControlsProps) {
+export function MapControls({
+  onImport,
+  onClear,
+  loading,
+  showBuildings,
+  onToggleBuildings,
+}: MapControlsProps) {
   return (
     <div className="map-controls">
       <ControlButton
@@ -39,6 +47,11 @@ export function MapControls({ onImport, onClear, loading }: MapControlsProps) {
         disabled={loading}
       />
       <ControlButton title="Clear network" icon="🗑️" onClick={onClear} />
+      <ControlButton
+        title={showBuildings ? "Hide buildings" : "Show buildings"}
+        icon={showBuildings ? "🏢" : "🏗️"}
+        onClick={onToggleBuildings}
+      />
     </div>
   );
 }
