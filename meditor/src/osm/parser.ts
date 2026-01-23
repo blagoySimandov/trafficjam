@@ -1,11 +1,16 @@
 import type { Network, TrafficNode, TrafficLink, TransportRoute, Building, BuildingType } from "../types";
 import type { OSMElement, OSMNode, OSMWay } from "../types/osm";
-import { BUILDING_TAG_MAPPINGS } from "../constants";
+import {
+  BUILDING_TAG_MAPPINGS,
+  ID_PREFIXES,
+  OSM_TAG_VALUES,
+  GEOMETRY_VALIDATION,
+} from "../constants";
 
 function indexNodes(elements: OSMElement[]): Map<number, OSMNode> {
   const osmNodes = new Map<number, OSMNode>();
   for (const el of elements) {
-    if (el.type === "node") {
+    if (el.type === OSM_TAG_VALUES.TYPE_NODE) {
       osmNodes.set(el.id, el);
     }
   }
@@ -15,7 +20,7 @@ function indexNodes(elements: OSMElement[]): Map<number, OSMNode> {
 function indexWays(elements: OSMElement[]): Map<number, OSMWay> {
   const osmWays = new Map<number, OSMWay>();
   for (const el of elements) {
-    if (el.type === "way") {
+    if (el.type === OSM_TAG_VALUES.TYPE_WAY) {
       osmWays.set(el.id, el);
     }
   }
@@ -25,7 +30,7 @@ function indexWays(elements: OSMElement[]): Map<number, OSMWay> {
 function countNodeUsage(elements: OSMElement[]): Map<number, number> {
   const nodeUsage = new Map<number, number>();
   for (const el of elements) {
-    if (el.type === "way" && el.tags?.highway) {
+    if (el.type === OSM_TAG_VALUES.TYPE_WAY && el.tags?.highway) {
       for (const nodeId of el.nodes) {
         nodeUsage.set(nodeId, (nodeUsage.get(nodeId) || 0) + 1);
       }
@@ -52,11 +57,11 @@ function createLink(
   way: { id: number; nodes: number[]; tags: Record<string, string> },
   geometry: L.LatLngTuple[]
 ): TrafficLink {
-  const fromNodeId = `node_${way.nodes[0]}`;
-  const toNodeId = `node_${way.nodes[way.nodes.length - 1]}`;
+  const fromNodeId = `${ID_PREFIXES.NODE}${way.nodes[0]}`;
+  const toNodeId = `${ID_PREFIXES.NODE}${way.nodes[way.nodes.length - 1]}`;
 
   return {
-    id: `link_${way.id}`,
+    id: `${ID_PREFIXES.LINK}${way.id}`,
     osmId: way.id,
     from: fromNodeId,
     to: toNodeId,
@@ -65,7 +70,7 @@ function createLink(
       highway: way.tags.highway,
       lanes: way.tags.lanes ? parseInt(way.tags.lanes) : undefined,
       maxspeed: way.tags.maxspeed ? parseInt(way.tags.maxspeed) : undefined,
-      oneway: way.tags.oneway === "yes",
+      oneway: way.tags.oneway === OSM_TAG_VALUES.ONEWAY_YES,
       name: way.tags.name,
     },
   };
@@ -77,7 +82,7 @@ function createNode(
   connectionCount: number
 ): TrafficNode {
   return {
-    id: `node_${osmId}`,
+    id: `${ID_PREFIXES.NODE}${osmId}`,
     osmId,
     position: [osmNode.lat, osmNode.lon],
     connectionCount,
@@ -91,7 +96,7 @@ function createTransportRoute(
   tags: Record<string, string>
 ): TransportRoute {
   return {
-    id: `transport_${relationId}_way_${wayId}`,
+    id: `${ID_PREFIXES.TRANSPORT}${relationId}${ID_PREFIXES.TRANSPORT_WAY}${wayId}`,
     osmId: relationId,
     wayId,
     geometry,
@@ -125,7 +130,7 @@ function createBuilding(
   if (!type) return null;
 
   return {
-    id: `building_${osmId}`,
+    id: `${ID_PREFIXES.BUILDING}${osmId}`,
     osmId,
     position,
     geometry,
@@ -149,9 +154,9 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
   const nodeUsage = countNodeUsage(elements);
 
   for (const el of elements) {
-    if (el.type === "way" && el.tags?.highway) {
+    if (el.type === OSM_TAG_VALUES.TYPE_WAY && el.tags?.highway) {
       const geometry = buildGeometry(el.nodes, osmNodes);
-      if (geometry.length < 2) continue;
+      if (geometry.length < GEOMETRY_VALIDATION.MIN_LINK_POINTS) continue;
 
       const link = createLink(
         { id: el.id, nodes: el.nodes, tags: el.tags },
@@ -161,7 +166,7 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
 
       const endpoints = [el.nodes[0], el.nodes[el.nodes.length - 1]];
       for (const osmId of endpoints) {
-        const nodeId = `node_${osmId}`;
+        const nodeId = `${ID_PREFIXES.NODE}${osmId}`;
         if (nodes.has(nodeId)) continue;
 
         const osmNode = osmNodes.get(osmId);
@@ -172,15 +177,15 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
           );
         }
       }
-    } else if (el.type === "relation" && el.tags?.route) {
+    } else if (el.type === OSM_TAG_VALUES.TYPE_RELATION && el.tags?.route) {
       for (const member of el.members) {
-        if (member.type !== "way") continue;
+        if (member.type !== OSM_TAG_VALUES.TYPE_WAY) continue;
 
         const way = osmWays.get(member.ref);
-        if (!way || way.nodes.length < 2) continue;
+        if (!way || way.nodes.length < GEOMETRY_VALIDATION.MIN_ROUTE_POINTS) continue;
 
         const geometry = buildGeometry(way.nodes, osmNodes);
-        if (geometry.length < 2) continue;
+        if (geometry.length < GEOMETRY_VALIDATION.MIN_ROUTE_POINTS) continue;
 
         const route = createTransportRoute(
           el.id,
@@ -190,14 +195,14 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
         );
         transportRoutes.set(route.id, route);
       }
-    } else if (el.type === "node" && el.tags) {
+    } else if (el.type === OSM_TAG_VALUES.TYPE_NODE && el.tags) {
       const building = createBuilding(el.id, [el.lat, el.lon], el.tags);
       if (building) {
         buildings.set(building.id, building);
       }
-    } else if (el.type === "way" && el.tags && !el.tags.highway) {
+    } else if (el.type === OSM_TAG_VALUES.TYPE_WAY && el.tags && !el.tags.highway) {
       const geometry = buildGeometry(el.nodes, osmNodes);
-      if (geometry.length < 3) continue;
+      if (geometry.length < GEOMETRY_VALIDATION.MIN_BUILDING_POLYGON_POINTS) continue;
 
       const centroid: L.LatLngTuple = [
         geometry.reduce((sum, p) => sum + p[0], 0) / geometry.length,

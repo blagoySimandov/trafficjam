@@ -1,5 +1,5 @@
 import type { Building } from "../../types";
-import { BUILDING_TYPE_LABELS } from "../../constants";
+import { BUILDING_TYPE_LABELS, UI_LABELS } from "../../constants";
 import styles from "./combined-tooltip.module.css";
 
 interface BuildingInfoProps {
@@ -15,7 +15,7 @@ export function BuildingInfo({ building }: BuildingInfoProps) {
         {building.tags.name || typeLabel}
       </strong>
       <div className={styles.linkDetails}>
-        Type: {typeLabel}
+        {UI_LABELS.TYPE_LABEL}{typeLabel}
       </div>
     </div>
   );
