@@ -11,9 +11,12 @@ import {
   INTERACTIVE_LAYER_IDS,
 } from "../constants";
 import { useOSMImport } from "../hooks/use-osm-import";
-import { useNetworkInteraction } from "../hooks/use-network-interaction";
+import { useMapInteractions } from "../hooks/use-map-interactions";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
+import { TransportLayer } from "./transport-layer";
+import { BuildingLayer } from "./building-layer";
+import { CombinedTooltip } from "./combined-tooltip";
 
 interface MapViewProps {
   onStatusChange: (status: string) => void;
@@ -22,6 +25,7 @@ interface MapViewProps {
 
 export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
+  const [showBuildings, setShowBuildings] = useState(true);
   const mapRef = useRef<MapRef | null>(null);
 
   const { loading, importData, clear } = useOSMImport(mapRef, {
@@ -30,10 +34,18 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   });
 
   const { hoverInfo, handleClick, handleMouseMove, handleMouseLeave } =
-    useNetworkInteraction(network, mapRef, onLinkClick);
+    useMapInteractions({
+      network,
+      mapRef,
+      onLinkClick,
+    });
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
+  }, []);
+
+  const toggleBuildings = useCallback(() => {
+    setShowBuildings((prev) => !prev);
   }, []);
 
   return (
@@ -52,8 +64,29 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <MapControls onImport={importData} onClear={clear} loading={loading} />
-      {network && <NetworkLayer network={network} hoverInfo={hoverInfo} />}
+      <MapControls
+        onImport={importData}
+        onClear={clear}
+        loading={loading}
+        showBuildings={showBuildings}
+        onToggleBuildings={toggleBuildings}
+      />
+      {network && <NetworkLayer network={network} hoverInfo={null} />}
+      {network?.transportRoutes && network.transportRoutes.size > 0 && (
+        <TransportLayer routes={network.transportRoutes} hoverInfo={null} />
+      )}
+      {showBuildings && network?.buildings && network.buildings.size > 0 && (
+        <BuildingLayer buildings={network.buildings} />
+      )}
+      {hoverInfo && (
+        <CombinedTooltip
+          link={hoverInfo.link}
+          routes={hoverInfo.routes}
+          building={hoverInfo.building}
+          longitude={hoverInfo.longitude}
+          latitude={hoverInfo.latitude}
+        />
+      )}
     </Map>
   );
 }
