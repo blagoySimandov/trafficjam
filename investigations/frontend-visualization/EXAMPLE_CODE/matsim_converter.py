@@ -84,7 +84,6 @@ def matsim_events_to_trips(events_xml_path, network_geojson_path, output_json_pa
     
     # Build a lookup: link_id -> coordinates
     link_coords = {}
-    link_nodes = {}  # Store from/to nodes for each link
     
     for feature in network['features']:
         link_id = feature['properties']['id']
@@ -154,7 +153,7 @@ def matsim_events_to_trips(events_xml_path, network_geojson_path, output_json_pa
         json.dump(trips, f, indent=2)
     
     print(f"✓ Converted {len(trips)} vehicle trips to {output_json_path}")
-    print(f"\nConversion complete!")
+    print("\nConversion complete!")
     return trips
 
 
