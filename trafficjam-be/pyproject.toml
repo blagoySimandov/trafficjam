@@ -4,4 +4,3 @@ version = "0.1.0"
 description = "Simulating the traffic for a city of choice in order to make it more efficient."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
