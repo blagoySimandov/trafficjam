@@ -4,3 +4,5 @@ export { MapControls } from "./map-controls";
 export { MapView } from "./map-view";
 export { NetworkLayer } from "./network-layer";
 export { StatusBar } from "./status-bar";
+export { TransportLayer } from "./transport-layer";
+export { CombinedTooltip } from "./combined-tooltip";

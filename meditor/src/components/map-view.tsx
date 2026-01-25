@@ -24,6 +24,7 @@ interface MapViewProps {
 
 export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
+  const [showBuildings, setShowBuildings] = useState(true);
   const mapRef = useRef<MapRef | null>(null);
   const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
@@ -33,10 +34,18 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   });
 
   const { hoverInfo, handleClick, handleMouseMove, handleMouseLeave } =
-    useNetworkInteraction(network, mapRef, onLinkClick);
+    useMapInteractions({
+      network,
+      mapRef,
+      onLinkClick,
+    });
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
+  }, []);
+
+  const toggleBuildings = useCallback(() => {
+    setShowBuildings((prev) => !prev);
   }, []);
 
   return (

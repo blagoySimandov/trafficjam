@@ -1,3 +1,5 @@
+import { CONTROL_ICONS, CONTROL_TITLES } from "../constants";
+
 interface ControlButtonProps {
   title: string;
   icon: string;
@@ -28,14 +30,16 @@ interface MapControlsProps {
   onClear: () => void;
   onExport?: () => void;
   loading: boolean;
+  showBuildings: boolean;
+  onToggleBuildings: () => void;
 }
 
 export function MapControls({ onImport, onClear, onExport, loading }: MapControlsProps) {
   return (
     <div className="map-controls">
       <ControlButton
-        title="Import OSM data"
-        icon="📥"
+        title={CONTROL_TITLES.IMPORT}
+        icon={CONTROL_ICONS.IMPORT}
         onClick={onImport}
         disabled={loading}
       />
