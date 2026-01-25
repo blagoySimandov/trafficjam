@@ -13,3 +13,4 @@ export async function fetchOSMData(bounds: LngLatBounds): Promise<Network> {
 export { fetchFromOverpass } from "./api";
 export { parseOSMResponse } from "./parser";
 export { buildOverpassQuery, formatBbox } from "./query-builder";
+export { networkToMatsim } from "./matsim";
