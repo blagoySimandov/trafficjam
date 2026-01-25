@@ -15,6 +15,9 @@ import { useNetworkExport } from "../hooks/use-network-export";
 import { useMapInteractions } from "../hooks/use-map-interactions";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
+import { TransportLayer } from "./transport-layer";
+import { BuildingLayer } from "./building-layer";
+import { CombinedTooltip } from "./combined-tooltip";
 
 interface MapViewProps {
   onStatusChange: (status: string) => void;
@@ -71,6 +74,22 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
       />
-    {network && <NetworkLayer network={network} hoverInfo={hoverInfo} showBuildings={showBuildings} />}</Map>
+     {network && <NetworkLayer network={network} hoverInfo={null} showBuildings={showBuildings} />}
+      {network?.transportRoutes && network.transportRoutes.size > 0 && (
+        <TransportLayer routes={network.transportRoutes} hoverInfo={null} />
+      )}
+      {showBuildings && network?.buildings && network.buildings.size > 0 && (
+        <BuildingLayer buildings={network.buildings} />
+      )}
+      {hoverInfo && (
+        <CombinedTooltip
+          link={hoverInfo.link}
+          routes={hoverInfo.routes}
+          building={hoverInfo.building}
+          longitude={hoverInfo.longitude}
+          latitude={hoverInfo.latitude}
+        />
+      )}
+    </Map>
   );
 }
