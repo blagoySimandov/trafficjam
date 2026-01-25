@@ -1,4 +1,4 @@
-import type { Network, TrafficNode, TrafficLink } from "../types";
+import type { Network, TrafficLink } from "../types";
 
 function haversineMeters(a: [number, number], b: [number, number]) {
   const toRad = (d: number) => (d * Math.PI) / 180;
