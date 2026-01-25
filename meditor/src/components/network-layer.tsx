@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
-import type { Network } from "../types";
+import type { CombinedHoverInfo, Network } from "../types";
 import { glowLayer, casingLayer, mainLayer, dividersLayer } from "../constants";
 import { networkToGeoJSON } from "../utils";
 
 interface NetworkLayerProps {
   network: Network;
-  hoverInfo: null;
+  hoverInfo: CombinedHoverInfo | null;
 }
 
 export function NetworkLayer({ network }: NetworkLayerProps) {

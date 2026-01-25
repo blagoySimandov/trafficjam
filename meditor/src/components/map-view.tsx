@@ -11,11 +11,10 @@ import {
   INTERACTIVE_LAYER_IDS,
 } from "../constants";
 import { useOSMImport } from "../hooks/use-osm-import";
-import { useNetworkInteraction } from "../hooks/use-network-interaction";
 import { useNetworkExport } from "../hooks/use-network-export";
+import { useMapInteractions } from "../hooks/use-map-interactions";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
-import { networkToMatsim } from "../osm/matsim";
 
 interface MapViewProps {
   onStatusChange: (status: string) => void;
@@ -69,6 +68,8 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
         onClear={clear}
         onExport={exportNetwork}
         loading={loading}
+        showBuildings={showBuildings}
+        onToggleBuildings={toggleBuildings}
       />
       {network && <NetworkLayer network={network} hoverInfo={hoverInfo} />}
     </Map>
