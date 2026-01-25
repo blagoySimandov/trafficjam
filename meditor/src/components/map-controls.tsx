@@ -28,13 +28,18 @@ function ControlButton({ title, icon, onClick, disabled }: ControlButtonProps) {
 interface MapControlsProps {
   onImport: () => void;
   onClear: () => void;
-  onExport?: () => void;
   loading: boolean;
   showBuildings: boolean;
   onToggleBuildings: () => void;
 }
 
-export function MapControls({ onImport, onClear, onExport, loading }: MapControlsProps) {
+export function MapControls({
+  onImport,
+  onClear,
+  loading,
+  showBuildings,
+  onToggleBuildings,
+}: MapControlsProps) {
   return (
     <div className="map-controls">
       <ControlButton
@@ -43,13 +48,15 @@ export function MapControls({ onImport, onClear, onExport, loading }: MapControl
         onClick={onImport}
         disabled={loading}
       />
-      <ControlButton title="Clear network" icon="🗑️" onClick={onClear} />
       <ControlButton
-        title="Export network (MATSim XML)"
-        icon="🚀"
-        onClick={() => {
-          if (onExport) onExport();
-        }}
+        title={CONTROL_TITLES.CLEAR}
+        icon={CONTROL_ICONS.CLEAR}
+        onClick={onClear}
+      />
+      <ControlButton
+        title={showBuildings ? CONTROL_TITLES.BUILDINGS_HIDE : CONTROL_TITLES.BUILDINGS_SHOW}
+        icon={showBuildings ? CONTROL_ICONS.BUILDINGS_HIDE : CONTROL_ICONS.BUILDINGS_SHOW}
+        onClick={onToggleBuildings}
       />
     </div>
   );
