@@ -11,6 +11,7 @@ import {
   INTERACTIVE_LAYER_IDS,
 } from "../constants";
 import { useOSMImport } from "../hooks/use-osm-import";
+import { useNetworkExport } from "../hooks/use-network-export";
 import { useMapInteractions } from "../hooks/use-map-interactions";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./network-layer";
@@ -27,6 +28,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
   const [showBuildings, setShowBuildings] = useState(true);
   const mapRef = useRef<MapRef | null>(null);
+  const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
   const { loading, importData, clear } = useOSMImport(mapRef, {
     onStatusChange,
@@ -67,11 +69,12 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       <MapControls
         onImport={importData}
         onClear={clear}
+        onExport={exportNetwork}
         loading={loading}
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
       />
-      {network && <NetworkLayer network={network} hoverInfo={null} />}
+     {network && <NetworkLayer network={network} hoverInfo={null} showBuildings={showBuildings} />}
       {network?.transportRoutes && network.transportRoutes.size > 0 && (
         <TransportLayer routes={network.transportRoutes} hoverInfo={null} />
       )}
