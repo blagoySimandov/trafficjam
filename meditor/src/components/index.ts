@@ -6,3 +6,6 @@ export { NetworkLayer } from "./network-layer";
 export { StatusBar } from "./status-bar";
 export { TransportLayer } from "./transport-layer";
 export { CombinedTooltip } from "./combined-tooltip";
+export { EditorPanel } from "./editor-panel";
+export { DrawingLayer } from "./drawing-layer";
+export { BuildingLayer } from "./building-layer";
