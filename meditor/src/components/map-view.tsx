@@ -12,6 +12,7 @@ import {
   NODE_LAYER_ID,
 } from "../constants";
 import { useOSMImport } from "../hooks/use-osm-import";
+import { useNetworkExport } from "../hooks/use-network-export";
 import { useMapInteractions } from "../hooks/use-map-interactions";
 import { useNodeDrag } from "../hooks/use-node-drag";
 import { MapControls } from "./map-controls";
@@ -31,6 +32,8 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const [showBuildings, setShowBuildings] = useState(true);
   const [editorMode, setEditorMode] = useState(false);
   const mapRef = useRef<MapRef | null>(null);
+  const { exportNetwork } = useNetworkExport(network, { onStatusChange });
+
 
   const { loading, importData, clear } = useOSMImport(mapRef, {
     onStatusChange,
@@ -127,7 +130,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       <MapControls
         onImport={importData}
         onClear={clear}
-        onExport={handleExport}
+        onExport={exportNetwork}
         loading={loading}
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
