@@ -12,7 +12,7 @@
 	</module>
 
 	<module name="plans">
-		<param name="inputPlansFile" value="cork_city_plans_FINAL.xml" />
+		<param name="inputPlansFile" value="cork_city_plans_WORKING.xml" />
 	</module>
 
 	<module name="controller">
