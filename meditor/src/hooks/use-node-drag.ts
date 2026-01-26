@@ -17,6 +17,7 @@ export function useNodeDrag({
   onNetworkChange,
 }: UseNodeDragParams) {
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const isDraggingRef = useRef(false);
 
   const handleNodeMouseDown = useCallback(
@@ -32,6 +33,7 @@ export function useNodeDrag({
       const nodeId = feature.properties.id;
       setDraggedNodeId(nodeId);
       isDraggingRef.current = true;
+      setIsDragging(true);
 
       const map = mapRef.current;
       if (map) {
@@ -62,7 +64,7 @@ export function useNodeDrag({
       updatedNodes.set(draggedNodeId, updatedNode);
 
       // Extract OSM ID from node ID (format: "node_12345")
-      const nodeOsmId = node.osmId;
+      // const nodeOsmId = node.osmId;
 
       // Update all links that contain this node (at any position in geometry)
       const updatedLinks = new Map(network.links);
@@ -117,6 +119,7 @@ export function useNodeDrag({
     if (!isDraggingRef.current) return;
 
     isDraggingRef.current = false;
+    setIsDragging(false);
     setDraggedNodeId(null);
 
     const map = mapRef.current;
@@ -130,7 +133,7 @@ export function useNodeDrag({
     handleNodeMouseDown,
     handleMouseMove,
     handleMouseUp,
-    isDragging: isDraggingRef.current,
+    isDragging,
     draggedNodeId,
   };
 }

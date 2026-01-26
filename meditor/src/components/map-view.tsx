@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import Map from "react-map-gl";
-import type { MapRef } from "react-map-gl";
+import type { MapMouseEvent, MapRef } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../types";
 import {
@@ -71,15 +71,15 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
     setEditorMode((prev) => !prev);
   }, []);
 
-  const handleExport = useCallback(() => {
-    if (network) {
-      // TODO: Implement export functionality
-      console.log("Export network:", network);
-    }
-  }, [network]);
+  // const handleExport = useCallback(() => {
+  //   if (network) {
+  //     // TODO: Implement export functionality
+  //     console.log("Export network:", network);
+  //   }
+  // }, [network]);
 
   const handleMapClick = useCallback(
-    (event: any) => {
+    (event: MapMouseEvent) => {
       if (editorMode) {
         handleNodeMouseDown(event);
       } else {
@@ -90,7 +90,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   );
 
   const handleMapMouseMove = useCallback(
-    (event: any) => {
+    (event: MapMouseEvent) => {
       if (isDragging) {
         handleNodeDragMove(event);
       } else if (!editorMode) {
