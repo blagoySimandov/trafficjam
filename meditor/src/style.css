@@ -70,6 +70,18 @@ html {
   margin-bottom: 15px;
   background: #fff;
   border: 1px solid #ccc;
+  transition: all 0.2s ease;
+}
+
+
+.map-control-btn:hover {
+  background: #f0f0f0;
+}
+
+.map-control-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #2563eb;
 }
 
 .link-tooltip {
