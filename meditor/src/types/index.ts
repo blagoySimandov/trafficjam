@@ -5,6 +5,7 @@ export type {
   Building,
   BuildingType,
   Network,
+  ProjectedCoords,
   LngLatTuple,
   LngLatBounds,
   CombinedHoverInfo,
