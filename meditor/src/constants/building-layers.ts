@@ -25,7 +25,7 @@ export const BUILDING_CIRCLE_LAYER: LayerProps = {
   type: "circle",
   paint: {
     "circle-radius": BUILDING_CIRCLE_RADIUS,
-    "circle-color": createColorExpression(),
+    "circle-color": createColorExpression() as any,
     "circle-stroke-color": BUILDING_CIRCLE_STROKE_COLOR,
     "circle-stroke-width": BUILDING_CIRCLE_STROKE_WIDTH,
     "circle-opacity": BUILDING_CIRCLE_OPACITY,

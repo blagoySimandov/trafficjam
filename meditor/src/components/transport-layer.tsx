@@ -7,10 +7,11 @@ import { TRANSPORT_SOURCE_ID, TRANSPORT_LAYERS } from "../constants";
 interface TransportLayerProps {
   routes: Map<string, TransportRoute>;
   hoverInfo: null;
+  crs: string;  // format for all coordinates in this network
 }
 
-export function TransportLayer({ routes }: TransportLayerProps) {
-  const geojson = useMemo(() => transportRoutesToGeoJSON(routes), [routes]);
+export function TransportLayer({ routes, crs }: TransportLayerProps) {
+  const geojson = useMemo(() => transportRoutesToGeoJSON(routes, crs), [routes, crs]);
 
   return (
     <Source id={TRANSPORT_SOURCE_ID} type="geojson" data={geojson}>

@@ -1,6 +1,7 @@
 import type { FeatureCollection, Feature, LineString } from "geojson";
 import type { Network } from "../types";
 import { ROAD_STYLES, DEFAULT_STYLE } from "../constants";
+import { projectedToWGS84 } from "./coordinates";
 
 export interface LinkFeatureProperties {
   id: string;
@@ -49,7 +50,11 @@ export function networkToGeoJSON(
       },
       geometry: {
         type: "LineString",
-        coordinates: link.geometry.map(([lat, lng]) => [lng, lat]),
+        coordinates: link.geometry.map(([x, y]) => {
+          // Transform projected coordinates → WGS84, then swap for GeoJSON
+          const [lat, lon] = projectedToWGS84(x, y, network.crs);
+          return [lon, lat]; // GeoJSON format: [lon, lat]
+        }),
       },
     });
   }

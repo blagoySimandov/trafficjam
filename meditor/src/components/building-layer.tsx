@@ -9,10 +9,11 @@ import {
 
 interface BuildingLayerProps {
   buildings: Map<string, Building>;
+  crs: string;
 }
 
-export function BuildingLayer({ buildings }: BuildingLayerProps) {
-  const geojson = useMemo(() => buildingToGeoJSON(buildings), [buildings]);
+export function BuildingLayer({ buildings, crs }: BuildingLayerProps) {
+  const geojson = useMemo(() => buildingToGeoJSON(buildings, crs), [buildings, crs]);
 
   return (
     <Source id={BUILDING_SOURCE_ID} type="geojson" data={geojson}>
