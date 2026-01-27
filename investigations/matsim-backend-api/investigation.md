@@ -121,13 +121,20 @@ REST + SSE delivers the core requirements faster with lower risk:
 
 ---
 
+## Improvements to help reduce cons
+- Save config in postgre database
+- The data is then sent from the DB to MATSim
+- Inter datacenter communication is really fast
+- Also allows for reuse of scenarios
+
 ## Complete Flow Diagram
 ```
 1. Visualizer → POST /simulations/start → Java API
 2. Java API → Generate XML files → Start MatSim
 3. Java API → Response with streamUrl → Visualizer
 4. Visualizer → GET /events (SSE) → Java API
-5. MatSim → Events → Java API → SSE → Visualizer (continuous)
-6. Visualizer displays agents moving in real-time
-7. (Optional) Visualizer → POST /stop → Java API → MatSim stops
+5. MatSim generates events continuously
+6. Java API → SSE stream → Visualizer (real-time display)
+7. Java API → Database (save events for replay, parallel to step 6)
+8. (Optional) Visualizer → POST /stop → Java API → MatSim stops
 ```
