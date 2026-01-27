@@ -178,7 +178,7 @@ class CorkAgentGenerator:
     
     def generate_agents_from_od_data(self):
         print("Generating Cork City agents with network-matched coordinates...")
-        print(f"Coordinate ranges: X: ~528k-558k, Y: ~5.74M-5.78M (7 digits!)")
+        print("Coordinate ranges: X: ~528k-558k, Y: ~5.74M-5.78M (7 digits!)")
         print()
         
         od_pairs = CorkODData.get_all_od_pairs()
@@ -234,7 +234,7 @@ class CorkAgentGenerator:
             
             f.write('</plans>\n')
         print(f"[OK] Written {len(self.agents)} agents")
-        print(f"   Coordinate format check: Y-values have 7 digits (5.7M range)")
+        print("   Coordinate format check: Y-values have 7 digits (5.7M range)")
     
     def write_od_summary(self, output_file: str):
         print(f"Writing summary: {output_file}")
