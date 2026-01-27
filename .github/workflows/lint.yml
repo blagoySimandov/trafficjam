@@ -29,9 +29,15 @@ jobs:
       - name: Lint trafficjam-fe
         working-directory: trafficjam-fe
         run: bun run lint
+      - name: Type check trafficjam-fe
+        working-directory: trafficjam-fe
+        run: bunx tsc --noEmit
       - name: Install dependencies (meditor)
         working-directory: meditor
         run: bun install --frozen-lockfile
       - name: Lint meditor
         working-directory: meditor
         run: bun run lint
+      - name: Type check meditor
+        working-directory: meditor
+        run: bunx tsc --noEmit
