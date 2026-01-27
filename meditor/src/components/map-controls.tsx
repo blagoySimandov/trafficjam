@@ -1,8 +1,8 @@
-import { CONTROL_ICONS, CONTROL_TITLES } from "../constants";
+import { Download, Trash2, Upload, Building2, Building } from "lucide-react";
 
 interface ControlButtonProps {
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
 }
@@ -45,24 +45,24 @@ export function MapControls({
   return (
     <div className="map-controls">
       <ControlButton
-        title={CONTROL_TITLES.IMPORT}
-        icon={CONTROL_ICONS.IMPORT}
+        title="Import OSM data"
+        icon={<Download size={18} />}
         onClick={onImport}
         disabled={loading}
       />
       <ControlButton
-        title={CONTROL_TITLES.EXPORT}
-        icon={CONTROL_ICONS.EXPORT}
+        title="Export network"
+        icon={<Upload size={18} />}
         onClick={onExport}
       />
       <ControlButton
-        title={CONTROL_TITLES.CLEAR}
-        icon={CONTROL_ICONS.CLEAR}
+        title="Clear network"
+        icon={<Trash2 size={18} />}
         onClick={onClear}
       />
       <ControlButton
-        title={showBuildings ? CONTROL_TITLES.BUILDINGS_HIDE : CONTROL_TITLES.BUILDINGS_SHOW}
-        icon={showBuildings ? CONTROL_ICONS.BUILDINGS_HIDE : CONTROL_ICONS.BUILDINGS_SHOW}
+        title={showBuildings ? "Hide buildings" : "Show buildings"}
+        icon={showBuildings ? <Building size={18} /> : <Building2 size={18} />}
         onClick={onToggleBuildings}
       />
     </div>
