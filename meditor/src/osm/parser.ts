@@ -181,7 +181,7 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
 
   // Second pass: create ALL nodes (not just endpoints)
   for (const el of elements) {
-    if (el.type === OSM_TAG_VALUES.TYPE_WAY && el.tags?.highway) {
+    if (isOSMWay(el) && el.tags?.highway) {
       // Add ALL nodes from this way, not just endpoints
       for (const osmId of el.nodes) {
         const nodeId = `${ID_PREFIXES.NODE}${osmId}`;
