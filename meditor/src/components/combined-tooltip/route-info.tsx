@@ -1,5 +1,5 @@
 import type { TransportRoute } from "../../types";
-import { DEFAULT_TRANSPORT_COLOR, UI_LABELS } from "../../constants";
+import { DEFAULT_TRANSPORT_COLOR } from "../../constants";
 import styles from "./combined-tooltip.module.css";
 
 interface RouteInfoProps {
@@ -11,7 +11,7 @@ export function RouteInfo({ routes }: RouteInfoProps) {
 
   return (
     <div className={styles.routesSection}>
-      <strong className={styles.routesTitle}>{UI_LABELS.TRANSPORT_LINES}</strong>
+      <strong className={styles.routesTitle}>Transport Lines:</strong>
       {routes.map((route) => (
         <div
           key={route.id}
