@@ -52,7 +52,6 @@ export function useNodeDrag({
 
       const newPosition: LngLatTuple = [event.lngLat.lat, event.lngLat.lng];
       
-      // Create updated network with moved node
       const updatedNodes = new Map(network.nodes);
       const node = updatedNodes.get(draggedNodeId);
       if (!node) return;
@@ -63,14 +62,10 @@ export function useNodeDrag({
       };
       updatedNodes.set(draggedNodeId, updatedNode);
 
-      // Extract OSM ID from node ID (format: "node_12345")
-      // const nodeOsmId = node.osmId;
 
-      // Update all links that contain this node (at any position in geometry)
       const updatedLinks = new Map(network.links);
       for (const [linkId, link] of network.links.entries()) {
-        // Get the way's node IDs by parsing the geometry
-        // We need to check if this node is part of the link's geometry
+
         let shouldUpdate = false;
         const geometry = [...link.geometry];
 
@@ -84,8 +79,6 @@ export function useNodeDrag({
           shouldUpdate = true;
         }
 
-        // For intermediate nodes, we need to check if the original position matches
-        // and update it. We'll compare positions with a small tolerance.
         if (!shouldUpdate) {
           const oldPosition = node.position;
           for (let i = 0; i < geometry.length; i++) {

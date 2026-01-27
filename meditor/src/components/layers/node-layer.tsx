@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
-import type { Network } from "../types";
-import { nodeToGeoJSON } from "../utils";
-import { NODE_CIRCLE_LAYER } from "../constants";
+import type { Network } from "../../types";
+import { nodeToGeoJSON } from "../../utils";
+import { NODE_CIRCLE_LAYER } from "../../constants";
 
 interface NodeLayerProps {
   network: Network;

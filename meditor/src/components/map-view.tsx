@@ -16,10 +16,10 @@ import { useNetworkExport } from "../hooks/use-network-export";
 import { useMapInteractions } from "../hooks/use-map-interactions";
 import { useNodeDrag } from "../hooks/use-node-drag";
 import { MapControls } from "./map-controls";
-import { NetworkLayer } from "./network-layer";
-import { TransportLayer } from "./transport-layer";
-import { BuildingLayer } from "./building-layer";
-import { NodeLayer } from "./node-layer";
+import { NetworkLayer } from "./layers/network-layer";
+import { TransportLayer } from "./layers/transport-layer";
+import { BuildingLayer } from "./layers/building-layer";
+import { NodeLayer } from "./layers/node-layer";
 import { CombinedTooltip } from "./combined-tooltip";
 
 interface MapViewProps {
@@ -65,18 +65,11 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
 
   const toggleBuildings = useCallback(() => {
     setShowBuildings((prev) => !prev);
-  }, []);
+  }, [setShowBuildings]);
 
   const toggleEditorMode = useCallback(() => {
     setEditorMode((prev) => !prev);
-  }, []);
-
-  // const handleExport = useCallback(() => {
-  //   if (network) {
-  //     // TODO: Implement export functionality
-  //     console.log("Export network:", network);
-  //   }
-  // }, [network]);
+  }, [setEditorMode]);
 
   const handleMapClick = useCallback(
     (event: MapMouseEvent) => {

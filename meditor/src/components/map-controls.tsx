@@ -1,4 +1,5 @@
 import { CONTROL_ICONS, CONTROL_TITLES } from "../constants";
+import { cn } from "../utils/cn"; // path depends on your project
 
 interface ControlButtonProps {
   title: string;
@@ -18,7 +19,7 @@ function ControlButton({ title, icon, onClick, disabled, active }: ControlButton
           e.preventDefault();
           if (!disabled && onClick) onClick();
         }}
-        className={`map-control-btn ${active ? "active" : ""}`}
+       className={cn("map-control-btn", active && "active")}
       >
         {icon}
       </a>
