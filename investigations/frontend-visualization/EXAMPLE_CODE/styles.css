@@ -1,0 +1,176 @@
+body { 
+  margin: 0; 
+  background: #0b0b0b;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#map { 
+  width: 100vw; 
+  height: 100vh; 
+}
+
+.panel {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 15px;
+  color: white;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+#controls {
+  top: 10px;
+  left: 10px;
+  min-width: 280px;
+}
+
+#stats {
+  top: 10px;
+  right: 10px;
+  min-width: 200px;
+}
+
+#timeline-controls {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 600px;
+  padding: 20px;
+}
+
+.control-group {
+  margin-bottom: 15px;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+button {
+  width: 100%;
+  padding: 8px;
+  background: #0066cc;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #0052a3;
+}
+
+button:active {
+  background: #004080;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.stat-label {
+  opacity: 0.7;
+}
+
+.stat-value {
+  font-weight: bold;
+}
+
+/* Timeline controls */
+.timeline-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+#play-pause-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 24px;
+  padding: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-slider-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.time-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* RANGE SLIDERS - ACTUALLY WHITE THIS TIME */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #cccccc;
+  outline: none;
+  border-radius: 3px;
+  margin: 10px 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #0066cc;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #0052a3;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #0066cc;
+  cursor: pointer;
+  border-radius: 50%;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: #0052a3;
+}
+
+/* Time scrubber specific - bigger and brighter */
+#time-scrubber {
+  height: 8px;
+  background: #dddddd;
+  cursor: pointer;
+}
+
+#time-scrubber::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+}
+
+#time-scrubber::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+}
