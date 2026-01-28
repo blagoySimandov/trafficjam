@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from "react";
-import type { MapMouseEvent, MapRef } from "react-map-gl";
+import { useState, useRef, useEffect } from "react";
+import type { MapRef } from "react-map-gl";
 import type { Network, TrafficNode, LngLatTuple } from "../types";
 import { NODE_LAYER_ID } from "../constants";
 
@@ -10,6 +10,9 @@ interface UseNodeDragParams {
   onNetworkChange: (network: Network) => void;
 }
 
+// Threshold for distinguishing click from drag (in pixels)
+const DRAG_THRESHOLD = 5;
+
 export function useNodeDrag({
   network,
   mapRef,
@@ -19,39 +22,61 @@ export function useNodeDrag({
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isDraggingRef = useRef(false);
+  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
+  const hasMoved = useRef(false);
 
-  const handleNodeMouseDown = useCallback(
-    (event: MapMouseEvent) => {
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !editorMode) return;
+
+    const mapCanvas = map.getMap();
+
+    const handleMouseDown = (e: any) => {
       if (!editorMode || !network) return;
 
-      const features = event.features;
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: [NODE_LAYER_ID],
+      });
+
       if (!features || features.length === 0) return;
 
-      const feature = features.find((f) => f.layer?.id === NODE_LAYER_ID);
+      const feature = features[0];
       if (!feature || !feature.properties) return;
 
       const nodeId = feature.properties.id;
       setDraggedNodeId(nodeId);
       isDraggingRef.current = true;
-      setIsDragging(true);
 
-      const map = mapRef.current;
-      if (map) {
-        map.getCanvas().style.cursor = "grabbing";
+      dragStartPos.current = { x: e.point.x, y: e.point.y };
+      hasMoved.current = false;
+
+      if (map.dragPan) {
+        mapCanvas.getCanvas().style.cursor = "grabbing";
         map.dragPan.disable();
       }
 
-      event.preventDefault();
-    },
-    [editorMode, network, mapRef]
-  );
+      e.preventDefault();
+    };
 
-  const handleMouseMove = useCallback(
-    (event: MapMouseEvent) => {
+    const handleMouseMove = (e: any) => {
       if (!isDraggingRef.current || !draggedNodeId || !network) return;
 
-      const newPosition: LngLatTuple = [event.lngLat.lat, event.lngLat.lng];
-      
+      // Check if moved beyond drag threshold
+      if (dragStartPos.current && !hasMoved.current) {
+        const dx = e.point.x - dragStartPos.current.x;
+        const dy = e.point.y - dragStartPos.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > DRAG_THRESHOLD) {
+          hasMoved.current = true;
+          setIsDragging(true);
+        } else {
+          return;
+        }
+      }
+
+      const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
+
       const updatedNodes = new Map(network.nodes);
       const node = updatedNodes.get(draggedNodeId);
       if (!node) return;
@@ -62,12 +87,10 @@ export function useNodeDrag({
       };
       updatedNodes.set(draggedNodeId, updatedNode);
 
-
       const updatedLinks = new Map(network.links);
       for (const [linkId, link] of network.links.entries()) {
-
         let shouldUpdate = false;
-        const geometry = [...link.geometry];
+        let geometry = [...link.geometry];
 
         // Check if this is an endpoint
         if (link.from === draggedNodeId) {
@@ -81,51 +104,68 @@ export function useNodeDrag({
 
         if (!shouldUpdate) {
           const oldPosition = node.position;
+          const newGeometry: LngLatTuple[] = [];
+
           for (let i = 0; i < geometry.length; i++) {
             const [lat, lng] = geometry[i];
-            // Check if this geometry point matches the old node position
-            if (
+            const isOldNodePosition = 
               Math.abs(lat - oldPosition[0]) < 0.000001 &&
-              Math.abs(lng - oldPosition[1]) < 0.000001
-            ) {
-              geometry[i] = newPosition;
+              Math.abs(lng - oldPosition[1]) < 0.000001;       
+            
+            const isEndpoint = i === 0 || i === geometry.length - 1;
+            
+            if (isOldNodePosition && !isEndpoint) {
               shouldUpdate = true;
+            }else{
+              newGeometry.push(geometry[i]);
             }
           }
-        }
+        
+          if (shouldUpdate) {
+            geometry = newGeometry;
+          }}
 
-        if (shouldUpdate) {
-          updatedLinks.set(linkId, { ...link, geometry });
-        }
+      if (shouldUpdate) {
+        updatedLinks.set(linkId, { ...link, geometry });
       }
+    }
 
       onNetworkChange({
         ...network,
         nodes: updatedNodes,
         links: updatedLinks,
       });
-    },
-    [draggedNodeId, network, onNetworkChange]
-  );
+    };
 
-  const handleMouseUp = useCallback(() => {
-    if (!isDraggingRef.current) return;
+    const handleMouseUp = () => {
+      if (!isDraggingRef.current) return;
 
-    isDraggingRef.current = false;
-    setIsDragging(false);
-    setDraggedNodeId(null);
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      setDraggedNodeId(null);
+      dragStartPos.current = null;
+      hasMoved.current = false;
 
-    const map = mapRef.current;
-    if (map) {
-      map.getCanvas().style.cursor = "";
-      map.dragPan.enable();
-    }
-  }, [mapRef]);
+      if (map.dragPan) {
+        mapCanvas.getCanvas().style.cursor = "";
+        map.dragPan.enable();
+      }
+    };
+
+    // Attach event listeners
+    mapCanvas.on("mousedown", handleMouseDown);
+    mapCanvas.on("mousemove", handleMouseMove);
+    mapCanvas.on("mouseup", handleMouseUp);
+
+    // Cleanup
+    return () => {
+      mapCanvas.off("mousedown", handleMouseDown);
+      mapCanvas.off("mousemove", handleMouseMove);
+      mapCanvas.off("mouseup", handleMouseUp);
+    };
+  }, [network, mapRef, editorMode, onNetworkChange, draggedNodeId]);
 
   return {
-    handleNodeMouseDown,
-    handleMouseMove,
-    handleMouseUp,
     isDragging,
     draggedNodeId,
   };
