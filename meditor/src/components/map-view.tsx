@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import Map from "react-map-gl";
-import type { MapRef } from "react-map-gl";
+import type { MapRef, MapMouseEvent } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../types";
 import {
@@ -58,7 +58,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   }, [setEditorMode]);
 
   const handleMapClick = useCallback(
-    (event: any) => {
+    (event: MapMouseEvent) => {
       if (!editorMode) {
         handleClick(event);
       }
@@ -66,7 +66,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
     [editorMode, handleClick],
   );
   const handleMapMouseMove = useCallback(
-    (event: any) => {
+    (event: MapMouseEvent) => {
       if (!editorMode) {
         handleMouseMove(event);
       }

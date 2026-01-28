@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import type { MapRef } from "react-map-gl";
+import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, LngLatTuple } from "../types";
 import { NODE_LAYER_ID } from "../constants";
 
@@ -31,7 +31,7 @@ export function useNodeDrag({
 
     const mapCanvas = map.getMap();
 
-    const handleMouseDown = (e: any) => {
+    const handleMouseDown = (e: MapMouseEvent) => {
       if (!editorMode || !network) return;
 
       const features = map.queryRenderedFeatures(e.point, {
@@ -58,7 +58,7 @@ export function useNodeDrag({
       e.preventDefault();
     };
 
-    const handleMouseMove = (e: any) => {
+    const handleMouseMove = (e: MapMouseEvent) => {
       if (!isDraggingRef.current || !draggedNodeId || !network) return;
 
       // Check if moved beyond drag threshold
