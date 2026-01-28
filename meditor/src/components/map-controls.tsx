@@ -1,13 +1,15 @@
 import { CONTROL_ICONS, CONTROL_TITLES } from "../constants";
+import { cn } from "../utils/cn"; // path depends on your project
 
 interface ControlButtonProps {
   title: string;
   icon: string;
-  onClick: () => void;
+  onClick?: () => void;
   disabled?: boolean;
+  active?: boolean;
 }
 
-function ControlButton({ title, icon, onClick, disabled }: ControlButtonProps) {
+function ControlButton({ title, icon, onClick, disabled, active }: ControlButtonProps) {
   return (
     <div className="leaflet-control leaflet-bar">
       <a
@@ -15,9 +17,9 @@ function ControlButton({ title, icon, onClick, disabled }: ControlButtonProps) {
         title={title}
         onClick={(e) => {
           e.preventDefault();
-          if (!disabled) onClick();
+          if (!disabled && onClick) onClick();
         }}
-        className="map-control-btn"
+       className={cn("map-control-btn", active && "active")}
       >
         {icon}
       </a>
@@ -32,6 +34,8 @@ interface MapControlsProps {
   loading: boolean;
   showBuildings: boolean;
   onToggleBuildings: () => void;
+  editorMode?: boolean;
+  onToggleEditorMode?: () => void;
 }
 
 export function MapControls({
@@ -41,6 +45,8 @@ export function MapControls({
   loading,
   showBuildings,
   onToggleBuildings,
+  editorMode,
+  onToggleEditorMode
 }: MapControlsProps) {
   return (
     <div className="map-controls">
@@ -64,6 +70,12 @@ export function MapControls({
         title={showBuildings ? CONTROL_TITLES.BUILDINGS_HIDE : CONTROL_TITLES.BUILDINGS_SHOW}
         icon={showBuildings ? CONTROL_ICONS.BUILDINGS_HIDE : CONTROL_ICONS.BUILDINGS_SHOW}
         onClick={onToggleBuildings}
+      />
+       <ControlButton
+        title={editorMode ? CONTROL_TITLES.EDITOR_MODE_OFF : CONTROL_TITLES.EDITOR_MODE_ON}
+        icon={CONTROL_ICONS.EDITOR_MODE}
+        onClick={onToggleEditorMode}
+        active={editorMode}
       />
     </div>
   );

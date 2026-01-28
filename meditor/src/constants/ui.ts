@@ -18,12 +18,16 @@ export const CONTROL_ICONS = {
   EXPORT: "🚀",
   BUILDINGS_SHOW: "🏗️",
   BUILDINGS_HIDE: "🏢",
+  EDITOR_MODE: "✏️",
 };
 
 export const CONTROL_TITLES = {
   IMPORT: "Import OSM data",
   CLEAR: "Clear network",
-  EXPORT: "Export network",
+  EXPORT: "Export network data",
   BUILDINGS_SHOW: "Show buildings",
   BUILDINGS_HIDE: "Hide buildings",
+  EDITOR_MODE_ON: "Enter editor mode",
+  EDITOR_MODE_OFF: "Exit editor mode",
+
 };

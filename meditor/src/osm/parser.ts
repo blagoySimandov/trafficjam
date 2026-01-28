@@ -165,6 +165,7 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
   const osmWays = indexWays(elements);
   const nodeUsage = countNodeUsage(elements);
 
+  // First pass: create all links
   for (const el of elements) {
     if (isOSMWay(el) && el.tags?.highway) {
       const geometry = buildGeometry(el.nodes, osmNodes);
@@ -175,9 +176,14 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
         geometry
       );
       links.set(link.id, link);
+    }
+  }
 
-      const endpoints = [el.nodes[0], el.nodes[el.nodes.length - 1]];
-      for (const osmId of endpoints) {
+  // Second pass: create ALL nodes (not just endpoints)
+  for (const el of elements) {
+    if (isOSMWay(el) && el.tags?.highway) {
+      // Add ALL nodes from this way, not just endpoints
+      for (const osmId of el.nodes) {
         const nodeId = `${ID_PREFIXES.NODE}${osmId}`;
         if (nodes.has(nodeId)) continue;
 
