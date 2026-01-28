@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import Map from "react-map-gl";
-import type { MapMouseEvent, MapRef } from "react-map-gl";
+import type { MapRef } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../types";
 import {
@@ -9,12 +9,11 @@ import {
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
-  NODE_LAYER_ID,
 } from "../constants";
 import { useOSMImport } from "../hooks/use-osm-import";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useMapInteractions } from "../hooks/use-map-interactions";
-import { useNodeDrag } from "../hooks/use-node-drag";
+// import { useNodeDrag } from "../hooks/use-node-drag";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./layers/network-layer";
 import { TransportLayer } from "./layers/transport-layer";
@@ -34,7 +33,6 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   const mapRef = useRef<MapRef | null>(null);
   const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
-
   const { loading, importData, clear } = useOSMImport(mapRef, {
     onStatusChange,
     onNetworkChange: setNetwork,
@@ -46,18 +44,6 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       mapRef,
       onLinkClick,
     });
-
-  const {
-    handleNodeMouseDown,
-    handleMouseMove: handleNodeDragMove,
-    handleMouseUp,
-    isDragging,
-  } = useNodeDrag({
-    network,
-    mapRef,
-    editorMode,
-    onNetworkChange: setNetwork,
-  });
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
@@ -72,36 +58,29 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
   }, [setEditorMode]);
 
   const handleMapClick = useCallback(
-    (event: MapMouseEvent) => {
-      if (editorMode) {
-        handleNodeMouseDown(event);
-      } else {
+    (event: any) => {
+      if (!editorMode) {
         handleClick(event);
       }
     },
-    [editorMode, handleNodeMouseDown, handleClick]
+    [editorMode, handleClick],
   );
-
   const handleMapMouseMove = useCallback(
-    (event: MapMouseEvent) => {
-      if (isDragging) {
-        handleNodeDragMove(event);
-      } else if (!editorMode) {
+    (event: any) => {
+      if (!editorMode) {
         handleMouseMove(event);
       }
     },
-    [isDragging, editorMode, handleNodeDragMove, handleMouseMove]
+    [editorMode, handleMouseMove],
   );
 
-  const handleMapMouseUp = useCallback(() => {
-    if (editorMode) {
-      handleMouseUp();
-    }
-  }, [editorMode, handleMouseUp]);
+  // onClick={handleClick}
+  // onMouseMove={handleMouseMove}
+  // onMouseLeave={handleMouseLeave}
 
-  const interactiveIds = editorMode 
-    ? [NODE_LAYER_ID] 
-    : network ? INTERACTIVE_LAYER_IDS : [];
+  // {hoverInfo && !editorMode && !isDragging && (
+  //   <CombinedTooltip ... />
+  // )}
 
   return (
     <Map
@@ -114,10 +93,10 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       style={{ width: "100%", height: "100%" }}
       mapStyle={MAP_STYLE}
       mapboxAccessToken={MAPBOX_TOKEN}
-      interactiveLayerIds={interactiveIds}
+      interactiveLayerIds={network ? INTERACTIVE_LAYER_IDS : []}
       onClick={handleMapClick}
       onMouseMove={handleMapMouseMove}
-      onMouseUp={handleMapMouseUp}
+      // onMouseUp={handleMapMouseUp}
       onMouseLeave={handleMouseLeave}
     >
       <MapControls
