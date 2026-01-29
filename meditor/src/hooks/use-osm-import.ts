@@ -32,7 +32,8 @@ export function useOSMImport(
     try {
       const bounds = map.getBounds();
       if (!bounds) {
-        throw new Error('Map bounds not available');
+        onStatusChange("Could not get map bounds");
+        return;
       }
       const data = await fetchOSMData(bounds);
       onNetworkChange(data);
