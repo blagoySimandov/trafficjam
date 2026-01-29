@@ -1,9 +1,22 @@
-export type LngLatTuple = [number, number];
+/**
+ * Coordinate tuple in projected CRS (dynamically determined based on region)
+ * Format: [x, y] where x=easting (meters), y=northing (meters)
+ *
+ * For Ireland: EPSG:2157 (Irish Transverse Mercator)
+ * For UK: EPSG:27700 (British National Grid)
+ * For other regions: Appropriate projected CRS or WGS84 fallback
+ *
+ * Transform to WGS84 for MapBox display using projectedToWGS84()
+ */
+export type ProjectedCoords = [number, number];
+
+// Legacy alias for backwards compatibility
+export type LngLatTuple = ProjectedCoords;
 
 export interface TrafficNode {
   id: string;
   osmId: number;
-  position: LngLatTuple;
+  position: ProjectedCoords;
   connectionCount: number;
 }
 
@@ -12,7 +25,7 @@ export interface TrafficLink {
   osmId: number;
   from: string;
   to: string;
-  geometry: LngLatTuple[];
+  geometry: ProjectedCoords[];
   tags: {
     highway: string;
     lanes?: number;
@@ -26,7 +39,7 @@ export interface TransportRoute {
   id: string;
   osmId: number;
   wayId: number;
-  geometry: LngLatTuple[];
+  geometry: ProjectedCoords[];
   tags: {
     route: string;
     ref?: string;
@@ -42,8 +55,8 @@ export type BuildingType = "retail" | "apartments" | "supermarket" | "school" | 
 export interface Building {
   id: string;
   osmId: number;
-  position: LngLatTuple;
-  geometry?: LngLatTuple[];
+  position: ProjectedCoords;
+  geometry?: ProjectedCoords[];
   type: BuildingType;
   tags: {
     name?: string;
@@ -58,6 +71,11 @@ export interface Network {
   links: Map<string, TrafficLink>;
   transportRoutes?: Map<string, TransportRoute>;
   buildings?: Map<string, Building>;
+  /**
+   * The coordinate reference system used for all coordinates in this network
+   * e.g., "EPSG:2157" for Irish Transverse Mercator
+   */
+  crs: string;
 }
 
 export interface LngLatBounds {

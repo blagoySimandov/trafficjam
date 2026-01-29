@@ -22,7 +22,7 @@ export function NetworkLayer({ network, showBuildings }: NetworkLayerProps) {
         <Layer {...mainLayer} />
         <Layer {...dividersLayer} />
       </Source>
-      {showBuildings && network.buildings && <BuildingLayer buildings={network.buildings} />}
+      {showBuildings && network.buildings && <BuildingLayer buildings={network.buildings} crs={network.crs} />}
     </>
   );
 }
