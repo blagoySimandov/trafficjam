@@ -1,4 +1,5 @@
 import type { LayerProps } from "react-map-gl";
+import type { ExpressionSpecification } from "mapbox-gl";
 import {
   BUILDING_LAYER_ID,
   BUILDING_COLORS,
@@ -9,15 +10,15 @@ import {
   BUILDING_CIRCLE_OPACITY,
 } from "./building-icons";
 
-function createColorExpression(): unknown[] {
-  const expression: unknown[] = ["match", ["get", "type"]];
+function createColorExpression(): ExpressionSpecification {
+  const expression: (string | ExpressionSpecification)[] = ["match", ["get", "type"]];
 
   for (const [type, color] of Object.entries(BUILDING_COLORS)) {
     expression.push(type, color);
   }
 
   expression.push(DEFAULT_BUILDING_COLOR);
-  return expression;
+  return expression as ExpressionSpecification;
 }
 
 export const BUILDING_CIRCLE_LAYER: LayerProps = {

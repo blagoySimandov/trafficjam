@@ -1,4 +1,4 @@
-import type { Network, TrafficNode, TrafficLink, TransportRoute, Building, BuildingType, ProjectedCoords } from "../types";
+import type { Network, TrafficNode, TrafficLink, TransportRoute, Building, BuildingType, LngLatTuple } from "../types";
 import type { OSMElement, OSMNode, OSMWay, OSMRelation } from "../types/osm";
 import {
   BUILDING_TAG_MAPPINGS,
@@ -8,11 +8,23 @@ import {
 } from "../constants";
 import { wgs84ToProjected } from "../utils/coordinates";
 
+function isOSMNode(el: OSMElement): el is OSMNode {
+  return el.type === OSM_TAG_VALUES.TYPE_NODE;
+}
+
+function isOSMWay(el: OSMElement): el is OSMWay {
+  return el.type === OSM_TAG_VALUES.TYPE_WAY;
+}
+
+function isOSMRelation(el: OSMElement): el is OSMRelation {
+  return el.type === OSM_TAG_VALUES.TYPE_RELATION;
+}
+
 function indexNodes(elements: OSMElement[]): Map<number, OSMNode> {
   const osmNodes = new Map<number, OSMNode>();
   for (const el of elements) {
-    if (el.type === OSM_TAG_VALUES.TYPE_NODE) {
-      osmNodes.set(el.id, el as OSMNode);
+    if (isOSMNode(el)) {
+      osmNodes.set(el.id, el);
     }
   }
   return osmNodes;
@@ -21,8 +33,8 @@ function indexNodes(elements: OSMElement[]): Map<number, OSMNode> {
 function indexWays(elements: OSMElement[]): Map<number, OSMWay> {
   const osmWays = new Map<number, OSMWay>();
   for (const el of elements) {
-    if (el.type === OSM_TAG_VALUES.TYPE_WAY) {
-      osmWays.set(el.id, el as OSMWay);
+    if (isOSMWay(el)) {
+      osmWays.set(el.id, el);
     }
   }
   return osmWays;
@@ -31,9 +43,8 @@ function indexWays(elements: OSMElement[]): Map<number, OSMWay> {
 function countNodeUsage(elements: OSMElement[]): Map<number, number> {
   const nodeUsage = new Map<number, number>();
   for (const el of elements) {
-    if (el.type === OSM_TAG_VALUES.TYPE_WAY && el.tags?.highway) {
-      const way = el as OSMWay;
-      for (const nodeId of way.nodes) {
+    if (isOSMWay(el) && el.tags?.highway) {
+      for (const nodeId of el.nodes) {
         nodeUsage.set(nodeId, (nodeUsage.get(nodeId) || 0) + 1);
       }
     }
@@ -45,8 +56,8 @@ function buildGeometry(
   wayNodes: number[],
   osmNodes: Map<number, OSMNode>,
   targetCRS: string
-): ProjectedCoords[] {
-  const geometry: ProjectedCoords[] = [];
+): LngLatTuple[] {
+  const geometry: LngLatTuple[] = [];
   for (const nodeId of wayNodes) {
     const osmNode = osmNodes.get(nodeId);
     if (osmNode) {
@@ -60,7 +71,7 @@ function buildGeometry(
 
 function createLink(
   way: { id: number; nodes: number[]; tags: Record<string, string> },
-  geometry: ProjectedCoords[]
+  geometry: LngLatTuple[]
 ): TrafficLink {
   const fromNodeId = `${ID_PREFIXES.NODE}${way.nodes[0]}`;
   const toNodeId = `${ID_PREFIXES.NODE}${way.nodes[way.nodes.length - 1]}`;
@@ -99,7 +110,7 @@ function createNode(
 function createTransportRoute(
   relationId: number,
   wayId: number,
-  geometry: ProjectedCoords[],
+  geometry: LngLatTuple[],
   tags: Record<string, string>
 ): TransportRoute {
   return {
@@ -129,9 +140,9 @@ function determineBuildingType(tags: Record<string, string>): BuildingType | nul
 
 function createBuilding(
   osmId: number,
-  position: ProjectedCoords,
+  position: LngLatTuple,
   tags: Record<string, string>,
-  geometry?: ProjectedCoords[]
+  geometry?: LngLatTuple[]
 ): Building | null {
   const type = determineBuildingType(tags);
   if (!type) return null;
@@ -161,18 +172,17 @@ export function parseOSMResponse(elements: OSMElement[], targetCRS: string): Net
   const nodeUsage = countNodeUsage(elements);
 
   for (const el of elements) {
-    if (el.type === OSM_TAG_VALUES.TYPE_WAY && el.tags?.highway) {
-      const way = el as OSMWay;
-      const geometry = buildGeometry(way.nodes, osmNodes, targetCRS);
+    if (isOSMWay(el) && el.tags?.highway) {
+      const geometry = buildGeometry(el.nodes, osmNodes, targetCRS);
       if (geometry.length < GEOMETRY_VALIDATION.MIN_LINK_POINTS) continue;
 
       const link = createLink(
-        { id: way.id, nodes: way.nodes, tags: way.tags || {} },
+        { id: el.id, nodes: el.nodes, tags: el.tags || {} },
         geometry
       );
       links.set(link.id, link);
 
-      const endpoints = [way.nodes[0], way.nodes[way.nodes.length - 1]];
+      const endpoints = [el.nodes[0], el.nodes[el.nodes.length - 1]];
       for (const osmId of endpoints) {
         const nodeId = `${ID_PREFIXES.NODE}${osmId}`;
         if (nodes.has(nodeId)) continue;
@@ -185,9 +195,8 @@ export function parseOSMResponse(elements: OSMElement[], targetCRS: string): Net
           );
         }
       }
-    } else if (el.type === OSM_TAG_VALUES.TYPE_RELATION && el.tags?.route) {
-      const relation = el as OSMRelation;
-      for (const member of relation.members) {
+    } else if (isOSMRelation(el) && el.tags?.route) {
+      for (const member of el.members) {
         if (member.type !== OSM_TAG_VALUES.TYPE_WAY) continue;
 
         const way = osmWays.get(member.ref);
@@ -197,32 +206,28 @@ export function parseOSMResponse(elements: OSMElement[], targetCRS: string): Net
         if (geometry.length < GEOMETRY_VALIDATION.MIN_ROUTE_POINTS) continue;
 
         const route = createTransportRoute(
-          relation.id,
+          el.id,
           member.ref,
           geometry,
-          relation.tags || {}
+          el.tags || {}
         );
         transportRoutes.set(route.id, route);
       }
-    } else if (el.type === OSM_TAG_VALUES.TYPE_NODE && el.tags) {
-      const node = el as OSMNode;
-      const [x, y] = wgs84ToProjected(node.lat, node.lon, targetCRS);
-      const building = createBuilding(node.id, [x, y], node.tags || {});
+    } else if (isOSMNode(el) && el.tags) {
+      const building = createBuilding(el.id, [el.lat, el.lon], el.tags);
       if (building) {
         buildings.set(building.id, building);
       }
-    } else if (el.type === OSM_TAG_VALUES.TYPE_WAY && el.tags && !el.tags.highway) {
-      const way2 = el as OSMWay;
-      const geometry = buildGeometry(way2.nodes, osmNodes, targetCRS);
+    } else if (isOSMWay(el) && el.tags && !el.tags.highway) {
+      const geometry = buildGeometry(el.nodes, osmNodes, targetCRS);
       if (geometry.length < GEOMETRY_VALIDATION.MIN_BUILDING_POLYGON_POINTS) continue;
 
-      // Calculate centroid - already in projected coordinates
-      const centroid: ProjectedCoords = [
+      const centroid: LngLatTuple = [
         geometry.reduce((sum, p) => sum + p[0], 0) / geometry.length,
         geometry.reduce((sum, p) => sum + p[1], 0) / geometry.length,
       ];
 
-      const building = createBuilding(way2.id, centroid, way2.tags || {}, geometry);
+      const building = createBuilding(el.id, centroid, el.tags || {}, geometry);
       if (building) {
         buildings.set(building.id, building);
       }
