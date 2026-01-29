@@ -1,6 +1,7 @@
 import type { FeatureCollection, Feature, LineString } from "geojson";
 import type { TransportRoute } from "../types";
 import { TRANSPORT_COLORS, DEFAULT_TRANSPORT_COLOR } from "../constants";
+import { projectedToWGS84 } from "./coordinates";
 
 export interface TransportFeatureProperties {
   id: string;
@@ -13,7 +14,8 @@ export interface TransportFeatureProperties {
 }
 
 export function transportRoutesToGeoJSON(
-  routes: Map<string, TransportRoute>
+  routes: Map<string, TransportRoute>,
+  crs: string
 ): FeatureCollection<LineString, TransportFeatureProperties> {
   const features: Feature<LineString, TransportFeatureProperties>[] = [];
 
@@ -34,7 +36,11 @@ export function transportRoutesToGeoJSON(
       },
       geometry: {
         type: "LineString",
-        coordinates: route.geometry.map(([lat, lng]) => [lng, lat]),
+        coordinates: route.geometry.map(([x, y]) => {
+          // Transform projected coordinates → WGS84, then swap for GeoJSON
+          const [lat, lon] = projectedToWGS84(x, y, crs);
+          return [lon, lat]; // GeoJSON format: [lon, lat]
+        }),
       },
     });
   }

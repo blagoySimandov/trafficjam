@@ -6,6 +6,7 @@ import {
   OSM_TAG_VALUES,
   GEOMETRY_VALIDATION,
 } from "../constants";
+import { wgs84ToProjected } from "../utils/coordinates";
 
 function isOSMNode(el: OSMElement): el is OSMNode {
   return el.type === OSM_TAG_VALUES.TYPE_NODE;
@@ -53,13 +54,16 @@ function countNodeUsage(elements: OSMElement[]): Map<number, number> {
 
 function buildGeometry(
   wayNodes: number[],
-  osmNodes: Map<number, OSMNode>
+  osmNodes: Map<number, OSMNode>,
+  targetCRS: string
 ): LngLatTuple[] {
   const geometry: LngLatTuple[] = [];
   for (const nodeId of wayNodes) {
     const osmNode = osmNodes.get(nodeId);
     if (osmNode) {
-      geometry.push([osmNode.lat, osmNode.lon]);
+      // Transform WGS84 → projected CRS at data entry
+      const [x, y] = wgs84ToProjected(osmNode.lat, osmNode.lon, targetCRS);
+      geometry.push([x, y]);
     }
   }
   return geometry;
@@ -91,12 +95,14 @@ function createLink(
 function createNode(
   osmId: number,
   osmNode: OSMNode,
-  connectionCount: number
+  connectionCount: number,
+  targetCRS: string
 ): TrafficNode {
+  const [x, y] = wgs84ToProjected(osmNode.lat, osmNode.lon, targetCRS);
   return {
     id: `${ID_PREFIXES.NODE}${osmId}`,
     osmId,
-    position: [osmNode.lat, osmNode.lon],
+    position: [x, y],
     connectionCount,
   };
 }
@@ -156,7 +162,7 @@ function createBuilding(
   };
 }
 
-export function parseOSMResponse(elements: OSMElement[]): Network {
+export function parseOSMResponse(elements: OSMElement[], targetCRS: string): Network {
   const nodes = new Map<string, TrafficNode>();
   const links = new Map<string, TrafficLink>();
   const transportRoutes = new Map<string, TransportRoute>();
@@ -167,11 +173,11 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
 
   for (const el of elements) {
     if (isOSMWay(el) && el.tags?.highway) {
-      const geometry = buildGeometry(el.nodes, osmNodes);
+      const geometry = buildGeometry(el.nodes, osmNodes, targetCRS);
       if (geometry.length < GEOMETRY_VALIDATION.MIN_LINK_POINTS) continue;
 
       const link = createLink(
-        { id: el.id, nodes: el.nodes, tags: el.tags },
+        { id: el.id, nodes: el.nodes, tags: el.tags || {} },
         geometry
       );
       links.set(link.id, link);
@@ -185,7 +191,7 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
         if (osmNode) {
           nodes.set(
             nodeId,
-            createNode(osmId, osmNode, nodeUsage.get(osmId) || 1)
+            createNode(osmId, osmNode, nodeUsage.get(osmId) || 1, targetCRS)
           );
         }
       }
@@ -196,14 +202,14 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
         const way = osmWays.get(member.ref);
         if (!way || way.nodes.length < GEOMETRY_VALIDATION.MIN_ROUTE_POINTS) continue;
 
-        const geometry = buildGeometry(way.nodes, osmNodes);
+        const geometry = buildGeometry(way.nodes, osmNodes, targetCRS);
         if (geometry.length < GEOMETRY_VALIDATION.MIN_ROUTE_POINTS) continue;
 
         const route = createTransportRoute(
           el.id,
           member.ref,
           geometry,
-          el.tags
+          el.tags || {}
         );
         transportRoutes.set(route.id, route);
       }
@@ -213,7 +219,7 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
         buildings.set(building.id, building);
       }
     } else if (isOSMWay(el) && el.tags && !el.tags.highway) {
-      const geometry = buildGeometry(el.nodes, osmNodes);
+      const geometry = buildGeometry(el.nodes, osmNodes, targetCRS);
       if (geometry.length < GEOMETRY_VALIDATION.MIN_BUILDING_POLYGON_POINTS) continue;
 
       const centroid: LngLatTuple = [
@@ -221,12 +227,12 @@ export function parseOSMResponse(elements: OSMElement[]): Network {
         geometry.reduce((sum, p) => sum + p[1], 0) / geometry.length,
       ];
 
-      const building = createBuilding(el.id, centroid, el.tags, geometry);
+      const building = createBuilding(el.id, centroid, el.tags || {}, geometry);
       if (building) {
         buildings.set(building.id, building);
       }
     }
   }
 
-  return { nodes, links, transportRoutes, buildings };
+  return { nodes, links, transportRoutes, buildings, crs: targetCRS };
 }

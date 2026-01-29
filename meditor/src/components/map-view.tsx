@@ -76,10 +76,10 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       />
      {network && <NetworkLayer network={network} hoverInfo={null} showBuildings={showBuildings} />}
       {network?.transportRoutes && network.transportRoutes.size > 0 && (
-        <TransportLayer routes={network.transportRoutes} hoverInfo={null} />
+        <TransportLayer routes={network.transportRoutes} hoverInfo={null} crs={network.crs} />
       )}
       {showBuildings && network?.buildings && network.buildings.size > 0 && (
-        <BuildingLayer buildings={network.buildings} />
+        <BuildingLayer buildings={network.buildings} crs={network.crs} />
       )}
       {hoverInfo && (
         <CombinedTooltip
