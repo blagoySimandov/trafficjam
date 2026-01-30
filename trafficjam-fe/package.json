@@ -29,7 +29,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "lucide-react": "^0.563.0",
     "mapbox-gl": "^3.9.4",
-    "react": "^19.2.3",
+    "react": "^19.2.4",
     "react-dom": "^19.2.3",
     "react-map-gl": "^7.1.9"
   }
