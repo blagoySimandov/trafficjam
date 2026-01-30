@@ -81,14 +81,7 @@ export function useNodeDrag({
       const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
       currentPosition.current = newPosition;
 
-      // const filteredNetwork: Network = {
-      //   ...network,
-      //   nodes: new Map(
-      //     [...network.nodes.entries()].filter(([id]) => id !== draggedNodeId)
-      //   )
-      // }
 
-      // const snapResult = findSnapPoint(rawPosition, filteredNetwork, []);
       // only snap if found a valid snap point
       
       const updatedNodes = new Map(network.nodes);
@@ -159,27 +152,33 @@ export function useNodeDrag({
           filteredNetwork,
           []
         );
-        if (snapResult?.isNode){
+        if (snapResult?.isNode && snapResult.nodeId){
+          const targetNodeId = snapResult.nodeId;
           const snappedPosition = snapResult.point;
-          const updatedNodes = new Map(network.nodes);
-          const node = updatedNodes.get(draggedNodeId);
-          if (node) {
-            const updatedNode: TrafficNode = {
-              ...node,
-              position: snappedPosition,
-            };
-            updatedNodes.set(draggedNodeId, updatedNode);
+
+          // const updatedNodes = new Map(network.nodes);
+          // const node = updatedNodes.get(draggedNodeId);
+          // if (node) {
+          //   const updatedNode: TrafficNode = {
+          //     ...node,
+          //     position: snappedPosition,
+          //   };
+          //   updatedNodes.set(draggedNodeId, updatedNode);
             
             const updatedLinks = new Map(network.links);
             for (const [linkId, link] of network.links.entries()) {
               let shouldUpdate = false;
               const geometry = [...link.geometry];
+              let from = link.from;
+              let to = link.to;
 
               if (link.from === draggedNodeId) {
+                from = targetNodeId;
                 geometry[0] = snappedPosition;
                 shouldUpdate = true;
               }
               if (link.to === draggedNodeId) {
+                to = targetNodeId
                 geometry[geometry.length - 1] = snappedPosition;
                 shouldUpdate = true;
               }
@@ -200,9 +199,28 @@ export function useNodeDrag({
               }
 
               if (shouldUpdate) {
-                updatedLinks.set(linkId, { ...link, geometry });
+                updatedLinks.set(linkId, { ...link, from, to, geometry });
               }
             }
+
+            const updatedNodes = new Map(network.nodes);
+            updatedNodes.delete(draggedNodeId);
+
+            const targetNode = updatedNodes.get(targetNodeId);
+            if (targetNode) {
+              let connectionCount = 0;
+              for (const link of updatedLinks.values()) {
+                if (link.from === targetNodeId || link.to === targetNodeId) {
+                  connectionCount++;
+                }
+              }
+              updatedNodes.set(targetNodeId, {
+                ...targetNode,
+                connectionCount: connectionCount,
+              });
+              
+
+
             onNetworkChange({
               ...network,
               nodes: updatedNodes,
