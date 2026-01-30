@@ -104,26 +104,19 @@ export function useNodeDrag({
 
         if (!shouldUpdate) {
           const oldPosition = node.position;
-          const newGeometry: LngLatTuple[] = [];
 
           for (let i = 0; i < geometry.length; i++) {
             const [lat, lng] = geometry[i];
             const isOldNodePosition = 
               Math.abs(lat - oldPosition[0]) < 0.000001 &&
               Math.abs(lng - oldPosition[1]) < 0.000001;       
-            
-            const isEndpoint = i === 0 || i === geometry.length - 1;
-            
-            if (isOldNodePosition && !isEndpoint) {
+
+            if (isOldNodePosition) {
+              geometry[i] = newPosition;
               shouldUpdate = true;
-            }else{
-              newGeometry.push(geometry[i]);
             }
           }
-        
-          if (shouldUpdate) {
-            geometry = newGeometry;
-          }}
+        }
 
       if (shouldUpdate) {
         updatedLinks.set(linkId, { ...link, geometry });
