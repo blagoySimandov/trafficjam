@@ -108,9 +108,7 @@ public class EventHandler {
 
         // Send each event to callback
         for (TransformedEvent event : eventBuffer) {
-            // Convert to MatSim Event format for callback
-            // For now, we'll need to adapt this based on callback interface
-            // TODO: Adjust when integrating with actual callback
+            callback.onEvent(event);
         }
 
         // Clear the buffer
