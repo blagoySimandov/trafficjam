@@ -1,5 +1,4 @@
-export * from "./building-icons";
-export * from "./building-layers";
+export * from "./building";
 export * from "./colors";
 export * from "./layer-styles";
 export * from "./map";
