@@ -6,5 +6,4 @@ export * from "./osm";
 export * from "./parser";
 export * from "./road-styles";
 export * from "./transport-layers";
-export * from "./ui";
 export * from "./node-layers";

@@ -1,4 +1,11 @@
-import { Download, Trash2, Upload, Building2, Building } from "lucide-react";
+import {
+  Download,
+  Trash2,
+  Upload,
+  Building2,
+  Building,
+  Pencil,
+} from "lucide-react";
 import { cn } from "../utils/cn"; // path depends on your project
 
 interface ControlButtonProps {
@@ -41,7 +48,7 @@ interface MapControlsProps {
   showBuildings: boolean;
   onToggleBuildings: () => void;
   editorMode?: boolean;
-  onToggleEditorMode?: () => void;
+  onToggleEditorMode: () => void;
 }
 
 export function MapControls({
@@ -78,12 +85,8 @@ export function MapControls({
         onClick={onToggleBuildings}
       />
       <ControlButton
-        title={
-          editorMode
-            ? CONTROL_TITLES.EDITOR_MODE_OFF
-            : CONTROL_TITLES.EDITOR_MODE_ON
-        }
-        icon={CONTROL_ICONS.EDITOR_MODE}
+        title={"Toggle editor mode"}
+        icon={<Pencil size={18} />}
         onClick={onToggleEditorMode}
         active={editorMode}
       />
