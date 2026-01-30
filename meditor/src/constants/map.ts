@@ -1,5 +1,5 @@
 import { NETWORK_LAYER_ID, TRANSPORT_LAYER_IDS } from "./transport-layers";
-import { BUILDING_LAYER_ID } from "./building-icons";
+import { BUILDING_LAYER_ID } from "./building";
 import { NODE_LAYER_ID } from "./node-layers";
 
 export const DEFAULT_CENTER: [number, number] = [23.322, 42.698];
