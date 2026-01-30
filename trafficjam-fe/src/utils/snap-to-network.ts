@@ -1,6 +1,6 @@
 import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../types";
 
-const SNAP_THRESHOLD = 50; // meters
+const SNAP_THRESHOLD = 3; // meters
 
 function calculateDistance(point1: LngLatTuple, point2: LngLatTuple): number {
   const [lat1, lon1] = point1;
