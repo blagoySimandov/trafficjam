@@ -70,7 +70,7 @@ def create_agents_from_network(
     transport_routes: List[Dict],
     crs: str = "EPSG:4326",
     country_code: str = "UNK",
-    country_name: str = "Unknown",
+    country_name: str = "UNK",  # TODO: figure out if you can make it always available
 ) -> List[Dict]:
     """
     Creates realistic MATSim agents with:
@@ -91,15 +91,16 @@ def create_agents_from_network(
     Returns:
         List of agent dictionaries with home/work locations and demographics
     """
-    city_name = "Unknown City"
+    city_name = "Unknown"
 
     total_population = calculate_population_from_bounds(bounds, crs, country_code)
-    num_agents = min(total_population, 10000)
 
-    logger.info(f"Creating {num_agents} agents for {city_name}, {country_name}")
+    logger.info(f"Creating {total_population} agents for {city_name}, {country_name}")
 
     building_dicts = prepare_building_dicts(buildings)
-    agent_distribution = distribute_agents_to_buildings(building_dicts, num_agents)
+    agent_distribution = distribute_agents_to_buildings(
+        building_dicts, total_population
+    )
 
     agents = []
     agent_id = 1
