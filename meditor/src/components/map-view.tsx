@@ -13,7 +13,7 @@ import {
 import { useOSMImport } from "../hooks/use-osm-import";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useMapInteractions } from "../hooks/use-map-interactions";
-// import { useNodeDrag } from "../hooks/use-node-drag";
+import { useNodeDrag } from "../hooks/use-node-drag";
 import { MapControls } from "./map-controls";
 import { NetworkLayer } from "./layers/network-layer";
 import { TransportLayer } from "./layers/transport-layer";
@@ -44,6 +44,13 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       mapRef,
       onLinkClick,
     });
+
+  const { isDragging } = useNodeDrag({
+    network,
+    mapRef,
+    editorMode,
+    onNetworkChange: setNetwork,
+  });
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
@@ -117,7 +124,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       {showBuildings && network?.buildings && network.buildings.size > 0 && (
         <BuildingLayer buildings={network.buildings} />
       )}
-      {hoverInfo && !editorMode && (
+      {hoverInfo && !editorMode && !isDragging && (
         <CombinedTooltip
           link={hoverInfo.link}
           routes={hoverInfo.routes}
