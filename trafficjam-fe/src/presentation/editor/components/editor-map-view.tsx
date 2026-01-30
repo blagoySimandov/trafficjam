@@ -2,31 +2,34 @@ import { useState, useRef, useCallback } from "react";
 import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import type { Network, TrafficLink } from "../types";
+import type { Network, TrafficLink } from "../../../types";
 import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
-} from "../constants";
-import { useOSMImport } from "../hooks/use-osm-import";
+} from "../../../constants";
+import { useOSMImport } from "../../../hooks/use-osm-import";
+import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
-import { useMapInteractions } from "../hooks/use-map-interactions";
 import { useNodeDrag } from "../hooks/use-node-drag";
-import { MapControls } from "./map-controls";
-import { NetworkLayer } from "./layers/network-layer";
-import { TransportLayer } from "./layers/transport-layer";
-import { BuildingLayer } from "./layers/building-layer";
+import { EditorControls } from "./editor-controls";
+import { NetworkLayer } from "../../../components/layers/network-layer";
+import { TransportLayer } from "../../../components/layers/transport-layer";
+import { BuildingLayer } from "../../../components/layers/building-layer";
 import { NodeLayer } from "./layers/node-layer";
-import { CombinedTooltip } from "./combined-tooltip";
+import { CombinedTooltip } from "../../../components/combined-tooltip";
 
-interface MapViewProps {
+interface EditorMapViewProps {
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink) => void;
 }
 
-export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
+export function EditorMapView({
+  onStatusChange,
+  onLinkClick,
+}: EditorMapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
   const [showBuildings, setShowBuildings] = useState(true);
   const [editorMode, setEditorMode] = useState(false);
@@ -70,7 +73,7 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
         handleClick(event);
       }
     },
-    [editorMode, handleClick],
+    [editorMode, handleClick]
   );
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
@@ -78,16 +81,8 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
         handleMouseMove(event);
       }
     },
-    [editorMode, handleMouseMove],
+    [editorMode, handleMouseMove]
   );
-
-  // onClick={handleClick}
-  // onMouseMove={handleMouseMove}
-  // onMouseLeave={handleMouseLeave}
-
-  // {hoverInfo && !editorMode && !isDragging && (
-  //   <CombinedTooltip ... />
-  // )}
 
   return (
     <Map
@@ -103,10 +98,9 @@ export function MapView({ onStatusChange, onLinkClick }: MapViewProps) {
       interactiveLayerIds={network ? INTERACTIVE_LAYER_IDS : []}
       onClick={handleMapClick}
       onMouseMove={handleMapMouseMove}
-      // onMouseUp={handleMapMouseUp}
       onMouseLeave={handleMouseLeave}
     >
-      <MapControls
+      <EditorControls
         onImport={importData}
         onClear={clear}
         onExport={exportNetwork}
