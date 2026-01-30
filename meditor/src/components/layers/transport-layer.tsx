@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
-import type { TransportRoute } from "../types";
-import { transportRoutesToGeoJSON } from "../utils";
-import { TRANSPORT_SOURCE_ID, TRANSPORT_LAYERS } from "../constants";
+import type { TransportRoute } from "../../types";
+import { transportRoutesToGeoJSON } from "../../utils";
+import { TRANSPORT_SOURCE_ID, TRANSPORT_LAYERS } from "../../constants";
 
 interface TransportLayerProps {
   routes: Map<string, TransportRoute>;
