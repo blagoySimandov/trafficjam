@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
-import type { Network, TrafficNode, LngLatTuple } from "../types";
-import { NODE_LAYER_ID } from "../constants";
+import type { Network, TrafficNode, LngLatTuple } from "../../../types";
+import { NODE_LAYER_ID } from "../../../constants";
 
 interface UseNodeDragParams {
   network: Network | null;
@@ -10,7 +10,6 @@ interface UseNodeDragParams {
   onNetworkChange: (network: Network) => void;
 }
 
-// Threshold for distinguishing click from drag (in pixels)
 const DRAG_THRESHOLD = 5;
 
 export function useNodeDrag({
@@ -61,7 +60,6 @@ export function useNodeDrag({
     const handleMouseMove = (e: MapMouseEvent) => {
       if (!isDraggingRef.current || !draggedNodeId || !network) return;
 
-      // Check if moved beyond drag threshold
       if (dragStartPos.current && !hasMoved.current) {
         const dx = e.point.x - dragStartPos.current.x;
         const dy = e.point.y - dragStartPos.current.y;
@@ -92,7 +90,6 @@ export function useNodeDrag({
         let shouldUpdate = false;
         const geometry = [...link.geometry];
 
-        // Check if this is an endpoint
         if (link.from === draggedNodeId) {
           geometry[0] = newPosition;
           shouldUpdate = true;
@@ -107,9 +104,9 @@ export function useNodeDrag({
 
           for (let i = 0; i < geometry.length; i++) {
             const [lat, lng] = geometry[i];
-            const isOldNodePosition = 
+            const isOldNodePosition =
               Math.abs(lat - oldPosition[0]) < 0.000001 &&
-              Math.abs(lng - oldPosition[1]) < 0.000001;       
+              Math.abs(lng - oldPosition[1]) < 0.000001;
 
             if (isOldNodePosition) {
               geometry[i] = newPosition;
@@ -118,10 +115,10 @@ export function useNodeDrag({
           }
         }
 
-      if (shouldUpdate) {
-        updatedLinks.set(linkId, { ...link, geometry });
+        if (shouldUpdate) {
+          updatedLinks.set(linkId, { ...link, geometry });
+        }
       }
-    }
 
       onNetworkChange({
         ...network,
@@ -145,12 +142,10 @@ export function useNodeDrag({
       }
     };
 
-    // Attach event listeners
     mapCanvas.on("mousedown", handleMouseDown);
     mapCanvas.on("mousemove", handleMouseMove);
     mapCanvas.on("mouseup", handleMouseUp);
 
-    // Cleanup
     return () => {
       mapCanvas.off("mousedown", handleMouseDown);
       mapCanvas.off("mousemove", handleMouseMove);

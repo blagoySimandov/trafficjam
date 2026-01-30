@@ -6,7 +6,7 @@ import {
   Building,
   Pencil,
 } from "lucide-react";
-import { cn } from "../utils/cn"; // path depends on your project
+import { cn } from "../../../utils/cn";
 
 interface ControlButtonProps {
   title: string;
@@ -40,7 +40,7 @@ function ControlButton({
   );
 }
 
-interface MapControlsProps {
+interface EditorControlsProps {
   onImport: () => void;
   onClear: () => void;
   onExport: () => void;
@@ -51,7 +51,7 @@ interface MapControlsProps {
   onToggleEditorMode: () => void;
 }
 
-export function MapControls({
+export function EditorControls({
   onImport,
   onClear,
   onExport,
@@ -60,7 +60,7 @@ export function MapControls({
   onToggleBuildings,
   editorMode,
   onToggleEditorMode,
-}: MapControlsProps) {
+}: EditorControlsProps) {
   return (
     <div className="map-controls">
       <ControlButton
