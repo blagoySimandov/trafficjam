@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, LngLatTuple } from "../types";
+import { findSnapPoint } from "../utils/snap-to-network";
 import { NODE_LAYER_ID } from "../constants";
 
 interface UseNodeDragParams {
@@ -75,7 +76,18 @@ export function useNodeDrag({
         }
       }
 
-      const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
+      const rawPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
+
+      const filteredNetwork: Network = {
+        ...network,
+        nodes: new Map(
+          [...network.nodes.entries()].filter(([id]) => id !== draggedNodeId)
+        )
+      }
+
+      const snapResult = findSnapPoint(rawPosition, filteredNetwork, []);
+      // only snap if found a valid snap point
+      const newPosition = (snapResult?.isNode) ? snapResult.point : rawPosition;
 
       const updatedNodes = new Map(network.nodes);
       const node = updatedNodes.get(draggedNodeId);
