@@ -126,11 +126,19 @@ public class MatsimRunner {
             public void install() {
                 // Register our custom event handler if callback is provided
                 if (eventCallback != null) {
+                    // Use EventHandler to filter, transform, and buffer events
+                    EventHandler eventHandler = new EventHandler(eventCallback, 100); // Buffer size of 100
                     this.addEventHandlerBinding().toInstance(new org.matsim.core.events.handler.BasicEventHandler() {
                         @Override
                         public void handleEvent(org.matsim.api.core.v01.events.Event event) {
-                            // Forward all events to the callback for streaming
-                            eventCallback.onEvent(event);
+                            // EventHandler filters, transforms, buffers, and sends to callback
+                            eventHandler.handleEvent(event);
+                        }
+
+                        @Override
+                        public void reset(int iteration) {
+                            // Flush any remaining events when iteration ends
+                            eventHandler.cleanup();
                         }
                     });
                 }
@@ -140,9 +148,10 @@ public class MatsimRunner {
 
     /**
      * Callback interface for streaming events in real-time.
+     * Receives simplified TransformedEvent objects suitable for frontend streaming.
      */
     public interface EventCallback {
-        void onEvent(org.matsim.api.core.v01.events.Event event);
+        void onEvent(EventHandler.TransformedEvent event);
     }
 
     /**
