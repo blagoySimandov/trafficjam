@@ -7,14 +7,14 @@ function calculateDistance(point1: LngLatTuple, point2: LngLatTuple): number {
   const [lat2, lon2] = point2;
 
   const R = 6371e3;
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const gamma1 = (lat1 * Math.PI) / 180;
+  const gamma2 = (lat2 * Math.PI) / 180;
+  const delta_gamm = ((lat2 - lat1) * Math.PI) / 180;
+  const delta_lambda = ((lon2 - lon1) * Math.PI) / 180;
 
   const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    Math.sin(delta_gamm / 2) * Math.sin(delta_gamm / 2) +
+    Math.cos(gamma1) * Math.cos(gamma2) * Math.sin(delta_lambda / 2) * Math.sin(delta_lambda / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
