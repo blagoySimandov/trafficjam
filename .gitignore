@@ -2,3 +2,8 @@
 .venv
 .claude
 meditor/.env
+trafficjam-be/agents/__pycache__/building_utils.cpython-313.pyc
+trafficjam-be/agents/__pycache__/daily_plans.cpython-313.pyc
+trafficjam-be/agents/__pycache__
+trafficjam-be/utils
+trafficjam-be/__pycache__
