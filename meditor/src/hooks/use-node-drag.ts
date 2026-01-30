@@ -90,7 +90,7 @@ export function useNodeDrag({
       const updatedLinks = new Map(network.links);
       for (const [linkId, link] of network.links.entries()) {
         let shouldUpdate = false;
-        let geometry = [...link.geometry];
+        const geometry = [...link.geometry];
 
         // Check if this is an endpoint
         if (link.from === draggedNodeId) {
