@@ -48,7 +48,7 @@ export function EditorMapView({
       onLinkClick,
     });
 
-  const { isDragging } = useNodeDrag({
+  const { isDragging, draggedNodeId } = useNodeDrag({
     network,
     mapRef,
     editorMode,
@@ -73,7 +73,7 @@ export function EditorMapView({
         handleClick(event);
       }
     },
-    [editorMode, handleClick]
+    [editorMode, handleClick],
   );
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
@@ -81,7 +81,7 @@ export function EditorMapView({
         handleMouseMove(event);
       }
     },
-    [editorMode, handleMouseMove]
+    [editorMode, handleMouseMove],
   );
 
   return (
@@ -111,7 +111,13 @@ export function EditorMapView({
         onToggleEditorMode={toggleEditorMode}
       />
       {network && <NetworkLayer network={network} hoverInfo={null} />}
-      {network && <NodeLayer network={network} editorMode={editorMode} />}
+      {network && (
+        <NodeLayer
+          network={network}
+          editorMode={editorMode}
+          draggedNodeId={draggedNodeId}
+        />
+      )}
       {network?.transportRoutes && network.transportRoutes.size > 0 && (
         <TransportLayer routes={network.transportRoutes} hoverInfo={null} />
       )}
