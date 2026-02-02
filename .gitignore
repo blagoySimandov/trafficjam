@@ -3,3 +3,4 @@
 .claude
 meditor/.env
 projection-service/__pycache__
+map-data-service/__pycache__
