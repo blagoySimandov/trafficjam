@@ -1,8 +1,7 @@
 from models import TrafficNode, TrafficLink, Building, TransportRoute
-from projection import transform_point, transform_points
 
 
-def parse_osm_response(data: dict, target_crs: str) -> dict:
+def parse_osm_response(data: dict) -> dict:
     elements = data.get("elements", [])
 
     nodes_by_id: dict[int, dict] = {}
@@ -40,20 +39,18 @@ def parse_osm_response(data: dict, target_crs: str) -> dict:
         if len(node_refs) < 2:
             continue
 
-        geometry_coords = []
+        geometry = []
         valid = True
         for nid in node_refs:
             node = nodes_by_id.get(nid)
             if node and "lon" in node and "lat" in node:
-                geometry_coords.append((node["lon"], node["lat"]))
+                geometry.append((node["lon"], node["lat"]))
             else:
                 valid = False
                 break
 
-        if not valid or len(geometry_coords) < 2:
+        if not valid or len(geometry) < 2:
             continue
-
-        projected_geometry = transform_points(geometry_coords, target_crs)
 
         from_node_id = node_refs[0]
         to_node_id = node_refs[-1]
@@ -63,7 +60,7 @@ def parse_osm_response(data: dict, target_crs: str) -> dict:
                 traffic_nodes[nid] = TrafficNode(
                     id=f"n{nid}",
                     osm_id=nid,
-                    position=projected_geometry[idx],
+                    position=geometry[idx],
                     connection_count=node_connection_count.get(nid, 1)
                 )
 
@@ -77,7 +74,7 @@ def parse_osm_response(data: dict, target_crs: str) -> dict:
             osm_id=way["id"],
             from_node=f"n{from_node_id}",
             to_node=f"n{to_node_id}",
-            geometry=projected_geometry,
+            geometry=geometry,
             tags=link_tags
         ))
 
@@ -85,23 +82,21 @@ def parse_osm_response(data: dict, target_crs: str) -> dict:
         tags = way.get("tags", {})
         node_refs = way.get("nodes", [])
 
-        geometry_coords = []
+        geometry = []
         valid = True
         for nid in node_refs:
             node = nodes_by_id.get(nid)
             if node and "lon" in node and "lat" in node:
-                geometry_coords.append((node["lon"], node["lat"]))
+                geometry.append((node["lon"], node["lat"]))
             else:
                 valid = False
                 break
 
-        if not valid or len(geometry_coords) < 3:
+        if not valid or len(geometry) < 3:
             continue
 
-        projected_geometry = transform_points(geometry_coords, target_crs)
-
-        centroid_x = sum(p[0] for p in projected_geometry) / len(projected_geometry)
-        centroid_y = sum(p[1] for p in projected_geometry) / len(projected_geometry)
+        centroid_x = sum(p[0] for p in geometry) / len(geometry)
+        centroid_y = sum(p[1] for p in geometry) / len(geometry)
 
         building_type = tags.get("building")
         if building_type == "yes":
@@ -116,7 +111,7 @@ def parse_osm_response(data: dict, target_crs: str) -> dict:
             id=f"b{way['id']}",
             osm_id=way["id"],
             position=(centroid_x, centroid_y),
-            geometry=projected_geometry,
+            geometry=geometry,
             type=building_type,
             tags=building_tags
         ))
@@ -141,8 +136,6 @@ def parse_osm_response(data: dict, target_crs: str) -> dict:
             if member["type"] == "way" and member.get("role") in ("", "forward", "backward"):
                 way_id = member["ref"]
                 if way_id in way_geometries:
-                    projected_geometry = transform_points(way_geometries[way_id], target_crs)
-
                     route_tags = {
                         k: v for k, v in tags.items()
                         if k in ("route", "ref", "name", "operator", "network", "from", "to")
@@ -152,7 +145,7 @@ def parse_osm_response(data: dict, target_crs: str) -> dict:
                         id=f"r{relation['id']}_{way_id}",
                         osm_id=relation["id"],
                         way_id=way_id,
-                        geometry=projected_geometry,
+                        geometry=way_geometries[way_id],
                         tags=route_tags
                     ))
 
