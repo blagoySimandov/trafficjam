@@ -2,3 +2,4 @@
 .venv
 .claude
 meditor/.env
+projection-service/__pycache__
