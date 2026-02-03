@@ -6,8 +6,8 @@ from osm_client import fetch_osm_data
 from parser import parse_osm_response
 
 app = FastAPI(
-    title="Map Data Service",
-    description="Fetch OSM data for traffic simulation",
+    title="Projection Service",
+    description="Fetch OSM data and serve in projected coordinates (UTM Zone 29N)",
     version="1.0.0"
 )
 
@@ -26,6 +26,7 @@ async def get_network(
     min_lng: float = Query(..., ge=-180, le=180, description="West boundary"),
     max_lat: float = Query(..., ge=-90, le=90, description="North boundary"),
     max_lng: float = Query(..., ge=-180, le=180, description="East boundary"),
+    crs: str = Query(default="EPSG:32629", description="Target CRS")
 ):
     if min_lat >= max_lat:
         raise HTTPException(status_code=400, detail="min_lat must be less than max_lat")
@@ -38,11 +39,12 @@ async def get_network(
         raise HTTPException(status_code=502, detail=f"Failed to fetch OSM data: {str(e)}")
 
     try:
-        parsed = parse_osm_response(osm_data)
+        parsed = parse_osm_response(osm_data, crs)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to parse OSM data: {str(e)}")
 
     return NetworkResponse(
+        crs=crs,
         nodes=parsed["nodes"],
         links=parsed["links"],
         buildings=parsed["buildings"],

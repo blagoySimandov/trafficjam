@@ -1,5 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
+
+
+class NetworkRequest(BaseModel):
+    min_lat: float = Field(..., ge=-90, le=90)
+    min_lng: float = Field(..., ge=-180, le=180)
+    max_lat: float = Field(..., ge=-90, le=90)
+    max_lng: float = Field(..., ge=-180, le=180)
+    crs: str = Field(default="EPSG:32629")
 
 
 class TrafficNode(BaseModel):
@@ -36,6 +44,7 @@ class TransportRoute(BaseModel):
 
 
 class NetworkResponse(BaseModel):
+    crs: str
     nodes: list[TrafficNode]
     links: list[TrafficLink]
     buildings: list[Building]
