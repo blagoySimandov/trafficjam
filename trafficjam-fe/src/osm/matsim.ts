@@ -3,22 +3,31 @@ import type { Network, TrafficLink } from "../types";
 function haversineMeters(a: [number, number], b: [number, number]) {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const R = 6371000;
-  const dLat = toRad(b[0] - a[0]);
-  const dLon = toRad(b[1] - a[1]);
-  const lat1 = toRad(a[0]);
-  const lat2 = toRad(b[0]);
+  const dLat = toRad(b[1] - a[1]);
+  const dLon = toRad(b[0] - a[0]);
+  const lat1 = toRad(a[1]);
+  const lat2 = toRad(b[1]);
   const sinDLat = Math.sin(dLat / 2);
   const sinDLon = Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon), Math.sqrt(1 - (sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon)));
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(
+        sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon,
+      ),
+      Math.sqrt(
+        1 -
+          (sinDLat * sinDLat +
+            Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
+      ),
+    );
   return R * c;
 }
 
 function estimateLengthMeters(link: TrafficLink) {
   const geom = link.geometry;
   if (geom.length < 2) return 100;
-  const a = geom[0];
-  const b = geom[geom.length - 1];
-  return haversineMeters([a[0], a[1]], [b[0], b[1]]);
+  return haversineMeters(geom[0], geom[geom.length - 1]);
 }
 
 function getFreespeedMs(link: TrafficLink) {
@@ -45,9 +54,8 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
 
   const nodesXml = ["  <nodes>"];
   for (const n of nodesArr) {
-    // note: MATSim expects x=lon, y=lat commonly when using EPSG:4326
     nodesXml.push(
-      `    <node id="${n.id}" x="${n.position[1].toFixed(6)}" y="${n.position[0].toFixed(6)}" />`
+      `    <node id="${n.id}" x="${n.position[0].toFixed(6)}" y="${n.position[1].toFixed(6)}" />`,
     );
   }
   nodesXml.push("  </nodes>");
@@ -61,8 +69,8 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
 
     linksXml.push(
       `    <link id="${l.id}" from="${l.from}" to="${l.to}" length="${length.toFixed(
-        2
-      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" allowedModes="car" />`
+        2,
+      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" allowedModes="car" />`,
     );
   }
   linksXml.push("  </links>");
