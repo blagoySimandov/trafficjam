@@ -20,3 +20,7 @@ ROUTE_TAG_KEYS = frozenset(
 )
 
 VALID_MEMBER_ROLES = frozenset({"", "forward", "backward"})
+
+VALID_BUILDING_TYPES = frozenset(
+    {"retail", "apartments", "supermarket", "school", "kindergarten", "parking"}
+)
