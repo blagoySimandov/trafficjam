@@ -49,7 +49,7 @@ export function networkToGeoJSON(
       },
       geometry: {
         type: "LineString",
-        coordinates: link.geometry.map(([lat, lng]) => [lng, lat]),
+        coordinates: link.geometry,
       },
     });
   }
