@@ -34,7 +34,7 @@ export function transportRoutesToGeoJSON(
       },
       geometry: {
         type: "LineString",
-        coordinates: route.geometry.map(([lat, lng]) => [lng, lat]),
+        coordinates: route.geometry,
       },
     });
   }
