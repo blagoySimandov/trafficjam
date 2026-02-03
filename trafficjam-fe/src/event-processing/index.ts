@@ -1,37 +1,56 @@
+//TODO: create a class to manage this...
 export interface Trip {
   id: string;
   path: [number, number][];
   timestamps: number[];
 }
 
-let trips: Trip[] = [];
-
 export async function loadTrips(): Promise<Trip[]> {
-  if (trips.length) return trips;
   const res = await fetch("/trips.json");
-  trips = await res.json();
-  return trips;
+  return res.json();
 }
 
-export function getVehiclePositions(time: number): Map<string, [number, number]> {
-  const positions = new Map<string, [number, number]>();
+export function getTimeRange(trips: Trip[]): [number, number] {
+  let min = Infinity,
+    max = -Infinity;
+  for (const t of trips) {
+    if (t.timestamps[0] < min) min = t.timestamps[0];
+    if (t.timestamps[t.timestamps.length - 1] > max)
+      max = t.timestamps[t.timestamps.length - 1];
+  }
+  return [min, max];
+}
 
+//binary search to make the search faster...
+function findSegmentIndex(timestamps: number[], time: number): number {
+  let lo = 0,
+    hi = timestamps.length - 2;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (timestamps[mid + 1] < time) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+//given a time and an ar
+export function getVehiclePositions(
+  trips: Trip[],
+  time: number,
+): [number, number][] {
+  const positions: [number, number][] = [];
   for (const trip of trips) {
     const { path, timestamps } = trip;
-    if (time < timestamps[0] || time > timestamps[timestamps.length - 1]) continue;
-
-    let i = 0;
-    while (i < timestamps.length - 1 && timestamps[i + 1] < time) i++;
-
+    if (time < timestamps[0] || time > timestamps[timestamps.length - 1])
+      continue;
+    const i = findSegmentIndex(timestamps, time);
     const t0 = timestamps[i];
     const t1 = timestamps[i + 1];
     const frac = t1 === t0 ? 0 : (time - t0) / (t1 - t0);
-
-    positions.set(trip.id, [
+    positions.push([
       path[i][0] + (path[i + 1][0] - path[i][0]) * frac,
       path[i][1] + (path[i + 1][1] - path[i][1]) * frac,
     ]);
   }
-
   return positions;
 }
