@@ -21,7 +21,7 @@ export function nodeToGeoJSON(
       },
       geometry: {
         type: "Point",
-        coordinates: node.position,
+        coordinates: [node.position[1], node.position[0]],
       },
     });
   }
