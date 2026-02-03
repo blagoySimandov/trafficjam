@@ -43,6 +43,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Lint with Checkstyle
+        working-directory: trafficjam-be/java
         run: mvn checkstyle:check
       - name: Lint with SpotBugs
+        working-directory: trafficjam-be/java
         run: mvn spotbugs:check
