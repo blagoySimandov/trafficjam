@@ -5,8 +5,7 @@ export type {
   Building,
   BuildingType,
   Network,
-  LngLatTuple,
+  Coordinate,
   LngLatBounds,
   CombinedHoverInfo,
 } from "./network";
-export type { OSMNode, OSMWay, OSMRelation, OSMElement, OSMResponse } from "./osm";
