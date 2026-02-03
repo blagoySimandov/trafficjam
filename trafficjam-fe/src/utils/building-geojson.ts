@@ -23,7 +23,7 @@ export function buildingToGeoJSON(
       },
       geometry: {
         type: "Point",
-        coordinates: [building.position[1], building.position[0]],
+        coordinates: building.position,
       },
     });
   }

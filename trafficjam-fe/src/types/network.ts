@@ -1,9 +1,9 @@
-export type LngLatTuple = [number, number];
+export type Coordinate = [number, number];
 
 export interface TrafficNode {
   id: string;
   osmId: number;
-  position: LngLatTuple;
+  position: Coordinate;
   connectionCount: number;
 }
 
@@ -12,7 +12,7 @@ export interface TrafficLink {
   osmId: number;
   from: string;
   to: string;
-  geometry: LngLatTuple[];
+  geometry: Coordinate[];
   tags: {
     highway: string;
     lanes?: number;
@@ -26,7 +26,7 @@ export interface TransportRoute {
   id: string;
   osmId: number;
   wayId: number;
-  geometry: LngLatTuple[];
+  geometry: Coordinate[];
   tags: {
     route: string;
     ref?: string;
@@ -42,8 +42,8 @@ export type BuildingType = "retail" | "apartments" | "supermarket" | "school" | 
 export interface Building {
   id: string;
   osmId: number;
-  position: LngLatTuple;
-  geometry?: LngLatTuple[];
+  position: Coordinate;
+  geometry?: Coordinate[];
   type: BuildingType;
   tags: {
     name?: string;
