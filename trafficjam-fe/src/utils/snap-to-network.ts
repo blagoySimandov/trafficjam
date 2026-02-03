@@ -1,10 +1,10 @@
-import type { Network, TrafficNode, TrafficLink, Coordinate } from "../types";
+import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../types";
 
-const SNAP_THRESHOLD = 50;
+const SNAP_THRESHOLD = 50; // meters
 
-function calculateDistance(point1: Coordinate, point2: Coordinate): number {
-  const [lon1, lat1] = point1;
-  const [lon2, lat2] = point2;
+function calculateDistance(point1: LngLatTuple, point2: LngLatTuple): number {
+  const [lat1, lon1] = point1;
+  const [lat2, lon2] = point2;
 
   const R = 6371e3;
   const gamma1 = (lat1 * Math.PI) / 180;
@@ -21,13 +21,13 @@ function calculateDistance(point1: Coordinate, point2: Coordinate): number {
 }
 
 function distanceToLineSegment(
-  point: Coordinate,
-  lineStart: Coordinate,
-  lineEnd: Coordinate
-): { distance: number; closestPoint: Coordinate; t: number } {
-  const [px, py] = point;
-  const [x1, y1] = lineStart;
-  const [x2, y2] = lineEnd;
+  point: LngLatTuple,
+  lineStart: LngLatTuple,
+  lineEnd: LngLatTuple
+): { distance: number; closestPoint: LngLatTuple; t: number } {
+  const [px, py] = [point[1], point[0]];
+  const [x1, y1] = [lineStart[1], lineStart[0]];
+  const [x2, y2] = [lineEnd[1], lineEnd[0]];
 
   const dx = x2 - x1;
   const dy = y2 - y1;
@@ -40,7 +40,7 @@ function distanceToLineSegment(
 
   const closestX = x1 + t * dx;
   const closestY = y1 + t * dy;
-  const closestPoint: Coordinate = [closestX, closestY];
+  const closestPoint: LngLatTuple = [closestY, closestX];
 
   const distance = calculateDistance(point, closestPoint);
 
@@ -48,20 +48,21 @@ function distanceToLineSegment(
 }
 
 export interface SnapResult {
-  point: Coordinate;
+  point: LngLatTuple;
   nodeId?: string;
   linkId?: string;
   isNode: boolean;
-  splitPosition?: number;
+  splitPosition?: number; // For splitting links
 }
 
 export function findSnapPoint(
-  clickPoint: Coordinate,
+  clickPoint: LngLatTuple,
   network: Network | null,
-  existingPoints: Coordinate[]
+  existingPoints: LngLatTuple[]
 ): SnapResult | null {
   if (!network) return null;
 
+  // First point must snap to a node
   if (existingPoints.length === 0) {
     let closestNode: TrafficNode | null = null;
     let minDistance = SNAP_THRESHOLD;
@@ -82,9 +83,10 @@ export function findSnapPoint(
       };
     }
 
-    return null;
+    return null; // First point must snap to existing node
   }
 
+  // Subsequent points can snap to nodes or edges
   let closestNode: TrafficNode | null = null;
   let minNodeDistance = SNAP_THRESHOLD;
 
@@ -96,9 +98,10 @@ export function findSnapPoint(
     }
   }
 
+  // Check for closest edge
   let closestLink: TrafficLink | null = null;
   let minEdgeDistance = SNAP_THRESHOLD;
-  let closestPointOnEdge: Coordinate | null = null;
+  let closestPointOnEdge: LngLatTuple | null = null;
   let splitT = 0;
 
   for (const link of network.links.values()) {
@@ -118,6 +121,7 @@ export function findSnapPoint(
     }
   }
 
+  // Prefer nodes over edges
   if (closestNode && minNodeDistance < minEdgeDistance * 0.5) {
     return {
       point: closestNode.position,
