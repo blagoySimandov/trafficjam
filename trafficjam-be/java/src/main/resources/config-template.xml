@@ -1,0 +1,146 @@
+<?xml version="1.0" ?>
+<!DOCTYPE config SYSTEM "http://www.matsim.org/files/dtd/config_v2.dtd">
+<config>
+
+	<module name="global">
+		<param name="randomSeed" value="{{RANDOM_SEED}}" />  <!-- DYNAMIC: User-specified or default 4711 -->
+		<param name="coordinateSystem" value="{{COORDINATE_SYSTEM}}" />  <!-- DYNAMIC: User-specified or default EPSG:2157 (Cork ITM) -->
+	</module>
+
+	<module name="network">
+		<param name="inputNetworkFile" value="{{NETWORK_FILE}}" />  <!-- DYNAMIC: User-provided network XML path -->
+	</module>
+
+	<module name="plans">
+		<param name="inputPlansFile" value="{{PLANS_FILE}}" />  <!-- DYNAMIC: User-provided plans XML path -->
+	</module>
+
+	<module name="controller">
+		<param name="outputDirectory" value="{{OUTPUT_DIR}}" />  <!-- DYNAMIC: User-specified or default ./output -->
+		<param name="lastIteration" value="{{ITERATIONS}}" />  <!-- DYNAMIC: User-specified or default 10 -->
+		<param name="writeEventsInterval" value="1" />  <!-- STATIC: Write events every iteration -->
+		<param name="writePlansInterval" value="1" />  <!-- STATIC: Write plans every iteration -->
+	</module>
+
+	<module name="scoring">
+		<param name="lateArrival" value="-18" />  <!-- STATIC: Penalty for late arrival -->
+		<param name="performing" value="+6" />  <!-- STATIC: Utility for performing activities -->
+		
+		<!-- STATIC: Activity parameters for home -->
+		<parameterset type="activityParams">
+			<param name="activityType" value="h" />
+			<param name="typicalDuration" value="12:00:00" />
+		</parameterset>
+		
+		<!-- STATIC: Activity parameters for work -->
+		<parameterset type="activityParams">
+			<param name="activityType" value="w" />
+			<param name="typicalDuration" value="08:00:00" />
+			<param name="openingTime" value="07:00:00" />
+			<param name="closingTime" value="18:00:00" />
+		</parameterset>
+		
+		<!-- STATIC: Mode parameters for car -->
+		<parameterset type="modeParams">
+			<param name="mode" value="car"/>
+			<param name="constant" value="0.0"/>
+			<param name="marginalUtilityOfTraveling_util_hr" value="-6.0"/>
+		</parameterset>
+		
+		<!-- STATIC: Mode parameters for walk -->
+		<parameterset type="modeParams">
+			<param name="mode" value="walk"/>
+			<param name="constant" value="0.0"/>
+			<param name="marginalUtilityOfTraveling_util_hr" value="-12.0"/>
+		</parameterset>
+		
+		<!-- STATIC: Mode parameters for bike -->
+		<parameterset type="modeParams">
+			<param name="mode" value="bike"/>
+			<param name="constant" value="-1.0"/>
+			<param name="marginalUtilityOfTraveling_util_hr" value="-10.0"/>
+		</parameterset>
+		
+		<!-- STATIC: Mode parameters for bus -->
+		<parameterset type="modeParams">
+			<param name="mode" value="bus"/>
+			<param name="constant" value="-2.0"/>
+			<param name="marginalUtilityOfTraveling_util_hr" value="-6.0"/>
+		</parameterset>
+		
+		<!-- STATIC: Mode parameters for car_passenger -->
+		<parameterset type="modeParams">
+			<param name="mode" value="car_passenger"/>
+			<param name="constant" value="-1.0"/>
+			<param name="marginalUtilityOfTraveling_util_hr" value="-6.0"/>
+		</parameterset>
+	</module>
+
+	<module name="planscalcroute">
+		<param name="networkModes" value="car"/>  <!-- STATIC: Only car uses network routing -->
+	</module>
+	
+	<module name="replanning">
+		<!-- STATIC: BestScore strategy - use best plan 70% of time -->
+		<parameterset type="strategysettings">
+			<param name="strategyName" value="BestScore" />
+			<param name="weight" value="0.7" />
+		</parameterset>
+
+		<!-- STATIC: ReRoute strategy - find new routes 20% of time -->
+		<parameterset type="strategysettings">
+			<param name="strategyName" value="ReRoute" />
+			<param name="weight" value="0.2" />
+		</parameterset>
+
+		<!-- STATIC: TimeAllocationMutator strategy - adjust times 10% of time -->
+		<parameterset type="strategysettings">
+			<param name="strategyName" value="TimeAllocationMutator" />
+			<param name="weight" value="0.1" />
+		</parameterset>
+	</module>
+
+	<module name="qsim">
+		<param name="startTime" value="00:00:00" />  <!-- STATIC: Simulation starts at midnight -->
+		<param name="endTime" value="30:00:00" />  <!-- STATIC: Simulation ends at 30 hours (next day 6am) -->
+		<param name="mainMode" value="car" />  <!-- STATIC: Primary transport mode -->
+		<param name="flowCapacityFactor" value="1.0" />  <!-- STATIC: No scaling of flow capacity -->
+		<param name="storageCapacityFactor" value="1.0" />  <!-- STATIC: No scaling of storage capacity -->
+		<param name="trafficDynamics" value="queue" />  <!-- STATIC: Use queue-based traffic model -->
+		<param name="vehiclesSource" value="defaultVehicle" />  <!-- STATIC: Use default vehicle types -->
+		<param name="removeStuckVehicles" value="true" />  <!-- STATIC: Remove vehicles stuck in traffic -->
+		<param name="stuckTime" value="10.0" />  <!-- STATIC: Consider vehicle stuck after 10 seconds -->
+	</module>
+
+	<!-- STATIC: Routing configuration for teleported modes (non-network modes) -->
+	<module name="routing">
+		<!-- STATIC: car_passenger teleported mode (~50 km/h) -->
+		<parameterset type="teleportedModeParameters">
+			<param name="mode" value="car_passenger" />
+			<param name="teleportedModeSpeed" value="13.88" />  <!-- 50 km/h in m/s -->
+			<param name="beelineDistanceFactor" value="1.3" />  <!-- Road network detour factor -->
+		</parameterset>
+		
+		<!-- STATIC: walk teleported mode (~5 km/h) -->
+		<parameterset type="teleportedModeParameters">
+			<param name="mode" value="walk" />
+			<param name="teleportedModeSpeed" value="1.34" />  <!-- 5 km/h in m/s -->
+			<param name="beelineDistanceFactor" value="1.3" />
+		</parameterset>
+		
+		<!-- STATIC: bike teleported mode (~15 km/h) -->
+		<parameterset type="teleportedModeParameters">
+			<param name="mode" value="bike" />
+			<param name="teleportedModeSpeed" value="4.17" />  <!-- 15 km/h in m/s -->
+			<param name="beelineDistanceFactor" value="1.3" />
+		</parameterset>
+		
+		<!-- STATIC: bus teleported mode (~30 km/h, slower due to stops) -->
+		<parameterset type="teleportedModeParameters">
+			<param name="mode" value="bus" />
+			<param name="teleportedModeSpeed" value="8.33" />  <!-- 30 km/h in m/s -->
+			<param name="beelineDistanceFactor" value="1.5" />  <!-- Less direct routes than car -->
+		</parameterset>
+	</module>
+
+</config>
