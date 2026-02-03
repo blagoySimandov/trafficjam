@@ -13,13 +13,13 @@ function haversineMeters(a: [number, number], b: [number, number]) {
     2 *
     Math.atan2(
       Math.sqrt(
-        sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon,
+        sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon
       ),
       Math.sqrt(
         1 -
           (sinDLat * sinDLat +
-            Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
-      ),
+            Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon)
+      )
     );
   return R * c;
 }
@@ -45,7 +45,10 @@ function calculateCapacity(link: TrafficLink) {
   return Math.round(perLane * lanes);
 }
 
-export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
+export function networkToMatsim(
+  network: Network,
+  crs = "EPSG:4326"
+): string {
   const nodesArr = Array.from(network.nodes.values());
   const linksArr = Array.from(network.links.values());
 
@@ -55,7 +58,7 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
   const nodesXml = ["  <nodes>"];
   for (const n of nodesArr) {
     nodesXml.push(
-      `    <node id="${n.id}" x="${n.position[0].toFixed(6)}" y="${n.position[1].toFixed(6)}" />`,
+      `    <node id="${n.id}" x="${n.position[0].toFixed(6)}" y="${n.position[1].toFixed(6)}" />`
     );
   }
   nodesXml.push("  </nodes>");
@@ -69,8 +72,8 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
 
     linksXml.push(
       `    <link id="${l.id}" from="${l.from}" to="${l.to}" length="${length.toFixed(
-        2,
-      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" allowedModes="car" />`,
+        2
+      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" allowedModes="car" />`
     );
   }
   linksXml.push("  </links>");
