@@ -8,7 +8,7 @@ from parser import parse_osm_response
 app = FastAPI(
     title="Map Data Service",
     description="Fetch OSM data for traffic simulation",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 app.add_middleware(
@@ -35,19 +35,16 @@ async def get_network(
     try:
         osm_data = await fetch_osm_data(min_lat, min_lng, max_lat, max_lng)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch OSM data: {str(e)}")
+        raise HTTPException(
+            status_code=502, detail=f"Failed to fetch OSM data: {str(e)}"
+        )
 
     try:
-        parsed = parse_osm_response(osm_data)
+        return parse_osm_response(osm_data)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to parse OSM data: {str(e)}")
-
-    return NetworkResponse(
-        nodes=parsed["nodes"],
-        links=parsed["links"],
-        buildings=parsed["buildings"],
-        transport_routes=parsed["transport_routes"]
-    )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to parse OSM data: {str(e)}"
+        )
 
 
 @app.get("/health")
