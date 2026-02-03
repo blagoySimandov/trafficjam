@@ -5,6 +5,7 @@ from constants import (
     BUILDING_TAG_KEYS,
     ROUTE_TAG_KEYS,
     VALID_MEMBER_ROLES,
+    VALID_BUILDING_TYPES,
 )
 
 from models import (
@@ -113,13 +114,19 @@ def _resolve_building_type(tags: dict[str, str]) -> str | None:
     return building_type
 
 
-def _make_building(way: OSMWay, geometry: list[tuple[float, float]]) -> Building:
+def _make_building(
+    way: OSMWay, geometry: list[tuple[float, float]]
+) -> Building | None:
+    b_type = _resolve_building_type(way.tags)
+    if b_type not in VALID_BUILDING_TYPES:
+        return None
+
     return Building(
         id=f"b{way.id}",
         osm_id=way.id,
         position=_centroid(geometry),
         geometry=geometry,
-        type=_resolve_building_type(way.tags),
+        type=b_type,
         tags={k: v for k, v in way.tags.items() if k in BUILDING_TAG_KEYS},
     )
 
@@ -134,7 +141,9 @@ def _build_buildings(
         geometry = _resolve_geometry(way.nodes, nodes_by_id)
         if geometry is None or len(geometry) < 3:
             continue
-        buildings.append(_make_building(way, geometry))
+        building = _make_building(way, geometry)
+        if building:
+            buildings.append(building)
     return buildings
 
 
