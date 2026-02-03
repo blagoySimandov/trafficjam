@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
-import type { Network, TrafficNode, Coordinate } from "../../../types";
+import type { Network, TrafficNode, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
 
 interface UseNodeDragParams {
@@ -73,7 +73,7 @@ export function useNodeDrag({
         }
       }
 
-      const newPosition: Coordinate = [e.lngLat.lng, e.lngLat.lat];
+      const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
 
       const updatedNodes = new Map(network.nodes);
       const node = updatedNodes.get(draggedNodeId);
@@ -103,10 +103,10 @@ export function useNodeDrag({
           const oldPosition = node.position;
 
           for (let i = 0; i < geometry.length; i++) {
-            const [lng, lat] = geometry[i];
+            const [lat, lng] = geometry[i];
             const isOldNodePosition =
-              Math.abs(lng - oldPosition[0]) < 0.000001 &&
-              Math.abs(lat - oldPosition[1]) < 0.000001;
+              Math.abs(lat - oldPosition[0]) < 0.000001 &&
+              Math.abs(lng - oldPosition[1]) < 0.000001;
 
             if (isOldNodePosition) {
               geometry[i] = newPosition;
