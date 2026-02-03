@@ -2,3 +2,4 @@
 .venv
 .claude
 meditor/.env
+__pycache__
