@@ -48,4 +48,3 @@ jobs:
       - name: Lint with SpotBugs
         working-directory: trafficjam-be/java
         run: mvn spotbugs:check
-
