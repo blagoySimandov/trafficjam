@@ -22,6 +22,9 @@ def filter_by_type(buildings: List[Dict], building_types: List[str]) -> List[Dic
 def distribute_agents_to_buildings(
     buildings: List[Dict], total_population: int
 ) -> Dict[str, int]:
+    """Distributing how many agents go in a single building while,
+    assuming that an apartment can take 3-4 agents"""
+
     residential_buildings = filter_by_type(buildings, ["apartments", "residential"])
 
     if not residential_buildings:
