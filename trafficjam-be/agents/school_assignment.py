@@ -11,19 +11,16 @@ def assign_school_to_child(
         if kindergartens:
             school = random.choice(kindergartens)
             child["school_location"] = school["position"]
-            child["school_type"] = "kindergarten"
             child["needs_dropoff"] = True
-    elif 6 <= age <= 10:
+    elif 6 <= age <= 11:
         if schools:
             school = random.choice(schools)
             child["school_location"] = school["position"]
-            child["school_type"] = "school"
             child["needs_dropoff"] = True
-    elif 11 <= age <= 18:
+    elif 12 <= age <= 18:
         if schools:
             school = random.choice(schools)
             child["school_location"] = school["position"]
-            child["school_type"] = "school"
             child["needs_dropoff"] = False
 
 
@@ -50,6 +47,5 @@ def assign_children_to_parents(agents: List[Dict], building_dicts: List[Dict]) -
                 {
                     "id": child["id"],
                     "school_location": child.get("school_location"),
-                    "school_type": child.get("school_type"),
                 }
             )

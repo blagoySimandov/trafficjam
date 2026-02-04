@@ -1,9 +1,9 @@
-"""Transport mode selection for MATSim agents."""
 from typing import Dict
 import random
 
 
 def get_transport_mode(agent: Dict, activity_type: str) -> str:
+    # TODO: give a car to ~60-70% of the people above 18/20
     """
     Determine transport mode based on agent characteristics and activity.
 

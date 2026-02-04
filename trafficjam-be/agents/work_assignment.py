@@ -1,26 +1,34 @@
 from typing import Dict, List, Tuple
 import random
 
+from models.building import Building
 
-def categorize_work_buildings(buildings: List[Dict]) -> Dict[str, List[Dict]]:
+SUPERMARKET_TAGS = ["supermarket", "convenience"]
+HEALTHCARE_TAGS = ["hospital", "clinic", "pharmacy", "doctors", "dentist"]
+EDUCATION_TAGS = ["school", "kindergarten"]
+RETAIL_TAGS = ["clothes", "shoes", "florist"]
+FOOD_TAGS = ["fast_food", "restaurant", "cafe"]
+
+
+def categorize_work_buildings(buildings: list[Building]) -> dict[str, list[Building]]:
     return {
-        "supermarket": [b for b in buildings if b["type"] == "supermarket"],
-        "healthcare": [
-            b for b in buildings if b["type"] in ["hospital", "clinic", "doctors"]
-        ],
-        "education": [b for b in buildings if b["type"] in ["school", "kindergarten"]],
-        "retail": [b for b in buildings if b["type"] == "retail"],
+        "supermarket": [b for b in buildings if b.get_tag("shop") in SUPERMARKET_TAGS],
+        "healthcare": [b for b in buildings if b.get_tag("amenity") in HEALTHCARE_TAGS],
+        "education": [b for b in buildings if b.get_tag("amenity") in EDUCATION_TAGS],
+        "retail": [b for b in buildings if b.get_tag("shop") in RETAIL_TAGS],
+        "food": [b for b in buildings if b.get_tag("amenity") in FOOD_TAGS],
     }
 
 
 def calculate_work_distribution_weights(
-    work_categories: Dict[str, List[Dict]],
+    work_categories: dict[str, list[Building]],
 ) -> Tuple[List[Tuple[str, List[Dict]]], List[float]]:
     base_weights = {
         "supermarket": 0.15,
-        "healthcare": 0.20,
+        "healthcare": 0.15,
         "education": 0.15,
-        "retail": 0.50,
+        "retail": 0.40,
+        "food": 0.15,
     }
 
     available_categories = []
@@ -38,7 +46,8 @@ def calculate_work_distribution_weights(
     return available_categories, weights
 
 
-def assign_work_location(agent: Dict, buildings: List[Dict]) -> None:
+# NOTE: might have to make it use a loop for all the agents
+def assign_work_location(agent: dict, buildings: List[Building]) -> None:
     work_categories = categorize_work_buildings(buildings)
     available_categories, weights = calculate_work_distribution_weights(work_categories)
 
