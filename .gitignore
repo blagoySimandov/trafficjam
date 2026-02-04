@@ -2,8 +2,34 @@
 .venv
 .claude
 meditor/.env
-trafficjam-be/agents/__pycache__/building_utils.cpython-313.pyc
-trafficjam-be/agents/__pycache__/daily_plans.cpython-313.pyc
-trafficjam-be/agents/__pycache__
-trafficjam-be/utils
-trafficjam-be/__pycache__
+package-lock.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+.ntvs
+*.njsproj
+*.sln
+*.sw?
+
+#Python compiled code
+_pycache_/
+*.pyc
+__pycache__

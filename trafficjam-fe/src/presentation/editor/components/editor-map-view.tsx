@@ -48,7 +48,7 @@ export function EditorMapView({
       onLinkClick,
     });
 
-  const { isDragging } = useNodeDrag({
+  const { isDragging, displayNetwork } = useNodeDrag({
     network,
     mapRef,
     editorMode,
@@ -73,7 +73,7 @@ export function EditorMapView({
         handleClick(event);
       }
     },
-    [editorMode, handleClick]
+    [editorMode, handleClick],
   );
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
@@ -81,7 +81,7 @@ export function EditorMapView({
         handleMouseMove(event);
       }
     },
-    [editorMode, handleMouseMove]
+    [editorMode, handleMouseMove],
   );
 
   return (
@@ -110,14 +110,24 @@ export function EditorMapView({
         editorMode={editorMode}
         onToggleEditorMode={toggleEditorMode}
       />
-      {network && <NetworkLayer network={network} hoverInfo={null} />}
-      {network && <NodeLayer network={network} editorMode={editorMode} />}
-      {network?.transportRoutes && network.transportRoutes.size > 0 && (
-        <TransportLayer routes={network.transportRoutes} hoverInfo={null} crs={network.crs} />
+      {displayNetwork && (
+        <NetworkLayer network={displayNetwork} hoverInfo={null} />
       )}
-      {showBuildings && network?.buildings && network.buildings.size > 0 && (
-        <BuildingLayer buildings={network.buildings} crs={network.crs} />
+      {displayNetwork && (
+        <NodeLayer network={displayNetwork} editorMode={editorMode} />
       )}
+      {displayNetwork?.transportRoutes &&
+        displayNetwork.transportRoutes.size > 0 && (
+          <TransportLayer
+            routes={displayNetwork.transportRoutes}
+            hoverInfo={null}
+          />
+        )}
+      {showBuildings &&
+        displayNetwork?.buildings &&
+        displayNetwork.buildings.size > 0 && (
+          <BuildingLayer buildings={displayNetwork.buildings} />
+        )}
       {hoverInfo && !editorMode && !isDragging && (
         <CombinedTooltip
           link={hoverInfo.link}
