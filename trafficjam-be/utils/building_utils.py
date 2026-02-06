@@ -4,15 +4,19 @@ import logging
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "map-data-service"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent.parent.parent / "map-data-service")
+)
 
-from models- import Building
+from models import Building
 
 
 logger = logging.getLogger(__name__)
 
 
-def filter_by_type(buildings: List[Building], building_types: List[str]) -> List[Building]:
+def filter_by_type(
+    buildings: List[Building], building_types: List[str]
+) -> List[Building]:
     return [b for b in buildings if b.type in building_types]
 
 
