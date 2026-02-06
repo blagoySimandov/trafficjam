@@ -28,6 +28,10 @@ export function useNodeSnap({
       if (snapResult?.isNode && snapResult.nodeId) {
           const targetNodeId = snapResult.nodeId;
           const snappedPosition = snapResult.point;
+          
+          // Get the current position of the node being snapped (before it's deleted)
+          const nodeBeingSnapped = network.nodes.get(nodeId);
+          const oldNodePosition: LngLatTuple | undefined = nodeBeingSnapped?.position;
 
           const updatedLinks = new Map(network.links);
           for (const [linkId, link] of network.links.entries()) {
@@ -47,13 +51,12 @@ export function useNodeSnap({
               shouldUpdate = true;
             }
 
-            if (!shouldUpdate) {
-              const oldPosition = position;
+            if (!shouldUpdate && oldNodePosition) {
               for (let i = 0; i < geometry.length; i++) {
                 const [lat, lng] = geometry[i];
                 const isOldNodePosition =
-                  Math.abs(lat - oldPosition[0]) < 0.000001 &&
-                  Math.abs(lng - oldPosition[1]) < 0.000001;
+                  Math.abs(lat - oldNodePosition[0]) < 0.000001 &&
+                  Math.abs(lng - oldNodePosition[1]) < 0.000001;
 
                 if (isOldNodePosition) {
                   geometry[i] = snappedPosition;
