@@ -32,3 +32,4 @@ dist-ssr
 #Python compiled code
 _pycache_/
 *.pyc
+__pycache__
