@@ -1,5 +1,7 @@
 package com.trafficjam;
 
+//i didnt get rid of this just in case, but it looks unused?
+import org.matsim.api.core.v01.Coord;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -14,5 +16,12 @@ public class Application {
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
+
+        // test for conversion utils. make sure you import the class if you want to uncomment this and retest it
+        // System.out.println("\n=== Testing CoordUtils ===");
+        // Coord matsim = CoordUtils.toMatsim(-8.4756, 51.8985);
+        // System.out.println("Cork City: " + matsim);
+        // double[] back = CoordUtils.toGeoJson(matsim);
+        // System.out.println("Back: [" + back[0] + ", " + back[1] + "]");
     }
 }
