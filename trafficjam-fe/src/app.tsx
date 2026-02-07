@@ -9,7 +9,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       {/* disabled the next line since it makes it easuer yo chagne between the two... */}
       {/*eslint-disable-next-line*/}
-      {true ? <Visualizer /> : <Editor />}
+      {false ? <Visualizer /> : <Editor />}
     </QueryClientProvider>
   );
 }
