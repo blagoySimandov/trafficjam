@@ -99,8 +99,57 @@ public class SimulationService {
      * Streams simulation events in real-time via Server-Sent Events.
      */
     public void streamEvents(String simulationId, SseEmitter emitter) {
-        // TODO: Register event callback that sends events to SSE emitter
-        // TODO: Handle emitter completion and errors
-        throw new UnsupportedOperationException("Not implemented yet");
+        // Verify simulation exists
+        MatsimRunner.SimulationStatus status = matsimRunner.getSimulationStatus(simulationId);
+        if (status == null) {
+            emitter.completeWithError(new IllegalArgumentException("Simulation not found: " + simulationId));
+            return;
+        }
+
+        // Start background thread to poll status and send updates
+        new Thread(() -> {
+            try {
+                // Send initial connection message
+                emitter.send(SseEmitter.event()
+                        .name("connected")
+                        .data("Streaming events for simulation: " + simulationId));
+
+                // Poll status and send updates every second
+                while (true) {
+                    MatsimRunner.SimulationStatus currentStatus = matsimRunner.getSimulationStatus(simulationId);
+
+                    if (currentStatus == null) {
+                        emitter.complete();
+                        break;
+                    }
+
+                    // Send status update
+                    emitter.send(SseEmitter.event()
+                            .name("status")
+                            .data(currentStatus.status));
+
+                    // Check if simulation finished
+                    if ("COMPLETED".equals(currentStatus.status) ||
+                            "FAILED".equals(currentStatus.status) ||
+                            "STOPPED".equals(currentStatus.status)) {
+
+                        // Send final message
+                        emitter.send(SseEmitter.event()
+                                .name("finished")
+                                .data(currentStatus.status));
+
+                        emitter.complete();
+                        break;
+                    }
+
+                    Thread.sleep(1000); // Poll every second
+                }
+            } catch (IOException e) {
+                emitter.completeWithError(e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                emitter.completeWithError(e);
+            }
+        }).start();
     }
 }
