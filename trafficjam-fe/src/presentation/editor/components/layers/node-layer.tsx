@@ -3,7 +3,7 @@ import { Source, Layer } from "react-map-gl";
 import type { LayerProps } from "react-map-gl";
 import type { Network } from "../../../../types";
 import { nodeToGeoJSON } from "../../../../utils";
-import { NODE_CIRCLE_LAYER } from "../../../../constants";
+import { NODE_CIRCLE_LAYER, COLORS } from "../../../../constants";
 
 interface NodeLayerProps {
   network: Network;
@@ -68,8 +68,8 @@ export function NodeLayer({
         "circle-color": [
           "case",
           ["==", ["get", "id"], draggedNodeId],
-          "#ef4444", // red color for dragged node
-          "#3b82f6", // default blue
+          COLORS.nodeDragged, // red color for dragged node
+          COLORS.nodeDefault, // default blue
         ],
       },
     } as LayerProps;
