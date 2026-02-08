@@ -75,10 +75,13 @@ public class SimulationController {
      */
     @GetMapping("/{id}/events")
     public SseEmitter streamEvents(@PathVariable String id) {
-        // TODO: Create SseEmitter with timeout
-        // TODO: Call simulationService.streamEvents()
-        // TODO: Return emitter
-        throw new UnsupportedOperationException("Not implemented yet");
+        // Create SSE emitter with 30 minute timeout
+        SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
+
+        // Start streaming (service handles the actual streaming logic)
+        simulationService.streamEvents(id, emitter);
+
+        return emitter;
     }
 
     /**
