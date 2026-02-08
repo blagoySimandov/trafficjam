@@ -1,30 +1,40 @@
 package com.trafficjam.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
-
 /**
- * Request DTO for starting a new MatSim simulation.
- * Contains the path to the MatSim configuration file.
+ * Request parameters for starting a new MatSim simulation.
+ * Used with multipart file upload for network.xml file.
+ * Plans file support will be added later for agent-based simulations.
  */
 public class SimulationRequest {
 
-    @NotBlank(message = "Config path is required")
-    private String configPath;
+    private Integer iterations;
+    private Long randomSeed;
 
     // Constructors
     public SimulationRequest() {
+        this.iterations = 10; // Default
+        this.randomSeed = 4711L; // Default
     }
 
-    public SimulationRequest(String configPath) {
-        this.configPath = configPath;
+    public SimulationRequest(Integer iterations, Long randomSeed) {
+        this.iterations = iterations;
+        this.randomSeed = randomSeed;
     }
 
     // Getters and Setters
-    public String getConfigPath() {
-        return configPath;
+    public Integer getIterations() {
+        return iterations;
     }
 
-    public void setConfigPath(String configPath) {
-        this.configPath = configPath;
+    public void setIterations(Integer iterations) {
+        this.iterations = iterations;
+    }
+
+    public Long getRandomSeed() {
+        return randomSeed;
+    }
+
+    public void setRandomSeed(Long randomSeed) {
+        this.randomSeed = randomSeed;
     }
 }

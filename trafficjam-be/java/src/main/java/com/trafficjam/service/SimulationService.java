@@ -33,20 +33,28 @@ public class SimulationService {
     }
 
     /**
-     * Starts a new simulation with uploaded network and plans files.
+     * Starts a new simulation with uploaded network file.
+     * Plans file support is commented out for MVP - will be added later.
      */
-    public String startSimulation(MultipartFile networkFile, MultipartFile plansFile,
+    public String startSimulation(MultipartFile networkFile,
+            // MultipartFile plansFile, // TODO: Add plans file support for full simulation
             Integer iterations, Long randomSeed) throws IOException {
         // Create unique simulation directory
         String simulationId = UUID.randomUUID().toString();
         Path simDir = Paths.get(tempDirectory, simulationId);
         Files.createDirectories(simDir);
 
-        // Save uploaded files
+        // Save uploaded network file
         Path networkPath = simDir.resolve("network.xml");
-        Path plansPath = simDir.resolve("plans.xml");
         networkFile.transferTo(networkPath.toFile());
-        plansFile.transferTo(plansPath.toFile());
+
+        // TODO: Plans file handling for future implementation
+        // Path plansPath = simDir.resolve("plans.xml");
+        // plansFile.transferTo(plansPath.toFile());
+
+        // Use default empty plans file for MVP (no agents)
+        String defaultPlansPath = getClass().getClassLoader()
+                .getResource("default-plans.xml").getPath();
 
         // Generate config.xml
         Path outputPath = Paths.get(outputDirectory, simulationId);
@@ -56,7 +64,7 @@ public class SimulationService {
         ConfigGenerator generator = new ConfigGenerator();
         String configContent = generator.generateConfig(
                 networkPath.toString(),
-                plansPath.toString(),
+                defaultPlansPath, // Use default empty plans for MVP
                 "EPSG:4326", // Projected coordinate system
                 outputPath.toString(),
                 iterations,
