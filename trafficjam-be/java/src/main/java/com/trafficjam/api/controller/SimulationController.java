@@ -28,18 +28,20 @@ public class SimulationController {
     }
 
     /**
-     * Starts a new MatSim simulation with uploaded network and plans files.
+     * Starts a new MatSim simulation with uploaded network file.
+     * Plans file support will be added in future for full agent-based simulation.
      */
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<SimulationResponse> startSimulation(
             @RequestParam("networkFile") MultipartFile networkFile,
-            @RequestParam("plansFile") MultipartFile plansFile,
+            // @RequestParam("plansFile") MultipartFile plansFile, // TODO: Add for
+            // agent-based simulation
             @RequestParam(value = "iterations", required = false, defaultValue = "10") Integer iterations,
             @RequestParam(value = "randomSeed", required = false, defaultValue = "4711") Long randomSeed) {
 
         try {
             String simulationId = simulationService.startSimulation(
-                    networkFile, plansFile, iterations, randomSeed);
+                    networkFile, iterations, randomSeed);
 
             SimulationResponse response = new SimulationResponse(simulationId, "RUNNING");
             return ResponseEntity.ok(response);
