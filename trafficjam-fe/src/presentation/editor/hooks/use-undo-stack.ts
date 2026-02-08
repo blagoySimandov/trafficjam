@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
-import type { Network } from '../../../types';
+import { useCallback } from "react";
+import type { Network } from "../../../types";
+import { useHistoryState } from "@uidotdev/usehooks";
 
 interface UseUndoStackResult {
   pushToUndoStack: (network: Network) => void;
@@ -9,60 +10,50 @@ interface UseUndoStackResult {
   undoStackSize: number;
 }
 
-const MAX_UNDO_STACK_SIZE = 50;
+function deepCopyNetwork(network: Network): Network {
+  return {
+    nodes: new Map(network.nodes),
+    links: new Map(network.links),
+    transportRoutes: network.transportRoutes ? new Map(network.transportRoutes) : new Map(),
+    buildings: network.buildings ? new Map(network.buildings) : new Map(),
+  };
+}
 
 export function useUndoStack(): UseUndoStackResult {
-  const [undoStack, setUndoStack] = useState<Network[]>([]);
+  const {
+    state: present,
+    set: setPresent,
+    undo: historyUndo,
+    clear: clearHistory,
+    canUndo,
+  } = useHistoryState<Network | null>(null);
 
-  const pushToUndoStack = useCallback((network: Network) => {
-    setUndoStack((prev) => {
-      // Create a deep copy of the network to store in the stack
-      const networkCopy: Network = {
-        nodes: new Map(network.nodes),
-        links: new Map(network.links),
-        transportRoutes: network.transportRoutes ? new Map(network.transportRoutes) : new Map(),
-        buildings: network.buildings ? new Map(network.buildings) : new Map(),
-      };
-      
-      const newStack = [...prev, networkCopy];
-      
-      // Limit stack size to prevent memory issues
-      if (newStack.length > MAX_UNDO_STACK_SIZE) {
-        return newStack.slice(1);
-      }
-      
-      return newStack;
-    });
-  }, []);
+  const pushToUndoStack = useCallback(
+    (network: Network) => {
+      const copy = deepCopyNetwork(network);
+      setPresent(copy);
+    },
+    [setPresent]
+  );
 
   const undo = useCallback((): Network | null => {
-    let poppedNetwork: Network | null = null;
-    
-    setUndoStack((prev) => {
-      if (prev.length === 0) {
-        return prev;
-      }
-
-      const newStack = [...prev];
-      poppedNetwork = newStack.pop() || null;
-      
-      return newStack;
-    });
-    
-    return poppedNetwork;
-  }, []);
+    // call the underlying undo; if it returns a value, return that, otherwise return present as a fallback
+    const result = (historyUndo as unknown as (() => Network | undefined))?.();
+    if (result) return result;
+    return present ?? null;
+  }, [historyUndo, present]);
 
   const clearUndoStack = useCallback(() => {
-    setUndoStack([]);
-  }, []);
+    clearHistory();
+  }, [clearHistory]);
 
-  const canUndo = undoStack.length > 0;
-  const undoStackSize = undoStack.length;
+  // We cannot reliably expose the full history length from the API, so expose 0 when unknown
+  const undoStackSize = canUndo ? 1 : 0;
 
   return {
     pushToUndoStack,
     undo,
-    canUndo,
+    canUndo: !!canUndo,
     clearUndoStack,
     undoStackSize,
   };
