@@ -10,6 +10,7 @@ interface UseNodeDragParams {
   mapRef: React.RefObject<MapRef | null>;
   editorMode: boolean;
   onNetworkChange: (network: Network) => void;
+  onBeforeChange?: (network: Network) => void;
 }
 
 const DRAG_THRESHOLD = 5;
@@ -19,6 +20,7 @@ export function useNodeDrag({
   mapRef,
   editorMode,
   onNetworkChange,
+  onBeforeChange,
 }: UseNodeDragParams) {
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -31,6 +33,7 @@ export function useNodeDrag({
   const { snapNodeToNetwork } = useNodeSnap({
     network,
     onNetworkChange,
+    onBeforeChange,
   });
 
   // Create a temporary network with the dragged node at its temporary position
@@ -175,7 +178,11 @@ export function useNodeDrag({
           // Merging with another node - use snapNodeToNetwork
           snapNodeToNetwork(draggedNodeId, tempDragPosition);
         } else {
-          // Just moving the node to a new position
+
+          // Save current state for undo (before mutating)
+          if (onBeforeChange) {
+            onBeforeChange(network);
+          }
           const updatedNodes = new Map(network.nodes);
           const updatedNode: TrafficNode = {
             ...node,
