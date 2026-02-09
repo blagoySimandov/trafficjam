@@ -99,6 +99,12 @@ public class MatsimRunner {
      * Loads and validates a MatSim scenario from the config file.
      */
     private Scenario loadScenario(String configPath) {
+        // Disable strict DTD validation to allow modern network files with additional
+        // attributes
+        // This allows network files with attributes like "allowedModes" that aren't in
+        // the v2 DTD
+        System.setProperty("matsim.preferLocalDtds", "true");
+
         // Load the MatSim configuration from the XML file
         Config config = ConfigUtils.loadConfig(configPath);
 
