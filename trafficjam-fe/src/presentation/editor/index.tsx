@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { EditorMapView } from "./components/editor-map-view";
-import { RunSimulationFab } from "./components/run-simulation-fab";
-import { LaunchDialog } from "./components/launch-dialog";
+import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
+import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
 import { InfoPanel } from "../../components/info-panel";
 import { StatusBar } from "../../components/status-bar";
 import type { TrafficLink } from "../../types";

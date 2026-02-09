@@ -1,23 +1,14 @@
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useHotkeys } from "react-hotkeys-hook";
 import { Play } from "lucide-react";
-import { loadTrips, getTimeRange } from "../../../event-processing";
-import { formatSimulationTime } from "../../../utils/format-time";
+import { loadTrips, getTimeRange } from "../../../../../event-processing";
+import { formatSimulationTime } from "../../../../../utils/format-time";
 import styles from "./launch-dialog.module.css";
 
 interface LaunchDialogProps {
   onLaunch: () => void;
   onClose: () => void;
-}
-
-function useEscapeKey(handler: () => void) {
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handler();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [handler]);
 }
 
 function useTripStats() {
@@ -50,7 +41,7 @@ function StatsLine({ stats }: { stats: ReturnType<typeof useTripStats> }) {
 export function LaunchDialog({ onLaunch, onClose }: LaunchDialogProps) {
   const stats = useTripStats();
 
-  useEscapeKey(onClose);
+  useHotkeys("escape", onClose);
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
