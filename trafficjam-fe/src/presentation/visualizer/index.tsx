@@ -2,21 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { DeckGL, TripsLayer, ScatterplotLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MAP_STYLE, MAPBOX_TOKEN } from "../../constants/map";
+import { MAPBOX_TOKEN } from "../../constants/map";
 import { loadTrips, getVehiclePositions } from "../../event-processing";
 import type { Trip } from "../../event-processing";
 import { useSimulationTime } from "./hooks/use-simulation-time";
-import { INITIAL_STATE_CORK } from "./constants";
+import { INITIAL_STATE_CORK, DARK_MAP_STYLE } from "./constants";
+import { BackToEditorButton } from "./components/back-button";
 
-export function Visualizer() {
-  const { data: trips = [] } = useQuery({
-    queryKey: ["trips"],
-    queryFn: loadTrips,
-  });
-  const time = useSimulationTime(trips);
-  const positions = getVehiclePositions(trips, time);
+interface VisualizerProps {
+  onBack: () => void;
+}
 
-  const layers = [
+function useLayers(trips: Trip[], time: number) {
+  return [
     new TripsLayer({
       id: "trails",
       data: trips,
@@ -29,7 +27,7 @@ export function Visualizer() {
     }),
     new ScatterplotLayer({
       id: "cars",
-      data: positions,
+      data: getVehiclePositions(trips, time),
       getPosition: (d: [number, number]) => d,
       getFillColor: [255, 220, 0],
       getRadius: 30,
@@ -37,10 +35,20 @@ export function Visualizer() {
       radiusMaxPixels: 8,
     }),
   ];
+}
+
+export function Visualizer({ onBack }: VisualizerProps) {
+  const { data: trips = [] } = useQuery({
+    queryKey: ["trips"],
+    queryFn: loadTrips,
+  });
+  const time = useSimulationTime(trips);
+  const layers = useLayers(trips, time);
 
   return (
     <DeckGL initialViewState={INITIAL_STATE_CORK} controller layers={layers}>
-      <Map mapStyle={MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
+      <Map mapStyle={DARK_MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
+      <BackToEditorButton onClick={onBack} />
     </DeckGL>
   );
 }
