@@ -48,7 +48,7 @@ export function EditorMapView({
       onLinkClick,
     });
 
-  const { isDragging, displayNetwork } = useNodeDrag({
+  const { isDragging, displayNetwork, draggedNodeId } = useNodeDrag({
     network,
     mapRef,
     editorMode,
@@ -114,7 +114,7 @@ export function EditorMapView({
         <NetworkLayer network={displayNetwork} hoverInfo={null} />
       )}
       {displayNetwork && (
-        <NodeLayer network={displayNetwork} editorMode={editorMode} />
+        <NodeLayer network={displayNetwork} editorMode={editorMode} draggedNodeId={draggedNodeId} />
       )}
       {displayNetwork?.transportRoutes &&
         displayNetwork.transportRoutes.size > 0 && (
