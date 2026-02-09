@@ -3,6 +3,7 @@ import type { ExpressionSpecification } from "mapbox-gl";
 import type { BuildingType } from "../types";
 
 export const BUILDING_LAYER_ID = "buildings";
+export const BUILDING_OUTLINE_LAYER_ID = "buildings-outline";
 export const BUILDING_SOURCE_ID = "buildings";
 
 export const BUILDING_COLORS: Record<BuildingType, string> = {
@@ -26,7 +27,10 @@ export const BUILDING_TYPE_LABELS: Record<BuildingType, string> = {
 const DEFAULT_BUILDING_COLOR = "#34495E";
 
 function createColorExpression(): ExpressionSpecification {
-  const expression: (string | ExpressionSpecification)[] = ["match", ["get", "type"]];
+  const expression: (string | ExpressionSpecification)[] = [
+    "match",
+    ["get", "type"],
+  ];
   for (const [type, color] of Object.entries(BUILDING_COLORS)) {
     expression.push(type, color);
   }
@@ -34,14 +38,20 @@ function createColorExpression(): ExpressionSpecification {
   return expression as ExpressionSpecification;
 }
 
-export const BUILDING_CIRCLE_LAYER: LayerProps = {
+export const BUILDING_FILL_LAYER: LayerProps = {
   id: BUILDING_LAYER_ID,
-  type: "circle",
+  type: "fill",
   paint: {
-    "circle-radius": 10,
-    "circle-color": createColorExpression(),
-    "circle-stroke-color": "#FFFFFF",
-    "circle-stroke-width": 2,
-    "circle-opacity": 0.9,
+    "fill-color": createColorExpression(),
+    "fill-opacity": 0.6,
+  },
+};
+
+export const BUILDING_OUTLINE_LAYER: LayerProps = {
+  id: BUILDING_OUTLINE_LAYER_ID,
+  type: "line",
+  paint: {
+    "line-color": createColorExpression(),
+    "line-width": 2,
   },
 };
