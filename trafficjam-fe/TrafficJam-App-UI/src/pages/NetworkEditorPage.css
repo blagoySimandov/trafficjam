@@ -143,6 +143,20 @@
   transform: translateY(-2px);
 }
 
+.tool-button.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.editor-map {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .editor-viewport {
   border-radius: var(--radius-lg);
   overflow: hidden;
