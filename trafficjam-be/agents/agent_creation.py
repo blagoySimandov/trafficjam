@@ -1,9 +1,6 @@
 import logging
-import sys
-from pathlib import Path
 from typing import Any, List, Dict
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "map-data-service"))
 
 from models import Building
 from utils.geo import calculate_area_wgs84, calculate_area_projected
@@ -98,18 +95,14 @@ def create_agents_from_network(
 
     logger.info(f"Creating {total_population} agents for {city_name}, {country_name}")
 
-    agent_distribution = distribute_agents_to_buildings(
-        buildings, total_population
-    )
+    agent_distribution = distribute_agents_to_buildings(buildings, total_population)
 
     agents = []
     agent_id = 1
     has_transport = len(transport_routes) > 0
 
     for building_id, count in agent_distribution.items():
-        building = next(
-            (b for b in buildings if b.id == building_id), None
-        )
+        building = next((b for b in buildings if b.id == building_id), None)
         if not building:
             continue
 
