@@ -1,55 +1,54 @@
-from typing import Dict
 import random
 
+from models import Agent, Adult, Child, TransportMode
 
-def get_transport_mode(agent: Dict, activity_type: str) -> str:
+
+def get_transport_mode(agent: Agent, activity_type: str) -> TransportMode:
     """
     Determine transport mode based on agent characteristics and activity.
-
-    Args:
-        agent: Agent dictionary with demographics
-        activity_type: Type of activity being traveled to
-
-    Returns:
-        Transport mode: 'car', 'pt' (public transport), 'walk', 'bike'
     """
-    if agent.get("uses_public_transport"):
+    if agent.uses_public_transport:
         if random.random() > 0.8:
-            return "pt"
+            return TransportMode.PUBLIC_TRANSPORT
 
-    if agent["age"] < 16:
+    if agent.age < 16:
         if random.random() > 0.7:
-            return "walk"
+            return TransportMode.WALK
         else:
-            return "car"
+            return TransportMode.CAR
 
-    if agent["age"] >= 16 and agent["age"] <= 25:
-        if agent.get("is_student"):
-            modes = ["pt", "bike", "walk", "car"]
+    if 16 <= agent.age <= 25:
+        if isinstance(agent, Adult) and agent.is_student:
+            modes = [
+                TransportMode.PUBLIC_TRANSPORT,
+                TransportMode.BIKE,
+                TransportMode.WALK,
+                TransportMode.CAR,
+            ]
             weights = [0.3, 0.2, 0.2, 0.3]
             return random.choices(modes, weights=weights)[0]
 
-    if agent["age"] >= 65:
-        if agent.get("has_car"):
-            modes = ["car", "pt", "walk"]
+    if agent.age >= 65:
+        if agent.has_car:
+            modes = [TransportMode.CAR, TransportMode.PUBLIC_TRANSPORT, TransportMode.WALK]
             weights = [0.5, 0.3, 0.2]
             return random.choices(modes, weights=weights)[0]
         else:
-            modes = ["pt", "walk"]
+            modes = [TransportMode.PUBLIC_TRANSPORT, TransportMode.WALK]
             weights = [0.6, 0.4]
             return random.choices(modes, weights=weights)[0]
 
     if activity_type in ["shopping", "healthcare"]:
-        if agent.get("has_car"):
-            modes = ["car", "pt", "walk"]
+        if agent.has_car:
+            modes = [TransportMode.CAR, TransportMode.PUBLIC_TRANSPORT, TransportMode.WALK]
             weights = [0.6, 0.2, 0.2]
             return random.choices(modes, weights=weights)[0]
         else:
-            modes = ["pt", "walk"]
+            modes = [TransportMode.PUBLIC_TRANSPORT, TransportMode.WALK]
             weights = [0.7, 0.3]
             return random.choices(modes, weights=weights)[0]
 
-    if agent.get("has_car"):
-        return "car"
+    if agent.has_car:
+        return TransportMode.CAR
 
-    return "pt"
+    return TransportMode.PUBLIC_TRANSPORT
