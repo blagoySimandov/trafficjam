@@ -1,6 +1,6 @@
 import random
 
-from models import Agent, Adult, Child, TransportMode
+from models import Agent, Adult, TransportMode
 
 
 def get_transport_mode(agent: Agent, activity_type: str) -> TransportMode:
@@ -30,7 +30,11 @@ def get_transport_mode(agent: Agent, activity_type: str) -> TransportMode:
 
     if agent.age >= 65:
         if agent.has_car:
-            modes = [TransportMode.CAR, TransportMode.PUBLIC_TRANSPORT, TransportMode.WALK]
+            modes = [
+                TransportMode.CAR,
+                TransportMode.PUBLIC_TRANSPORT,
+                TransportMode.WALK,
+            ]
             weights = [0.5, 0.3, 0.2]
             return random.choices(modes, weights=weights)[0]
         else:
@@ -40,7 +44,11 @@ def get_transport_mode(agent: Agent, activity_type: str) -> TransportMode:
 
     if activity_type in ["shopping", "healthcare"]:
         if agent.has_car:
-            modes = [TransportMode.CAR, TransportMode.PUBLIC_TRANSPORT, TransportMode.WALK]
+            modes = [
+                TransportMode.CAR,
+                TransportMode.PUBLIC_TRANSPORT,
+                TransportMode.WALK,
+            ]
             weights = [0.6, 0.2, 0.2]
             return random.choices(modes, weights=weights)[0]
         else:
