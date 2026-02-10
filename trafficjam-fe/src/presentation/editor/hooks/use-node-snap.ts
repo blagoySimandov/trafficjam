@@ -5,15 +5,22 @@ import { findSnapPoint } from '../../../utils/snap-to-network';
 interface UseNodeSnapParams {
     network: Network | null;
     onNetworkChange: (network: Network) => void;
+    onBeforeChange?: (network: Network) => void;
 }
 
 export function useNodeSnap({
   network,
   onNetworkChange,
+  onBeforeChange,
 }: UseNodeSnapParams) {
   const snapNodeToNetwork = useCallback(
     (nodeId: string, position: LngLatTuple) => {
       if (!network) return;
+      
+      // Save current state to undo stack before making changes
+      if (onBeforeChange) {
+        onBeforeChange(network);
+      }
       
       // Filter out the dragged node from snap candidates
       const filteredNetwork: Network = {
@@ -94,7 +101,7 @@ export function useNodeSnap({
           }
         }
     },
-    [network, onNetworkChange]
+    [network, onNetworkChange, onBeforeChange]
   );
   
   return { snapNodeToNetwork };
