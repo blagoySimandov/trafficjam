@@ -6,6 +6,7 @@ import { MAP_STYLE, MAPBOX_TOKEN } from "../../constants/map";
 import { loadTrips, getVehiclePositions } from "../../event-processing";
 import type { Trip } from "../../event-processing";
 import { useSimulationTime } from "./hooks/use-simulation-time";
+import { PlaybackBar } from "./components/playback-bar";
 import { INITIAL_STATE_CORK } from "./constants";
 
 export function Visualizer() {
@@ -13,8 +14,8 @@ export function Visualizer() {
     queryKey: ["trips"],
     queryFn: loadTrips,
   });
-  const time = useSimulationTime(trips);
-  const positions = getVehiclePositions(trips, time);
+  const simulation = useSimulationTime(trips);
+  const positions = getVehiclePositions(trips, simulation.time);
 
   const layers = [
     new TripsLayer({
@@ -25,7 +26,7 @@ export function Visualizer() {
       getColor: [253, 128, 93],
       widthMinPixels: 2,
       trailLength: 300,
-      currentTime: time,
+      currentTime: simulation.time,
     }),
     new ScatterplotLayer({
       id: "cars",
@@ -41,6 +42,7 @@ export function Visualizer() {
   return (
     <DeckGL initialViewState={INITIAL_STATE_CORK} controller layers={layers}>
       <Map mapStyle={MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
+      <PlaybackBar simulation={simulation} />
     </DeckGL>
   );
 }
