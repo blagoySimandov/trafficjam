@@ -54,7 +54,7 @@ def create_adult(
     buildings: list[Building],
     has_transport: bool,
     needs_to_dropoff_children: bool,
-    children_ids: list[str],
+    children_ids: list[Child],
 ) -> Adult:
     age = generate_adult_age()
     employed, is_student = determine_employment_status(age)
@@ -94,22 +94,29 @@ def create_household(
     schools: list[Building],
     kindergartens: list[Building],
     has_transport: bool,
-) -> tuple[list[Agent], list[Child]]:
+) -> list[Agent]:
     num_children = random.choices([0, 1, 2, 3], weights=[0.3, 0.35, 0.25, 0.1])[0]
     num_adults = random.choices([1, 2], weights=[0.3, 0.7])[0]
 
     children = [create_child(home, schools, kindergartens) for _ in range(num_children)]
 
     children_needing_dropoff = [c for c in children if c.needs_dropoff]
-    needs_to_dropoff = len(children_needing_dropoff) > 0
-    children_ids = [c.id for c in children_needing_dropoff]
+    children_ids = [c for c in children_needing_dropoff]
 
-    adults = [
-        create_adult(home, buildings, has_transport, needs_to_dropoff, children_ids)
-        for _ in range(num_adults)
-    ]
+    adults: list[Adult] = []
+    for i in range(num_adults):
+        is_dropper = (i == 0) and len(children_needing_dropoff) > 0
+        adult = create_adult(
+            home,
+            buildings,
+            has_transport,
+            is_dropper,
+            children_ids if is_dropper else [],
+        )
+        adults.append(adult)
 
-    return (adults, children)
+    household: list[Agent] = [*adults, *children]
+    return household
 
 
 def create_agents_from_network(
