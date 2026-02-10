@@ -3,7 +3,6 @@ import random
 
 
 def get_transport_mode(agent: Dict, activity_type: str) -> str:
-    # TODO: give a car to ~60-70% of the people above 18/20
     """
     Determine transport mode based on agent characteristics and activity.
 
@@ -27,7 +26,7 @@ def get_transport_mode(agent: Dict, activity_type: str) -> str:
     if agent["age"] >= 16 and agent["age"] <= 25:
         if agent.get("is_student"):
             modes = ["pt", "bike", "walk", "car"]
-            weights = [0.4, 0.2, 0.2, 0.2]
+            weights = [0.3, 0.2, 0.2, 0.3]
             return random.choices(modes, weights=weights)[0]
 
     if agent["age"] >= 65:
