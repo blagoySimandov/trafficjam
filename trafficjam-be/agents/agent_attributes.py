@@ -1,45 +1,20 @@
 from typing import Dict, List, Tuple
 import random
 import math
-import sys
-from pathlib import Path
+
+from haversine import haversine, Unit
 from models import Building
 
-sys.path.insert(
-    0, str(Path(__file__).resolve().parent.parent.parent / "map-data-service")
-)
 
-
-DEFAULT_AMENITY_RADIUS = 2000
-
-
-def haversine_distance(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
-    """Calculate distance between two (lat, lon) positions in meters."""
-    lat1, lon1 = pos1
-    lat2, lon2 = pos2
-
-    earth_radius = 6371000  # meters
-
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-
-    a = (
-        math.sin(delta_phi / 2) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
-    )
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    return earth_radius * c
+DEFAULT_AMENITY_RADIUS = 2  # kilometers
 
 
 def get_bounding_box(
     lat: float, lon: float, radius: float
 ) -> Tuple[float, float, float, float]:
-    """Get lat/lon bounding box for a radius in meters around a point."""
-    delta_lat = radius / 111320
-    delta_lon = radius / (111320 * math.cos(math.radians(lat)))
+    """Get lat/lon bounding box for a radius in kilometers around a point."""
+    delta_lat = radius / 111.32
+    delta_lon = radius / (111.32 * math.cos(math.radians(lat)))
 
     return (lat - delta_lat, lat + delta_lat, lon - delta_lon, lon + delta_lon)
 
@@ -63,12 +38,16 @@ def find_nearby_or_closest(
 
     if candidates:
         within_radius = [
-            b for b in candidates if haversine_distance(agent_pos, b.position) <= radius
+            b
+            for b in candidates
+            if haversine(agent_pos, b.position, unit=Unit.KILOMETERS) <= radius
         ]
         if within_radius:
             return random.choice(within_radius)
 
-    return min(buildings, key=lambda b: haversine_distance(agent_pos, b.position))
+    return min(
+        buildings, key=lambda b: haversine(agent_pos, b.position, unit=Unit.KILOMETERS)
+    )
 
 
 def generate_age_distribution() -> int:
