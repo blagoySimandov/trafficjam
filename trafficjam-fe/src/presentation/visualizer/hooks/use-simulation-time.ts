@@ -3,7 +3,7 @@ import { getTimeRange } from "../../../event-processing";
 import type { Trip } from "../../../event-processing";
 
 export const SPEED_OPTIONS = [30, 60, 120, 300, 600] as const;
-export const DEFAULT_SPEED = 30;
+export const DEFAULT_SPEED = 60;
 
 export interface SimulationTimeState {
   time: number;
