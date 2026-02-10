@@ -17,6 +17,15 @@
   color: #666;
 }
 
+.colorSwatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
 .routesSection {
 }
 
