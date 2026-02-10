@@ -20,6 +20,7 @@ export function NodeLayer({
   return (
     <Source id="nodes" type="geojson" data={geojson}>
       <Layer {...layerStyle} />
+      <Layer {...layerStyle} />
     </Source>
   );
 }

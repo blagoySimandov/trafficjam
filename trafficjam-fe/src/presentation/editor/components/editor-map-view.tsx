@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -14,6 +14,7 @@ import { useOSMImport } from "../../../hooks/use-osm-import";
 import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
+import { useUndoStack } from "../hooks/use-undo-stack";
 import { EditorControls } from "./editor-controls";
 import { NetworkLayer } from "../../../components/layers/network-layer";
 import { TransportLayer } from "../../../components/layers/transport-layer";
@@ -34,12 +35,19 @@ export function EditorMapView({
   const [showBuildings, setShowBuildings] = useState(true);
   const [editorMode, setEditorMode] = useState(false);
   const mapRef = useRef<MapRef | null>(null);
+
+  const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
   const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
   const { loading, importData, clear } = useOSMImport(mapRef, {
     onStatusChange,
     onNetworkChange: setNetwork,
   });
+
+  const handleClear = useCallback(() => {
+    clear();
+    clearUndoStack();
+  }, [clear, clearUndoStack]);
 
   const { hoverInfo, handleClick, handleMouseMove, handleMouseLeave } =
     useMapInteractions({
@@ -53,7 +61,52 @@ export function EditorMapView({
     mapRef,
     editorMode,
     onNetworkChange: setNetwork,
+    onBeforeChange: pushToUndoStack,
   });
+
+  const handleUndo = useCallback(() => {
+    const previousNetwork = undo();
+    if (previousNetwork) {
+      setNetwork(previousNetwork);
+      onStatusChange("Undid node operation");
+    }
+  }, [undo, onStatusChange]);
+
+  // Keyboard shortcut for undo (Cmd+Z on Mac, Ctrl+Z on Windows/Linux)
+  // Attach listener once and read latest canUndo/onStatusChange via refs to avoid re-registering
+  const canUndoRef = useRef(canUndo);
+  const onStatusChangeRef = useRef(onStatusChange);
+
+  useEffect(() => {
+    canUndoRef.current = canUndo;
+  }, [canUndo]);
+
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.key === "z" &&
+        !event.shiftKey
+      ) {
+        event.preventDefault();
+
+        if (!canUndoRef.current) return;
+
+        const previousNetwork = undo();
+        if (previousNetwork) {
+          setNetwork(previousNetwork);
+          onStatusChangeRef.current("Undid node operation");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo]);
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
@@ -102,19 +155,25 @@ export function EditorMapView({
     >
       <EditorControls
         onImport={importData}
-        onClear={clear}
+        onClear={handleClear}
         onExport={exportNetwork}
         loading={loading}
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
         editorMode={editorMode}
         onToggleEditorMode={toggleEditorMode}
+        onUndo={handleUndo}
+        canUndo={canUndo}
       />
       {displayNetwork && (
         <NetworkLayer network={displayNetwork} hoverInfo={null} />
       )}
       {displayNetwork && (
-        <NodeLayer network={displayNetwork} editorMode={editorMode} draggedNodeId={draggedNodeId} />
+        <NodeLayer
+          network={displayNetwork}
+          editorMode={editorMode}
+          draggedNodeId={draggedNodeId}
+        />
       )}
       {displayNetwork?.transportRoutes &&
         displayNetwork.transportRoutes.size > 0 && (

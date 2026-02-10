@@ -5,6 +5,7 @@ import {
   Building2,
   Building,
   Pencil,
+  Undo,
 } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
@@ -49,6 +50,8 @@ interface EditorControlsProps {
   onToggleBuildings: () => void;
   editorMode?: boolean;
   onToggleEditorMode: () => void;
+  onUndo: () => void;
+  canUndo: boolean;
 }
 
 export function EditorControls({
@@ -60,6 +63,8 @@ export function EditorControls({
   onToggleBuildings,
   editorMode,
   onToggleEditorMode,
+  onUndo,
+  canUndo,
 }: EditorControlsProps) {
   return (
     <div className="map-controls">
@@ -89,6 +94,12 @@ export function EditorControls({
         icon={<Pencil size={18} />}
         onClick={onToggleEditorMode}
         active={editorMode}
+      />
+      <ControlButton
+        title={"Undo network changes (Cmd/Ctrl+Z)"}
+        icon={<Undo size={18} />}
+        onClick={onUndo}
+        disabled={!canUndo}
       />
     </div>
   );
