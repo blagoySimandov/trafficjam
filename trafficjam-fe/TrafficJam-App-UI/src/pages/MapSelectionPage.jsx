@@ -1,16 +1,94 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import Map, { Source, Layer, Marker, Popup } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import PageContainer from '../components/PageContainer';
 import Button from '../components/Button';
 import './MapSelectionPage.css';
 
+// Helper to create a circle GeoJSON from center and radius (in km)
+const createCircleGeoJSON = (lon, lat, radiusKm) => {
+  const points = 64;
+  const coordinates = [];
+  const earthRadiusKm = 6371;
+  
+  for (let i = 0; i < points; i++) {
+    const bearing = (i / points) * 360;
+    
+    // Calculate destination point using Haversine formula
+    const lat1Rad = lat * Math.PI / 180;
+    const lon1Rad = lon * Math.PI / 180;
+    const distanceRad = radiusKm / earthRadiusKm;
+    const bearingRad = bearing * Math.PI / 180;
+    
+    const lat2Rad = Math.asin(
+      Math.sin(lat1Rad) * Math.cos(distanceRad) +
+      Math.cos(lat1Rad) * Math.sin(distanceRad) * Math.cos(bearingRad)
+    );
+    
+    const lon2Rad = lon1Rad + Math.atan2(
+      Math.sin(bearingRad) * Math.sin(distanceRad) * Math.cos(lat1Rad),
+      Math.cos(distanceRad) - Math.sin(lat1Rad) * Math.sin(lat2Rad)
+    );
+    
+    coordinates.push([
+      lon2Rad * 180 / Math.PI,
+      lat2Rad * 180 / Math.PI
+    ]);
+  }
+  coordinates.push(coordinates[0]); // Close the circle
+  
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [coordinates]
+        }
+      }
+    ]
+  };
+};
+
 const MapSelectionPage = () => {
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState('23.322, 42.698');
   const [radius, setRadius] = useState(5);
-  
+  const [mapReady, setMapReady] = useState(false);
+  const mapRef = useRef(null);
+
+  // Disable Mapbox telemetry
+  useEffect(() => {
+    if (window.mapboxgl) {
+      window.mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+    }
+  }, []);
+
+  // Parse location string to lat/lon
+  const parseLocation = (locationStr) => {
+    if (!locationStr) return { lat: 42.698, lon: 23.322 };
+    const parts = locationStr.split(',').map(p => parseFloat(p.trim()));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      return { lon: parts[0], lat: parts[1] };
+    }
+    return { lat: 42.698, lon: 23.322 };
+  };
+
+  const location = parseLocation(selectedLocation);
+  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+  const circleGeoJSON = createCircleGeoJSON(location.lon, location.lat, radius);
+
+  // Handle map click to drop pin
+  const handleMapClick = (e) => {
+    if (!mapReady) return;
+    const { lng, lat } = e.lngLat;
+    setSelectedLocation(`${lng.toFixed(4)}, ${lat.toFixed(4)}`);
+  };
+
   return (
     <PageContainer>
       <div className="map-selection-layout">
@@ -33,7 +111,7 @@ const MapSelectionPage = () => {
           <div className="panel-content">
             <h2 className="panel-title">Map Selection</h2>
             <p className="panel-subtitle">
-              Select which project area you want to work on
+              Click on the map to set location or enter coordinates
             </p>
             
             <div className="form-group">
@@ -41,7 +119,7 @@ const MapSelectionPage = () => {
               <input 
                 type="text" 
                 className="form-input" 
-                placeholder="51.89 93.3"
+                placeholder="23.322 42.698"
                 value={selectedLocation || ''}
                 onChange={(e) => setSelectedLocation(e.target.value)}
               />
@@ -66,7 +144,13 @@ const MapSelectionPage = () => {
               <Button 
                 variant="primary"
                 size="large"
-                onClick={() => navigate(`/projects/${projectId}/network-editor`)}
+                onClick={() => navigate(`/projects/${projectId}/network-editor`, {
+                  state: {
+                    location: selectedLocation,
+                    radius: radius,
+                    coordinates: location
+                  }
+                })}
                 style={{ width: '100%' }}
               >
                 Save Network
@@ -82,40 +166,68 @@ const MapSelectionPage = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <div className="map-placeholder">
-            <div className="map-placeholder-content">
-              <motion.div
-                className="abstract-shape shape-1"
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.1, 1]
-                }}
-                transition={{ 
-                  duration: 20,
-                  repeat: Infinity,
-                  ease: "linear"
+          <Map
+            ref={mapRef}
+            initialViewState={{
+              longitude: location.lon,
+              latitude: location.lat,
+              zoom: 13,
+            }}
+            style={{ width: '100%', height: '100%', cursor: 'default' }}
+            mapStyle="mapbox://styles/mapbox/light-v11"
+            mapboxAccessToken={mapboxToken}
+            trackResize={true}
+            attributionControl={true}
+            onClick={handleMapClick}
+            onLoad={() => setMapReady(true)}
+          >
+            {/* Radius circle layer */}
+            <Source id="circle-source" type="geojson" data={circleGeoJSON}>
+              <Layer
+                id="circle-fill"
+                type="fill"
+                paint={{
+                  'fill-color': '#007AFF',
+                  'fill-opacity': 0.1
                 }}
               />
-              <motion.div
-                className="abstract-shape shape-2"
-                animate={{ 
-                  rotate: -360,
-                  scale: [1, 0.9, 1]
-                }}
-                transition={{ 
-                  duration: 15,
-                  repeat: Infinity,
-                  ease: "linear"
+              <Layer
+                id="circle-stroke"
+                type="line"
+                paint={{
+                  'line-color': '#007AFF',
+                  'line-width': 2
                 }}
               />
-              <h3 className="map-placeholder-title">MapBox Map</h3>
-              <p className="map-placeholder-text">
-                Contains blue radius to show selection of network.
-                <br />
-                User can pan/zoom
-              </p>
-            </div>
-          </div>
+            </Source>
+
+            {/* Pin marker */}
+            <Marker
+              longitude={location.lon}
+              latitude={location.lat}
+              anchor="center"
+            >
+              <div style={{
+                width: '24px',
+                height: '24px',
+                backgroundColor: '#007AFF',
+                borderRadius: '50%',
+                cursor: 'grab',
+                border: '3px solid white',
+                boxShadow: '0 2px 8px rgba(0, 122, 255, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <div style={{
+                  width: '6px',
+                  height: '6px',
+                  backgroundColor: 'white',
+                  borderRadius: '50%'
+                }} />
+              </div>
+            </Marker>
+          </Map>
         </motion.div>
       </div>
     </PageContainer>
