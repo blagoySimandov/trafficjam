@@ -3,6 +3,7 @@ import { getTimeRange } from "../../../event-processing";
 import type { Trip } from "../../../event-processing";
 
 export const SPEED_OPTIONS = [30, 60, 120, 300, 600] as const;
+export const DEFAULT_SPEED = 30;
 
 export interface SimulationTimeState {
   time: number;
@@ -24,7 +25,7 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
 
   const [time, setTime] = useState(range[0]);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [speed, setSpeedState] = useState(60);
+  const [speed, setSpeedState] = useState(DEFAULT_SPEED);
 
   const isPlayingRef = useRef(isPlaying);
   const speedRef = useRef(speed);
