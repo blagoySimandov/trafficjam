@@ -26,4 +26,6 @@ export const COLORS = {
   unclassifiedGray: "#f8f9fa",
   defaultGray: "#ced4da",
   defaultGrayDark: "#868e96",
+  nodeDragged: "#ef4444",
+  nodeDefault: "#3b82f6",
 } as const;
