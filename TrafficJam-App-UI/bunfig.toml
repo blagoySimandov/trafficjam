@@ -1,0 +1,9 @@
+[install]
+# Bun install configuration
+optional = true
+dev = true
+peer = true
+
+[install.cache]
+# Use local cache
+disable = false
