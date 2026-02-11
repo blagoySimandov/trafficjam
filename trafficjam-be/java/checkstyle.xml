@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    
+    <module name="TreeWalker">
+        <!-- Hidden fields: param names shadowing class fields -->
+        <!-- Ignores constructors and setters (common pattern) -->
+        <module name="HiddenField">
+            <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreSetter" value="true"/>
+        </module>
+
+        <!-- Fields must be private (enforces encapsulation) -->
+        <module name="VisibilityModifier"/>
+
+        <!-- Empty catch blocks: silently swallowing exceptions -->
+        <module name="EmptyCatchBlock"/>
+
+        <!-- Unused imports (code cleanliness) -->
+        <module name="UnusedImports"/>
+    </module>
+</module>

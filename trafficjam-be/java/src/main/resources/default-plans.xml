@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE population SYSTEM "http://www.matsim.org/files/dtd/population_v6.dtd">
+<!--
+    Default empty plans file for MVP.
+    MatSim requires a plans file even if no agents are defined.
+    This allows network-only simulations to run without errors.
+    
+    Future: Replace with user-uploaded or auto-generated agent plans.
+-->
+<population>
+    <!-- No agents defined for MVP - network-only simulation -->
+</population>
