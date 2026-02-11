@@ -16,7 +16,7 @@ BUILDING_TAG_KEYS = frozenset(
 )
 
 ROUTE_TAG_KEYS = frozenset(
-    {"route", "ref", "name", "operator", "network", "from", "to"}
+    {"route", "ref", "name", "operator", "network", "from", "to", "colour"}
 )
 
 VALID_MEMBER_ROLES = frozenset({"", "forward", "backward"})
