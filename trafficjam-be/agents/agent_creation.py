@@ -1,5 +1,5 @@
 import logging
-from typing import Any, List, Dict
+from typing import Any
 
 
 from models import Building
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_population_from_bounds(
-    bounds: Dict[str, float], crs: str, country_code: str
+    bounds: dict[str, float], crs: str, country_code: str
 ) -> int:
     if crs != "EPSG:4326":
         area_km2 = calculate_area_projected(bounds)
@@ -33,12 +33,12 @@ def calculate_population_from_bounds(
 def create_single_agent(
     agent_id: int,
     building: Building,
-    buildings: List[Building],
+    buildings: list[Building],
     country_name: str,
     country_code: str,
     city_name: str,
     has_transport: bool,
-) -> Dict:
+) -> dict:
     age = generate_age_distribution()
 
     agent = {
@@ -63,13 +63,13 @@ def create_single_agent(
 
 
 def create_agents_from_network(
-    bounds: Dict[str, float],
-    buildings: List[Any],
-    transport_routes: List[Dict],
+    bounds: dict[str, float],
+    buildings: list[Any],
+    transport_routes: list[dict],
     crs: str = "EPSG:4326",
     country_code: str = "UNK",
     country_name: str = "UNK",  # TODO: figure out if you can make it always available after the parser gets merged
-) -> List[Dict]:
+) -> list[dict]:
     """
     Creates realistic MATSim agents with:
     - Diverse work locations (supermarkets, hospitals, schools, retail)

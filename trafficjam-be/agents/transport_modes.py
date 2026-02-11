@@ -1,8 +1,7 @@
-from typing import Dict
 import random
 
 
-def get_transport_mode(agent: Dict, activity_type: str) -> str:
+def get_transport_mode(agent: dict, activity_type: str) -> str:
     """
     Determine transport mode based on agent characteristics and activity.
 

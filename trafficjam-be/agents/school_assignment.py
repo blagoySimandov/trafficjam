@@ -1,4 +1,3 @@
-from typing import Dict, List
 import random
 
 
@@ -6,7 +5,7 @@ from models import Building
 
 
 def assign_school_to_child(
-    child: Dict, schools: List[Building], kindergartens: List[Building]
+    child: dict, schools: list[Building], kindergartens: list[Building]
 ) -> None:
     age = child["age"]
 
@@ -27,7 +26,7 @@ def assign_school_to_child(
             child["needs_dropoff"] = False
 
 
-def assign_children_to_parents(agents: List[Dict], buildings: List[Building]) -> None:
+def assign_children_to_parents(agents: list[dict], buildings: list[Building]) -> None:
     adults = [a for a in agents if 25 <= a["age"] <= 45]
     children = [a for a in agents if 3 <= a["age"] <= 18]
 
