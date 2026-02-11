@@ -1,4 +1,3 @@
-from typing import Dict, List, Tuple
 import random
 
 
@@ -21,45 +20,19 @@ def categorize_work_buildings(buildings: list[Building]) -> dict[str, list[Build
     }
 
 
-def calculate_work_distribution_weights(
-    work_categories: dict[str, list[Building]],
-) -> Tuple[List[Tuple[str, List[Dict]]], List[float]]:
-    base_weights = {
-        "supermarket": 0.15,
-        "healthcare": 0.15,
-        "education": 0.15,
-        "retail": 0.40,
-        "food": 0.15,
-    }
-
-    available_categories = []
-    weights = []
-
-    for category, buildings in work_categories.items():
-        if buildings:
-            available_categories.append((category, buildings))
-            weights.append(base_weights[category])
-
-    total_weight = sum(weights)
-    if total_weight > 0:
-        weights = [w / total_weight for w in weights]
-
-    return available_categories, weights
-
-
-# NOTE: might have to make it use a loop for all the agents
-def assign_work_location(agent: dict, buildings: List[Building]) -> None:
+def assign_work_location(agent: Adult, buildings: list[Building]) -> Adult:
     work_categories = categorize_work_buildings(buildings)
-    available_categories, weights = calculate_work_distribution_weights(work_categories)
+    # Filter to non-empty categories, pair with buildings
+    available = [(cat, bldgs) for cat, bldgs in work_categories.items() if bldgs]
+    if not available:
+        return agent
 
-    if not available_categories:
-        return
+    # Get weights for available categories only
+    weights = [WORK_CATEGORY_WEIGHTS[cat] for cat, _ in available]
 
-    category, category_buildings = random.choices(
-        available_categories, weights=weights
-    )[0]
-    work_building = random.choice(category_buildings)
+    # random.choices handles non-normalized weights automatically
+    category, category_buildings = random.choices(available, weights=weights)[0]
 
-    agent["work_building_id"] = work_building.id
-    agent["work_location"] = work_building.position
-    agent["work_type"] = category
+    agent.work = random.choice(category_buildings)
+    agent.work_type = category
+    return agent

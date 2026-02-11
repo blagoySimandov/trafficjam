@@ -1,4 +1,3 @@
-from typing import Dict, List, Tuple
 import random
 import math
 
@@ -11,7 +10,7 @@ DEFAULT_AMENITY_RADIUS = 2  # kilometers
 
 def get_bounding_box(
     lat: float, lon: float, radius: float
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     """Get lat/lon bounding box for a radius in kilometers around a point."""
     delta_lat = radius / 111.32
     delta_lon = radius / (111.32 * math.cos(math.radians(lat)))
@@ -20,8 +19,8 @@ def get_bounding_box(
 
 
 def find_nearby_or_closest(
-    agent_pos: Tuple[float, float],
-    buildings: List[Building],
+    agent_pos: tuple[float, float],
+    buildings: list[Building],
     radius: float = DEFAULT_AMENITY_RADIUS,
 ) -> Building | None:
     if not buildings:
@@ -57,7 +56,7 @@ def generate_age_distribution() -> int:
     )[0]
 
 
-def assign_employment_status(agent: Dict) -> None:
+def assign_employment_status(agent: dict) -> None:
     age = agent["age"]
 
     if 18 <= age < 65:
@@ -68,7 +67,7 @@ def assign_employment_status(agent: Dict) -> None:
         agent["is_student"] = False
 
 
-def assign_transport_mode(agent: Dict, has_transport: bool) -> None:
+def assign_transport_mode(agent: dict, has_transport: bool) -> None:
     age = agent["age"]
 
     if 16 <= age <= 25:
@@ -86,7 +85,7 @@ def assign_transport_mode(agent: Dict, has_transport: bool) -> None:
 
 
 def assign_amenity_preferences(
-    agent: Dict, buildings: List[Building], radius: float = DEFAULT_AMENITY_RADIUS
+    agent: dict, buildings: list[Building], radius: float = DEFAULT_AMENITY_RADIUS
 ) -> None:
     agent_home = agent["home_location"]
 
