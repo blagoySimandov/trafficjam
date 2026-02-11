@@ -3,6 +3,8 @@
 .claude
 meditor/.env
 package-lock.json
+map-data-service/.env
+map-data-service/*.json
 
 # Logs
 logs
