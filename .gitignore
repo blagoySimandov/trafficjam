@@ -33,3 +33,6 @@ dist-ssr
 _pycache_/
 *.pyc
 __pycache__
+
+# Maven created files
+trafficjam-be/java/target/
