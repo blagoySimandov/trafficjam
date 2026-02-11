@@ -8,3 +8,34 @@ trafficjam-be/plans
 trafficjam-be/agents/__pycache__
 trafficjam-be/__pycache__
 map-data-service/__pycache__
+package-lock.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+.ntvs
+*.njsproj
+*.sln
+*.sw?
+
+#Python compiled code
+_pycache_/
+*.pyc
+__pycache__
