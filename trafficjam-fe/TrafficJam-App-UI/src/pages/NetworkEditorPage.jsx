@@ -1,11 +1,15 @@
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Pencil, Trash2, Plus } from 'lucide-react';
-import Map, { Source, Layer, Marker } from 'react-map-gl';
+import { Pencil, Trash2, Plus, Undo, Redo } from 'lucide-react';
+import { Map as MapboxMap, Source, Layer, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import PageContainer from '../components/PageContainer';
 import Button from '../components/Button';
+import { useUndoStack } from '../hooks/useUndoStack';
+import { useNodeDrag } from '../hooks/useNodeDrag';
+import { useNodeSnap } from '../hooks/useNodeSnap';
+import { useNodeCreate } from '../hooks/useNodeCreate';
 import './NetworkEditorPage.css';
 
 const NetworkEditorPage = () => {
@@ -13,14 +17,76 @@ const NetworkEditorPage = () => {
   const { projectId } = useParams();
   const routeLocation = useLocation();
   const mapRef = useRef(null);
-  const [editMode, setEditMode] = useState(null);
+  const [editMode, setEditMode] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [metadata, setMetadata] = useState(null);
 
-  // Get location and radius from state
+  // Use undo stack for network state management
+  const {
+    state: network,
+    setState: setNetwork,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoStack(null);
+
+  // Node snapping/merging functionality
+  const { snapNodeToNetwork } = useNodeSnap({
+    network,
+    onNetworkChange: setNetwork,
+  });
+
+  // Node dragging functionality
+  const { isDragging, draggedNodeId, displayNetwork } = useNodeDrag({
+    network,
+    mapRef,
+    editorMode: editMode,
+    onNetworkChange: setNetwork,
+    snapNodeToNetwork, // Pass snap function to drag handler
+  });
+
+  // Node creation by clicking on links
+  useNodeCreate({
+    network,
+    mapRef,
+    editorMode: editMode,
+    onNetworkChange: setNetwork,
+  });
+
+  // Load network from localStorage
+  useEffect(() => {
+    const storedData = localStorage.getItem('trafficjam_network');
+    if (!storedData) return;
+
+    try {
+      const parsed = JSON.parse(storedData);
+
+      // Reconstruct Maps from array entries
+      const networkData = {
+        nodes: new Map(parsed.nodes),
+        links: new Map(parsed.links),
+      };
+
+      setNetwork(networkData);
+      setMetadata(parsed.metadata);
+
+      console.log(`Loaded network: ${networkData.links.size} links, ${networkData.nodes.size} nodes`);
+
+      // Clear localStorage after loading
+      localStorage.removeItem('trafficjam_network');
+    } catch (error) {
+      console.error('Failed to load network from localStorage:', error);
+    }
+  }, []);
+
+  // Get location and radius from loaded metadata or fallback to route state
   const { state } = routeLocation;
   const defaultLocation = { lon: 23.322, lat: 42.698 };
-  const location = state?.coordinates || defaultLocation;
-  const radius = state?.radius || 5;
+  const location = metadata
+    ? { lon: metadata.centerLon, lat: metadata.centerLat }
+    : (state?.coordinates || defaultLocation);
+  const radius = metadata?.radius || state?.radius || 5;
 
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
@@ -64,7 +130,49 @@ const NetworkEditorPage = () => {
   };
 
   const circleGeoJSON = createCircleGeoJSON(location.lon, location.lat, radius);
-  
+
+  // Use displayNetwork during drag for real-time preview, otherwise use network
+  const activeNetwork = displayNetwork || network;
+
+  // Convert network to GeoJSON for rendering (memoized to avoid recalculating on every render)
+  const linksGeoJSON = useMemo(() => {
+    if (!activeNetwork) return null;
+    return {
+      type: 'FeatureCollection',
+      features: Array.from(activeNetwork.links.values()).map(link => ({
+        type: 'Feature',
+        properties: {
+          id: link.id,
+          highway: link.tags.highway,
+          name: link.tags.name || 'Unnamed',
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: link.geometry.map(([lat, lon]) => [lon, lat])
+        }
+      }))
+    };
+  }, [activeNetwork]);
+
+  const nodesGeoJSON = useMemo(() => {
+    if (!activeNetwork) return null;
+    return {
+      type: 'FeatureCollection',
+      features: Array.from(activeNetwork.nodes.values()).map(node => ({
+        type: 'Feature',
+        properties: {
+          id: node.id,
+          isDragged: node.id === draggedNodeId,
+          connectionCount: node.connectionCount || 1,
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [node.position[1], node.position[0]] // [lon, lat]
+        }
+      }))
+    };
+  }, [activeNetwork, draggedNodeId]);
+
   return (
     <PageContainer className="editor-page">
       {/* Top Bar */}
@@ -124,23 +232,19 @@ const NetworkEditorPage = () => {
           </div>
 
           <div className="panel-section">
-            <h3 className="panel-section-title">Network visualizations</h3>
-            <div className="panel-options">
-              <label className="checkbox-label">
-                <input type="checkbox" defaultChecked />
-                <span>Show nodes as dots</span>
-              </label>
-              <label className="checkbox-label">
-                <input type="checkbox" defaultChecked />
-                <span>Show links as lines</span>
-              </label>
-              <label className="checkbox-label">
-                <input type="checkbox" defaultChecked />
-                <span>Show radius boundary</span>
-              </label>
+            <h3 className="panel-section-title">Network Data</h3>
+            <div className="config-list">
+              <div className="config-item">
+                <span>Nodes</span>
+                <span className="config-value">{network ? network.nodes.size : 0}</span>
+              </div>
+              <div className="config-item">
+                <span>Links</span>
+                <span className="config-value">{network ? network.links.size : 0}</span>
+              </div>
             </div>
           </div>
-          
+
           <div className="panel-section">
             <h3 className="panel-section-title">Config</h3>
             <div className="config-list">
@@ -162,34 +266,46 @@ const NetworkEditorPage = () => {
           <div className="panel-section">
             <h3 className="panel-section-title">Edit Network</h3>
             <div className="tool-grid">
-              <button 
-                className={`tool-button ${editMode === 'add' ? 'active' : ''}`}
-                onClick={() => setEditMode(editMode === 'add' ? null : 'add')}
-                title="Add node"
-              >
-                <Plus size={20} strokeWidth={2} />
-              </button>
-              <button 
-                className={`tool-button ${editMode === 'edit' ? 'active' : ''}`}
-                onClick={() => setEditMode(editMode === 'edit' ? null : 'edit')}
-                title="Edit node"
+              <button
+                className={`tool-button ${editMode ? 'active' : ''}`}
+                onClick={() => setEditMode(!editMode)}
+                title="Toggle editor mode (drag nodes)"
               >
                 <Pencil size={20} strokeWidth={2} />
               </button>
-              <button 
-                className={`tool-button ${editMode === 'delete' ? 'active' : ''}`}
-                onClick={() => setEditMode(editMode === 'delete' ? null : 'delete')}
-                title="Delete node"
+              <button
+                className={`tool-button`}
+                onClick={undo}
+                disabled={!canUndo}
+                title="Undo (Ctrl+Z)"
+                style={{ opacity: canUndo ? 1 : 0.4 }}
               >
-                <Trash2 size={20} strokeWidth={2} />
+                <Undo size={20} strokeWidth={2} />
+              </button>
+              <button
+                className={`tool-button`}
+                onClick={redo}
+                disabled={!canRedo}
+                title="Redo (Ctrl+Shift+Z)"
+                style={{ opacity: canRedo ? 1 : 0.4 }}
+              >
+                <Redo size={20} strokeWidth={2} />
               </button>
             </div>
+            {editMode && (
+              <div style={{ marginTop: '12px', fontSize: '13px', color: '#666' }}>
+                {isDragging
+                  ? `Dragging node ${draggedNodeId}...`
+                  : 'Click and drag nodes to move them. Drag nodes together to merge. Click on links to create new nodes.'
+                }
+              </div>
+            )}
           </div>
         </div>
         
         {/* Map Area */}
         <div className="editor-map">
-          <Map
+          <MapboxMap
             ref={mapRef}
             initialViewState={{
               longitude: location.lon,
@@ -201,6 +317,84 @@ const NetworkEditorPage = () => {
             mapboxAccessToken={mapboxToken}
             onLoad={() => setMapReady(true)}
           >
+            {/* Road network links */}
+            {mapReady && linksGeoJSON && (
+              <Source id="network-links" type="geojson" data={linksGeoJSON}>
+                <Layer
+                  id="links-layer"
+                  type="line"
+                  paint={{
+                    'line-color': [
+                      'match',
+                      ['get', 'highway'],
+                      'motorway', '#ff6b6b',
+                      'trunk', '#ffa94d',
+                      'primary', '#ffd43b',
+                      'secondary', '#69db7c',
+                      'tertiary', '#74c0fc',
+                      '#95a5a6' // default gray
+                    ],
+                    'line-width': [
+                      'match',
+                      ['get', 'highway'],
+                      'motorway', 4,
+                      'trunk', 3.5,
+                      'primary', 3,
+                      'secondary', 2.5,
+                      'tertiary', 2,
+                      1.5 // default
+                    ],
+                    'line-opacity': 0.8
+                  }}
+                />
+              </Source>
+            )}
+
+            {/* Road network nodes */}
+            {mapReady && nodesGeoJSON && editMode && (
+              <Source id="network-nodes" type="geojson" data={nodesGeoJSON}>
+                <Layer
+                  id="nodes-layer"
+                  type="circle"
+                  paint={{
+                    // Size based on connection count, 2x larger when dragging
+                    'circle-radius': [
+                      'case',
+                      ['get', 'isDragged'],
+                      [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'connectionCount'],
+                        1, 8,  // 1 connection = 8px (2x of 4px)
+                        2, 10, // 2 connections = 10px (2x of 5px)
+                        3, 12, // 3 connections = 12px (2x of 6px)
+                        4, 14  // 4+ connections = 14px (2x of 7px)
+                      ],
+                      [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'connectionCount'],
+                        1, 4,  // 1 connection = 4px
+                        2, 5,  // 2 connections = 5px
+                        3, 6,  // 3 connections = 6px
+                        4, 7   // 4+ connections = 7px
+                      ]
+                    ],
+                    // Red when dragging, blue otherwise
+                    'circle-color': [
+                      'case',
+                      ['get', 'isDragged'],
+                      '#ef4444', // Red when dragging
+                      '#3b82f6'  // Blue otherwise
+                    ],
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff',
+                    'circle-opacity': 0.9
+                  }}
+                />
+              </Source>
+            )}
+
             {/* Radius boundary circle */}
             <Source id="radius-circle" type="geojson" data={circleGeoJSON}>
               <Layer
@@ -247,7 +441,7 @@ const NetworkEditorPage = () => {
                 }} />
               </div>
             </Marker>
-          </Map>
+          </MapboxMap>
         </div>
       </motion.div>
     </PageContainer>
