@@ -6,6 +6,8 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import PageContainer from '../components/PageContainer';
 import Button from '../components/Button';
 import './MapSelectionPage.css';
+import { fetchOSMData } from '../osm';
+import { filterNetworkByRadius } from '../utils/radiusFilter';
 
 // Helper to create a circle GeoJSON from center and radius (in km)
 const createCircleGeoJSON = (lon, lat, radiusKm) => {
@@ -53,12 +55,27 @@ const createCircleGeoJSON = (lon, lat, radiusKm) => {
   };
 };
 
+// Helper to calculate bounding box from center and radius
+const calculateBoundingBox = (center, radiusKm) => {
+  const earthRadiusKm = 6371;
+  const latDelta = (radiusKm / earthRadiusKm) * (180 / Math.PI);
+  const lonDelta = (radiusKm / (earthRadiusKm * Math.cos(center.lat * Math.PI / 180))) * (180 / Math.PI);
+
+  return {
+    getSouth: () => center.lat - latDelta,
+    getNorth: () => center.lat + latDelta,
+    getWest: () => center.lon - lonDelta,
+    getEast: () => center.lon + lonDelta
+  };
+};
+
 const MapSelectionPage = () => {
   const navigate = useNavigate();
   const { projectId } = useParams();
   const [selectedLocation, setSelectedLocation] = useState('23.322, 42.698');
   const [radius, setRadius] = useState(5);
   const [mapReady, setMapReady] = useState(false);
+  const [loading, setLoading] = useState(false);
   const mapRef = useRef(null);
 
   // Disable Mapbox telemetry
@@ -80,13 +97,84 @@ const MapSelectionPage = () => {
 
   const location = parseLocation(selectedLocation);
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
-  const circleGeoJSON = createCircleGeoJSON(location.lon, location.lat, radius);
+  const circleGeoJSON = createCircleGeoJSON(location.lon, location.lat, Number(radius));
 
   // Handle map click to drop pin
   const handleMapClick = (e) => {
     if (!mapReady) return;
     const { lng, lat } = e.lngLat;
     setSelectedLocation(`${lng.toFixed(4)}, ${lat.toFixed(4)}`);
+  };
+
+  // Handle save network - fetch OSM data and filter by radius
+  const handleSaveNetwork = async () => {
+    if (loading) return;
+
+    // Validate radius
+    const radiusNum = Number(radius);
+    const MAX_RADIUS_KM = 10;
+    if (radiusNum > MAX_RADIUS_KM) {
+      alert(`Please select a radius smaller than ${MAX_RADIUS_KM}km to avoid API timeouts`);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log('Starting OSM data fetch...');
+      console.log('Location:', location);
+      console.log('Radius (km):', radiusNum, typeof radiusNum);
+
+      // Step 1: Calculate bounding box (1.5x radius for safety margin)
+      const expandedRadiusKm = radiusNum * 1.5;
+      const bounds = calculateBoundingBox(location, expandedRadiusKm);
+      console.log('Bounding box:', {
+        south: bounds.getSouth(),
+        west: bounds.getWest(),
+        north: bounds.getNorth(),
+        east: bounds.getEast()
+      });
+
+      // Step 2: Fetch OSM data
+      console.log('Fetching OSM data...');
+      const rawNetwork = await fetchOSMData(bounds);
+      console.log('Raw network:', rawNetwork);
+
+      // Step 3: Filter by exact radius
+      console.log('Filtering network by radius...');
+      const filteredNetwork = filterNetworkByRadius(rawNetwork, location, radiusNum);
+      console.log('Filtered network:', filteredNetwork);
+
+      // Step 4: Validate results
+      if (filteredNetwork.nodes.size === 0 || filteredNetwork.links.size === 0) {
+        alert('No road network found in selected area. Try a different location or larger radius.');
+        setLoading(false);
+        return;
+      }
+
+      // Step 5: Store in localStorage (convert Maps to arrays for JSON serialization)
+      localStorage.setItem('trafficjam_network', JSON.stringify({
+        nodes: Array.from(filteredNetwork.nodes.entries()),
+        links: Array.from(filteredNetwork.links.entries()),
+        transportRoutes: Array.from(filteredNetwork.transportRoutes?.entries() || []),
+        buildings: Array.from(filteredNetwork.buildings?.entries() || []),
+        metadata: {
+          centerLat: location.lat,
+          centerLon: location.lon,
+          radius: radiusNum,
+          timestamp: Date.now()
+        }
+      }));
+
+      // Step 6: Navigate to NetworkEditorPage
+      navigate(`/projects/${projectId}/network-editor`);
+
+    } catch (error) {
+      console.error('Failed to fetch OSM data:', error);
+      const errorMessage = error.message || 'Unknown error';
+      alert(`Failed to load network data: ${errorMessage}\n\nThe Overpass API may be overloaded. Please try again in a moment, or try a smaller radius.`);
+      setLoading(false);
+    }
   };
 
   return (
@@ -131,29 +219,24 @@ const MapSelectionPage = () => {
                 <span className="label-value">{radius}km</span>
               </label>
               <input 
-                type="range" 
-                className="form-range" 
+                type="range"
+                className="form-range"
                 min="1"
                 max="20"
                 value={radius}
-                onChange={(e) => setRadius(e.target.value)}
+                onChange={(e) => setRadius(Number(e.target.value))}
               />
             </div>
             
             <div className="panel-actions">
-              <Button 
+              <Button
                 variant="primary"
                 size="large"
-                onClick={() => navigate(`/projects/${projectId}/network-editor`, {
-                  state: {
-                    location: selectedLocation,
-                    radius: radius,
-                    coordinates: location
-                  }
-                })}
+                onClick={handleSaveNetwork}
+                disabled={loading}
                 style={{ width: '100%' }}
               >
-                Save Network
+                {loading ? 'Loading Network...' : 'Save Network'}
               </Button>
             </div>
           </div>
