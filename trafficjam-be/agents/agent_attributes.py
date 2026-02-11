@@ -50,7 +50,7 @@ def find_nearby_or_closest(
 
 
 def generate_child_age() -> int:
-    return random.randint(0, 17)
+    return random.randint(3, 17)
 
 
 def generate_adult_age() -> int:
