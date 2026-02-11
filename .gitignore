@@ -2,3 +2,9 @@
 .venv
 .claude
 meditor/.env
+trafficjam-be/utils
+trafficjam-be/public_transport
+trafficjam-be/plans
+trafficjam-be/agents/__pycache__
+trafficjam-be/__pycache__
+map-data-service/__pycache__
