@@ -20,19 +20,44 @@ def categorize_work_buildings(buildings: list[Building]) -> dict[str, list[Build
     }
 
 
-def assign_work_location(agent: Adult, buildings: list[Building]) -> Adult:
+def calculate_work_distribution_weights(
+    work_categories: dict[str, list[Building]],
+) -> tuple[list[tuple[str, list[dict]]], list[float]]:
+    base_weights = {
+        "supermarket": 0.15,
+        "healthcare": 0.15,
+        "education": 0.15,
+        "retail": 0.40,
+        "food": 0.15,
+    }
+
+    available_categories = []
+    weights = []
+
+    for category, buildings in work_categories.items():
+        if buildings:
+            available_categories.append((category, buildings))
+            weights.append(base_weights[category])
+
+    total_weight = sum(weights)
+    if total_weight > 0:
+        weights = [w / total_weight for w in weights]
+
+    return available_categories, weights
+
+
+def assign_work_location(agent: dict, buildings: List[Building]) -> None:
     work_categories = categorize_work_buildings(buildings)
-    # Filter to non-empty categories, pair with buildings
-    available = [(cat, bldgs) for cat, bldgs in work_categories.items() if bldgs]
-    if not available:
-        return agent
+    available_categories, weights = calculate_work_distribution_weights(work_categories)
 
-    # Get weights for available categories only
-    weights = [WORK_CATEGORY_WEIGHTS[cat] for cat, _ in available]
+    if not available_categories:
+        return
 
-    # random.choices handles non-normalized weights automatically
-    category, category_buildings = random.choices(available, weights=weights)[0]
+    category, category_buildings = random.choices(
+        available_categories, weights=weights
+    )[0]
+    work_building = random.choice(category_buildings)
 
-    agent.work = random.choice(category_buildings)
-    agent.work_type = category
-    return agent
+    agent["work_building_id"] = work_building.id
+    agent["work_location"] = work_building.position
+    agent["work_type"] = category
