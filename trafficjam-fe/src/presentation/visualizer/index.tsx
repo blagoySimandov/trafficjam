@@ -2,18 +2,29 @@ import { useQuery } from "@tanstack/react-query";
 import { DeckGL, TripsLayer, ScatterplotLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MAPBOX_TOKEN } from "../../constants/map";
+import { MAP_STYLE, MAPBOX_TOKEN } from "../../constants/map";
 import { loadTrips, getVehiclePositions } from "../../event-processing";
 import type { Trip } from "../../event-processing";
-import { useSimulationTime } from "./hooks/use-simulation-time";
+import {
+  useSimulationTime,
+  type SimulationTimeState,
+} from "./hooks/use-simulation-time";
 import { INITIAL_STATE_CORK, DARK_MAP_STYLE } from "./constants";
 import { BackToEditorButton } from "./components/back-button";
+import { PlaybackBar } from "./components/playback-bar";
 
 interface VisualizerProps {
   onBack: () => void;
 }
 
-function useLayers(trips: Trip[], time: number) {
+// export function Visualizer() {
+//   const { data: trips = [] } = useQuery({
+//     queryKey: ["trips"],
+//     queryFn: loadTrips,
+//   });
+//   const positions = getVehiclePositions(trips, simulation.time);
+
+function useLayers(trips: Trip[], simulation: SimulationTimeState) {
   return [
     new TripsLayer({
       id: "trails",
@@ -23,11 +34,11 @@ function useLayers(trips: Trip[], time: number) {
       getColor: [253, 128, 93],
       widthMinPixels: 2,
       trailLength: 300,
-      currentTime: time,
+      currentTime: simulation.time,
     }),
     new ScatterplotLayer({
       id: "cars",
-      data: getVehiclePositions(trips, time),
+      data: getVehiclePositions(trips, simulation.time),
       getPosition: (d: [number, number]) => d,
       getFillColor: [255, 220, 0],
       getRadius: 30,
@@ -42,13 +53,16 @@ export function Visualizer({ onBack }: VisualizerProps) {
     queryKey: ["trips"],
     queryFn: loadTrips,
   });
-  const time = useSimulationTime(trips);
-  const layers = useLayers(trips, time);
+
+  const simulation = useSimulationTime(trips);
+  const layers = useLayers(trips, simulation);
 
   return (
     <DeckGL initialViewState={INITIAL_STATE_CORK} controller layers={layers}>
       <Map mapStyle={DARK_MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
       <BackToEditorButton onClick={onBack} />
+      <Map mapStyle={MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
+      <PlaybackBar simulation={simulation} />
     </DeckGL>
   );
 }

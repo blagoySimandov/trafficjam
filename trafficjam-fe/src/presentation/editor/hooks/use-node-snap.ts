@@ -5,15 +5,22 @@ import { findSnapPoint } from '../../../utils/snap-to-network';
 interface UseNodeSnapParams {
     network: Network | null;
     onNetworkChange: (network: Network) => void;
+    onBeforeChange?: (network: Network) => void;
 }
 
 export function useNodeSnap({
   network,
   onNetworkChange,
+  onBeforeChange,
 }: UseNodeSnapParams) {
   const snapNodeToNetwork = useCallback(
     (nodeId: string, position: LngLatTuple) => {
       if (!network) return;
+      
+      // Save current state to undo stack before making changes
+      if (onBeforeChange) {
+        onBeforeChange(network);
+      }
       
       // Filter out the dragged node from snap candidates
       const filteredNetwork: Network = {
@@ -28,6 +35,10 @@ export function useNodeSnap({
       if (snapResult?.isNode && snapResult.nodeId) {
           const targetNodeId = snapResult.nodeId;
           const snappedPosition = snapResult.point;
+          
+          // Get the current position of the node being snapped (before it's deleted)
+          const nodeBeingSnapped = network.nodes.get(nodeId);
+          const oldNodePosition: LngLatTuple | undefined = nodeBeingSnapped?.position;
 
           const updatedLinks = new Map(network.links);
           for (const [linkId, link] of network.links.entries()) {
@@ -47,13 +58,12 @@ export function useNodeSnap({
               shouldUpdate = true;
             }
 
-            if (!shouldUpdate) {
-              const oldPosition = position;
+            if (!shouldUpdate && oldNodePosition) {
               for (let i = 0; i < geometry.length; i++) {
                 const [lat, lng] = geometry[i];
                 const isOldNodePosition =
-                  Math.abs(lat - oldPosition[0]) < 0.000001 &&
-                  Math.abs(lng - oldPosition[1]) < 0.000001;
+                  Math.abs(lat - oldNodePosition[0]) < 0.000001 &&
+                  Math.abs(lng - oldNodePosition[1]) < 0.000001;
 
                 if (isOldNodePosition) {
                   geometry[i] = snappedPosition;
@@ -91,7 +101,7 @@ export function useNodeSnap({
           }
         }
     },
-    [network, onNetworkChange]
+    [network, onNetworkChange, onBeforeChange]
   );
   
   return { snapNodeToNetwork };
