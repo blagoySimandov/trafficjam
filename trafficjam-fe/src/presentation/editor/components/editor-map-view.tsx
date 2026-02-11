@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import Map from "react-map-gl";
+import MapGL from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../../../types";
+import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
@@ -49,11 +50,21 @@ export function EditorMapView({
     clearUndoStack();
   }, [clear, clearUndoStack]);
 
+  const handleLinkClickLocal = useAddNodeOnLink({
+    network,
+    setNetwork,
+    pushToUndoStack,
+    onStatusChange,
+    editorMode,
+    onLinkClick,
+  });
+
   const { hoverInfo, handleClick, handleMouseMove, handleMouseLeave } =
     useMapInteractions({
       network,
       mapRef,
-      onLinkClick,
+      onLinkClick: handleLinkClickLocal,
+      editorMode,
     });
 
   const { isDragging, displayNetwork, draggedNodeId } = useNodeDrag({
@@ -122,23 +133,19 @@ export function EditorMapView({
 
   const handleMapClick = useCallback(
     (event: MapMouseEvent) => {
-      if (!editorMode) {
-        handleClick(event);
-      }
+      handleClick(event);
     },
-    [editorMode, handleClick],
+    [handleClick],
   );
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
-      if (!editorMode) {
-        handleMouseMove(event);
-      }
+      handleMouseMove(event);
     },
-    [editorMode, handleMouseMove],
+    [handleMouseMove],
   );
 
   return (
-    <Map
+    <MapGL
       ref={handleMapRef}
       initialViewState={{
         longitude: DEFAULT_CENTER[0],
@@ -196,6 +203,6 @@ export function EditorMapView({
           latitude={hoverInfo.latitude}
         />
       )}
-    </Map>
+    </MapGL>
   );
 }

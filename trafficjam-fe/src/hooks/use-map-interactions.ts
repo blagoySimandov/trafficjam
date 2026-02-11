@@ -1,23 +1,25 @@
 import { useState, useCallback } from "react";
-import type { MapLayerMouseEvent, MapRef } from "react-map-gl";
+import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint } from "../utils/feature-detection";
 
 interface UseMapInteractionsParams {
   network: Network | null;
   mapRef: React.RefObject<MapRef | null>;
-  onLinkClick?: (link: TrafficLink) => void;
+  onLinkClick?: (link: TrafficLink, coords?: { lng: number; lat: number }) => void;
+  editorMode?: boolean;
 }
 
 export function useMapInteractions({
   network,
   mapRef,
   onLinkClick,
-}: UseMapInteractionsParams) {
+  editorMode,
+}: UseMapInteractionsParams) { 
   const [hoverInfo, setHoverInfo] = useState<CombinedHoverInfo | null>(null);
 
   const handleClick = useCallback(
-    (event: MapLayerMouseEvent) => {
+    (event: MapMouseEvent) => {
       if (!network) return;
 
       const detected = detectFeaturesAtPoint(event, network);
@@ -30,14 +32,14 @@ export function useMapInteractions({
           latitude: event.lngLat.lat,
         });
       } else if (detected.link && onLinkClick) {
-        onLinkClick(detected.link);
+        onLinkClick(detected.link, { lng: event.lngLat.lng, lat: event.lngLat.lat });
       }
     },
     [network, onLinkClick]
   );
 
   const handleMouseMove = useCallback(
-    (event: MapLayerMouseEvent) => {
+    (event: MapMouseEvent) => {
       const map = mapRef.current;
       const features = event.features || [];
 
@@ -46,9 +48,13 @@ export function useMapInteractions({
         return;
       }
 
-      if (map) map.getCanvas().style.cursor = "pointer";
-
       const detected = detectFeaturesAtPoint(event, network);
+
+      if (detected.link && editorMode) {
+        if (map) map.getCanvas().style.cursor = "crosshair";
+      } else {
+        if (map) map.getCanvas().style.cursor = "pointer";
+      }
 
       if (detected.link || detected.routes.length > 0) {
         setHoverInfo({
@@ -61,7 +67,7 @@ export function useMapInteractions({
         setHoverInfo(null);
       }
     },
-    [network, mapRef]
+    [network, mapRef, editorMode]
   );
 
   const handleMouseLeave = useCallback(() => {
