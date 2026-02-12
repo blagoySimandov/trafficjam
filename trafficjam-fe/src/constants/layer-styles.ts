@@ -1,4 +1,19 @@
+import type { ExpressionSpecification } from "mapbox-gl";
 import type { LayerProps } from "react-map-gl";
+
+function zoomScaledWidth(
+  offset: number,
+): ExpressionSpecification {
+  return [
+    "interpolate",
+    ["exponential", 1.5],
+    ["zoom"],
+    10, ["*", ["+", ["get", "weight"], offset], 0.05],
+    13, ["*", ["+", ["get", "weight"], offset], 0.15],
+    15, ["+", ["get", "weight"], offset],
+    18, ["*", ["+", ["get", "weight"], offset], 2.5],
+  ];
+}
 
 export const glowLayer: LayerProps = {
   id: "network-glow",
@@ -6,7 +21,7 @@ export const glowLayer: LayerProps = {
   filter: ["==", ["get", "hasGlow"], true],
   paint: {
     "line-color": ["get", "color"],
-    "line-width": ["+", ["get", "weight"], 12],
+    "line-width": zoomScaledWidth(12),
     "line-opacity": 0.15,
     "line-blur": 4,
   },
@@ -21,7 +36,7 @@ export const casingLayer: LayerProps = {
   type: "line",
   paint: {
     "line-color": ["get", "casingColor"],
-    "line-width": ["+", ["get", "weight"], 4],
+    "line-width": zoomScaledWidth(4),
     "line-opacity": 0.9,
   },
   layout: {
@@ -35,7 +50,7 @@ export const mainLayer: LayerProps = {
   type: "line",
   paint: {
     "line-color": ["get", "color"],
-    "line-width": ["get", "weight"],
+    "line-width": zoomScaledWidth(0),
     "line-opacity": 1,
   },
   layout: {
@@ -54,7 +69,15 @@ export const dividersLayer: LayerProps = {
   ],
   paint: {
     "line-color": ["get", "casingColor"],
-    "line-width": 1,
+    "line-width": [
+      "interpolate",
+      ["exponential", 1.5],
+      ["zoom"],
+      10, 0.1,
+      13, 0.4,
+      15, 1,
+      18, 2.5,
+    ],
     "line-opacity": 0.5,
     "line-dasharray": [8, 12],
   },

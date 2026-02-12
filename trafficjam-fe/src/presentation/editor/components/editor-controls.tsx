@@ -1,12 +1,4 @@
-import {
-  Download,
-  Trash2,
-  Upload,
-  Building2,
-  Building,
-  Pencil,
-  Undo,
-} from "lucide-react";
+import { Download, Trash2, Upload, Pencil, Undo } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
 interface ControlButtonProps {
@@ -46,8 +38,7 @@ interface EditorControlsProps {
   onClear: () => void;
   onExport: () => void;
   loading: boolean;
-  showBuildings: boolean;
-  onToggleBuildings: () => void;
+  layerToggle: React.ReactNode;
   editorMode?: boolean;
   onToggleEditorMode: () => void;
   onUndo: () => void;
@@ -59,8 +50,7 @@ export function EditorControls({
   onClear,
   onExport,
   loading,
-  showBuildings,
-  onToggleBuildings,
+  layerToggle,
   editorMode,
   onToggleEditorMode,
   onUndo,
@@ -84,11 +74,7 @@ export function EditorControls({
         icon={<Trash2 size={18} />}
         onClick={onClear}
       />
-      <ControlButton
-        title={showBuildings ? "Hide buildings" : "Show buildings"}
-        icon={showBuildings ? <Building size={18} /> : <Building2 size={18} />}
-        onClick={onToggleBuildings}
-      />
+      {layerToggle}
       <ControlButton
         title={"Toggle editor mode"}
         icon={<Pencil size={18} />}
