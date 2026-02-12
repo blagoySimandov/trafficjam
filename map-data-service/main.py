@@ -2,12 +2,11 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from models import NetworkResponse
-from osm_client import fetch_osm_data
-from parser import parse_osm_response
+from gcs_client import fetch_network_from_gcs, filter_network_by_bounds
 
 app = FastAPI(
     title="Map Data Service",
-    description="Fetch OSM data for traffic simulation",
+    description="Fetch network data from Google Cloud Storage for traffic simulation",
     version="1.0.0",
 )
 
@@ -33,20 +32,33 @@ async def get_network(
         raise HTTPException(status_code=400, detail="min_lng must be less than max_lng")
 
     try:
-        osm_data = await fetch_osm_data(min_lat, min_lng, max_lat, max_lng)
+        # Fetch the full network from GCS
+        full_network = await fetch_network_from_gcs()
     except Exception as e:
         raise HTTPException(
-            status_code=502, detail=f"Failed to fetch OSM data: {str(e)}"
+            status_code=502, detail=f"Failed to fetch network data from GCS: {str(e)}"
         )
 
     try:
-        return parse_osm_response(osm_data)
+        # Filter the network by the requested bounds
+        filtered_network = filter_network_by_bounds(
+            full_network, min_lat, min_lng, max_lat, max_lng
+        )
+        return filtered_network
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Failed to parse OSM data: {str(e)}"
+            status_code=500, detail=f"Failed to filter network data: {str(e)}"
         )
 
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    """This lets you run the file directly with python main.py
+        instead of using the uvicorn command"""
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
