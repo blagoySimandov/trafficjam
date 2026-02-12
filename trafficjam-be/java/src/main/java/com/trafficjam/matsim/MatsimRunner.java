@@ -179,6 +179,7 @@ public class MatsimRunner {
      */
     private static class SimulationInfo {
         final Thread thread;
+        @SuppressWarnings("unused")
         final Controler controler;
         String status; // "RUNNING", "COMPLETED", "FAILED"
         String error; // Error message if failed
