@@ -29,7 +29,7 @@ cd trafficjam-be
 **Bash (Linux/Mac/WSL):**
 ```bash
 cd trafficjam-be
-./run-server-with-logging.sh
+./run-server.sh
 ```
 
 This will:
@@ -91,8 +91,24 @@ This will:
 
 Expected output:
 ```
-[09:15:23.456] CONNECTED to stream
-[09:15:24.123] Status update #1
+[12:15:01] #1 CONNECTED to stream
+           -> connected
+[12:15:02] #2 Status update
+           -> RUNNING
+[12:15:03] #3 Status update
+           -> RUNNING
+...
+(Received 5 events in 5s - streaming works!)
+...
+[12:16:30] #100 Status update
+           -> COMPLETED
+[12:16:30] #101 FINISHED
+           -> COMPLETED
+
+=== Stream Closed ===
+Total events received: 101
+Total time: 90s
+```
            -> RUNNING
 [09:15:25.234] Status update #2
            -> RUNNING
