@@ -28,5 +28,5 @@ $env:MAVEN_OPTS = "--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.
 # Change to java directory and run Maven
 # The *>&1 redirects all streams (stdout and stderr) to stdout
 # Tee-Object writes to both the file and the console
-cd C:\Users\clanc\Desktop\trafficjam\trafficjam-be\java
-mvn spring-boot:run *>&1 | Tee-Object -FilePath "C:\Users\clanc\Desktop\trafficjam\trafficjam-be\$logFile" -Append
+cd .\java
+mvn spring-boot:run *>&1 | Tee-Object -FilePath "..\$logFile" -Append

@@ -12,7 +12,7 @@
 
 # Configuration
 $baseUrl = "http://localhost:8080/api/simulations"
-$networkFile = "c:\Users\clanc\Desktop\trafficjam\investigations\matsim-data\cork_network.xml"
+$networkFile = "$PSScriptRoot\java\src\main\resources\cork_network.xml"
 
 Write-Host "=== MatSim API Test Script ===" -ForegroundColor Cyan
 Write-Host ""
@@ -168,7 +168,7 @@ try {
     # ============================================================
     Write-Host "=== All Tests Complete ===" -ForegroundColor Green
     Write-Host "Simulation ID: $simulationId" -ForegroundColor Cyan
-    Write-Host "Check output files at: c:\Users\clanc\Desktop\trafficjam\trafficjam-be\java\output\$simulationId" -ForegroundColor Cyan
+    Write-Host "Check output files at: .\java\output\$simulationId" -ForegroundColor Cyan
     
 } catch {
     Write-Host "[ERROR] Error occurred!" -ForegroundColor Red

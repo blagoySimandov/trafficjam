@@ -12,7 +12,7 @@
 
 # Configuration
 $baseUrl = "http://localhost:8080/api/simulations"
-$networkFile = "c:\Users\clanc\Desktop\trafficjam\investigations\matsim-data\cork_network.xml"
+$networkFile = "$PSScriptRoot\java\src\main\resources\cork_network.xml"
 
 Write-Host "=== SSE Streaming Test (Long Simulation) ===" -ForegroundColor Cyan
 Write-Host ""
