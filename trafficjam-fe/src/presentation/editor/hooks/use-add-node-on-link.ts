@@ -3,6 +3,7 @@ import type { Network, TrafficLink } from "../../../types";
 import nearestPointOnLine from "@turf/nearest-point-on-line";
 import lineSplit from "@turf/line-split";
 import { point, lineString } from "@turf/helpers";
+import type { Feature, LineString, Point, FeatureCollection } from "geojson";
 
 interface UseAddNodeOnLinkParams {
   network: Network | null;
@@ -39,17 +40,17 @@ export function useAddNodeOnLink({
         if (coords) {
           try {
             const coordsArr = link.geometry.map(([lat, lng]) => [lng, lat]);
-            const line = lineString(coordsArr as any);
+            const line = lineString(coordsArr);
             const pt = point([coords.lng, coords.lat]);
-            const snapped: any = nearestPointOnLine(line as any, pt as any);
-            const split: any = lineSplit(line as any, snapped as any);
+            const snapped = nearestPointOnLine(line, pt) as Feature<Point>;
+            const split = lineSplit(line, snapped) as FeatureCollection<LineString>;
 
             if (split && split.features && split.features.length >= 2) {
               const leftCoords = split.features[0].geometry.coordinates.map(
-                ([lng, lat]: [number, number]) => [lat, lng] as [number, number],
+                (coord) => [coord[1], coord[0]] as [number, number],
               );
               const rightCoords = split.features[1].geometry.coordinates.map(
-                ([lng, lat]: [number, number]) => [lat, lng] as [number, number],
+                (coord) => [coord[1], coord[0]] as [number, number],
               );
 
               const snappedCoord = snapped.geometry.coordinates as [number, number];

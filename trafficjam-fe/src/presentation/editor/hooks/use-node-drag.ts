@@ -256,7 +256,7 @@ export function useNodeDrag({
       mapCanvas.off("mousemove", handleMouseMove);
       mapCanvas.off("mouseup", handleMouseUp);
     };
-  }, [network, mapRef, editorMode, onNetworkChange, draggedNodeId, tempDragPosition, originalNodePosition, snapNodeToNetwork]);
+  }, [network, mapRef, editorMode, onNetworkChange, onBeforeChange, draggedNodeId, tempDragPosition, originalNodePosition, snapNodeToNetwork]);
 
   return {
     isDragging,
