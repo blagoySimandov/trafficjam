@@ -1,31 +1,16 @@
 #!/bin/bash
-# MatSim API Test Script for Bash
-# 
-# This script tests all the main API endpoints:
-# 1. POST /api/simulations - Start a simulation with file upload
-# 2. GET /api/simulations/{id}/status - Check simulation status
-# 3. GET /api/simulations/{id}/events - SSE streaming (shows endpoint only)
-# 4. DELETE /api/simulations/{id} - Stop a simulation
-# 5. Error handling with invalid simulation ID
-# 6. CORS headers verification
-#
-# Usage: ./test-api.sh
+# API Test Script - Tests all main endpoints (POST, GET, DELETE, CORS, error handling)
 
-# Configuration
 BASE_URL="http://localhost:8080/api/simulations"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NETWORK_FILE="$SCRIPT_DIR/java/src/main/resources/cork_network.xml"
+NETWORK_FILE="$SCRIPT_DIR/../java/src/main/resources/cork_network.xml"
 
 echo -e "\033[36m=== MatSim API Test Script ===\033[0m"
 echo ""
 
-# ============================================================
-# Test 1: Start a Simulation (POST /api/simulations)
-# Tests: File upload, multipart form data, simulation creation
-# ============================================================
+# Test 1: Start simulation
 echo -e "\033[33mTest 1: Starting a simulation...\033[0m"
 
-# Use curl to upload file with multipart form data
 RESPONSE=$(curl -s -X POST "$BASE_URL" \
   -F "networkFile=@$NETWORK_FILE" \
   -F "iterations=5" \
@@ -43,12 +28,9 @@ else
     exit 1
 fi
 
-# ============================================================
-# Test 2: Check Status (GET /api/simulations/{id}/status)
-# Tests: Status endpoint, simulation tracking
-# ============================================================
+# Test 2: Check status
 echo -e "\033[33mTest 2: Checking simulation status...\033[0m"
-sleep 2  # Give simulation time to start
+sleep 2
 
 STATUS_RESPONSE=$(curl -s "$BASE_URL/$SIMULATION_ID/status")
 echo -e "\033[32m[OK] Status retrieved successfully!\033[0m"
@@ -56,24 +38,16 @@ STATUS=$(echo "$STATUS_RESPONSE" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
 echo -e "\033[36mStatus: $STATUS\033[0m"
 echo ""
 
-# ============================================================
-# Test 3: Stream Events (GET /api/simulations/{id}/events)
-# Tests: SSE endpoint availability
-# Note: Actual streaming test is in test-sse-full.sh
-# ============================================================
+# Test 3: SSE endpoint info
 echo -e "\033[33mTest 3: Streaming events (will show first few events)...\033[0m"
 echo -e "\033[90mPress Ctrl+C to stop streaming\033[0m"
 echo ""
 
-# SSE streaming is simpler in bash with curl
 echo -e "\033[33mTo stream events, use this command in a separate terminal:\033[0m"
 echo -e "\033[37mcurl -N $BASE_URL/$SIMULATION_ID/events\033[0m"
 echo ""
 
-# ============================================================
-# Test 4: Error Handling - Invalid Simulation ID
-# Tests: 404 error handling for non-existent simulations
-# ============================================================
+# Test 4: Error handling
 echo -e "\033[33mTest 4: Testing error handling with invalid simulation ID...\033[0m"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/invalid-id-12345/status")
 
@@ -84,13 +58,9 @@ else
 fi
 echo ""
 
-# ============================================================
-# Test 5: CORS Headers (OPTIONS /api/simulations)
-# Tests: CORS configuration for frontend integration
-# ============================================================
+# Test 5: CORS headers
 echo -e "\033[33mTest 5: Checking CORS headers...\033[0m"
 
-# Send OPTIONS request to check CORS preflight response
 CORS_RESPONSE=$(curl -s -i -X OPTIONS "$BASE_URL" \
   -H "Origin: http://localhost:3000" \
   -H "Access-Control-Request-Method: POST")
@@ -104,7 +74,7 @@ echo -e "\033[36m  Allow-Origin: $ALLOW_ORIGIN\033[0m"
 echo -e "\033[36m  Allow-Methods: $ALLOW_METHODS\033[0m"
 echo -e "\033[36m  Allow-Credentials: $ALLOW_CREDENTIALS\033[0m"
 
-# Verify all required HTTP methods are allowed
+# Verify required methods
 if echo "$ALLOW_METHODS" | grep -q "GET" && \
    echo "$ALLOW_METHODS" | grep -q "POST" && \
    echo "$ALLOW_METHODS" | grep -q "PUT" && \
@@ -115,19 +85,15 @@ else
 fi
 echo ""
 
-# ============================================================
-# Test 6: Stop Simulation (DELETE /api/simulations/{id})
-# Tests: Simulation control, graceful shutdown
-# ============================================================
+# Test 6: Stop simulation
 echo -e "\033[33mTest 6: Stopping the simulation...\033[0m"
 
-# Send DELETE request to stop the simulation
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/$SIMULATION_ID")
 
 if [ "$HTTP_CODE" = "204" ]; then
     echo -e "\033[32m[OK] Simulation stopped successfully (204 No Content)!\033[0m"
     
-    # Verify status changed to STOPPED
+    # Verify status changed
     sleep 1
     STOPPED_STATUS=$(curl -s "$BASE_URL/$SIMULATION_ID/status" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
     
@@ -141,9 +107,7 @@ else
 fi
 echo ""
 
-# ============================================================
 # Summary
-# ============================================================
 echo -e "\033[32m=== All Tests Complete ===\033[0m"
 echo -e "\033[36mSimulation ID: $SIMULATION_ID\033[0m"
 echo -e "\033[36mCheck output files at: ./java/output/$SIMULATION_ID\033[0m"

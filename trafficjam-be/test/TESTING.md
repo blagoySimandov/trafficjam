@@ -20,13 +20,6 @@ Expected: `BUILD SUCCESS`
 
 **Open a terminal and start the server (leave it running):**
 
-**PowerShell (Windows):**
-```powershell
-cd trafficjam-be
-.\run-server-with-logging.ps1
-```
-
-**Bash (Linux/Mac/WSL):**
 ```bash
 cd trafficjam-be
 ./run-server.sh
@@ -48,24 +41,17 @@ Tomcat started on port 8080 (http)
 
 **Open a NEW terminal window and run:**
 
-**PowerShell (Windows):**
-```powershell
-cd trafficjam-be
-powershell -ExecutionPolicy Bypass -File .\test-api.ps1
-```
-
-**Bash (Linux/Mac/WSL):**
 ```bash
-cd trafficjam-be
+cd trafficjam-be/test
 ./test-api.sh
 ```
 
 This automated test script will:
-- ✅ Start a simulation (5 iterations)
-- ✅ Check simulation status
-- ✅ Test error handling (invalid simulation ID)
-- ✅ Verify CORS headers
-- ✅ Stop the simulation
+- Start a simulation (5 iterations)
+- Check simulation status
+- Test error handling (invalid simulation ID)
+- Verify CORS headers
+- Stop the simulation
 
 Expected: All tests pass with `[OK]` messages in green
 
@@ -73,21 +59,15 @@ Expected: All tests pass with `[OK]` messages in green
 
 **In the same terminal, run:**
 
-**PowerShell (Windows):**
-```powershell
-powershell -ExecutionPolicy Bypass -File .\test-sse-full.ps1
-```
-
-**Bash (Linux/Mac/WSL):**
 ```bash
 ./test-sse-full.sh
 ```
 
 This will:
-- ✅ Start a long simulation (100 iterations, ~30-60 seconds)
-- ✅ Connect to the SSE stream immediately
-- ✅ Display events arriving in real-time
-- ✅ Prove that Server-Sent Events are working correctly
+- Start a long simulation (100 iterations, ~30-60 seconds)
+- Connect to the SSE stream immediately
+- Display events arriving in real-time
+- Prove that Server-Sent Events are working correctly
 
 Expected output:
 ```
@@ -109,13 +89,6 @@ Expected output:
 Total events received: 101
 Total time: 90s
 ```
-           -> RUNNING
-[09:15:25.234] Status update #2
-           -> RUNNING
-...
-[09:16:45.678] FINISHED
-           -> COMPLETED
-```
 
 ---
 
@@ -126,10 +99,6 @@ Total time: 90s
 After a simulation completes, verify files are created:
 
 ```bash
-# Windows
-dir trafficjam-be\java\output\{simulationId}
-
-# Linux/Mac
 ls -la trafficjam-be/java/output/{simulationId}
 ```
 
@@ -142,34 +111,6 @@ ls -la trafficjam-be/java/output/{simulationId}
 
 ---
 
-## Code Review Checklist
-
-### Configuration
-- [ ] `WebConfig.java` - CORS properly configured
-- [ ] `application.properties` - Temp/output directories configured
-
-### DTOs
-- [ ] `SimulationRequest.java` - Has default values (iterations=10, seed=4711)
-- [ ] `SimulationResponse.java` - Contains simulationId and status
-- [ ] `SimulationStatusResponse.java` - Contains simulationId, status, error
-
-### Service Layer
-- [ ] `SimulationService.java` - Handles file uploads correctly
-- [ ] Uses default-plans.xml for MVP (no user-uploaded plans)
-- [ ] SSE streaming polls status every second
-- [ ] Proper error handling for non-existent simulations
-
-### Controller
-- [ ] `SimulationController.java` - All endpoints properly annotated
-- [ ] Multipart file upload configured
-- [ ] SSE emitter has 30-minute timeout
-- [ ] Proper HTTP status codes returned
-
-### Resources
-- [ ] `default-plans.xml` - Valid empty MatSim plans file
-- [ ] `config-template.xml` - Contains all required placeholders
-
----
 
 ## Common Issues
 
@@ -203,10 +144,3 @@ Monitor memory usage and verify:
 - Output files are created correctly
 
 ---
-
-## Questions?
-
-If you encounter any issues during testing, please comment on the PR with:
-1. The exact command you ran
-2. The error message or unexpected behavior
-3. Your environment (OS, Java version, Maven version)
