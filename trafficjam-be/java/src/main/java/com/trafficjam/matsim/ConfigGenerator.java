@@ -29,7 +29,13 @@ public class ConfigGenerator {
     // Default values for optional parameters
     private static final String DEFAULT_COORDINATE_SYSTEM = "EPSG:2157"; // Cork ITM
     private static final int DEFAULT_ITERATIONS = 10;
-    private static final int DEFAULT_RANDOM_SEED = 4711;
+
+    // Generate a random seed by default for simulation variety
+    private static int generateRandomSeed() {
+        return java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 1000000);
+    }
+
+    private static final int DEFAULT_RANDOM_SEED = generateRandomSeed();
     private static final String DEFAULT_OUTPUT_DIR = "./output";
 
     /**

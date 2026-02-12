@@ -5,6 +5,8 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.UUID;
@@ -16,6 +18,8 @@ import java.util.concurrent.Executors;
  * Runs MatSim simulations programmatically.
  */
 public class MatsimRunner {
+
+    private static final Logger logger = LoggerFactory.getLogger(MatsimRunner.class);
 
     // Thread pool for running simulations concurrently
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -71,17 +75,27 @@ public class MatsimRunner {
         // Submit simulation to run in background thread
         executor.submit(() -> {
             try {
+                logger.info("Starting simulation {} with config: {}", simulationId, configPath);
+
                 // Update status to running
                 SimulationInfo info = new SimulationInfo(Thread.currentThread(), controler, "RUNNING");
                 activeSimulations.put(simulationId, info);
 
+                logger.info("Simulation {} status set to RUNNING, executing controler.run()", simulationId);
+
                 // Run the simulation (blocks this background thread)
                 controler.run();
+
+                logger.info("Simulation {} completed successfully", simulationId);
 
                 // Update status to completed
                 info.status = "COMPLETED";
 
             } catch (Exception e) {
+                logger.error("Simulation {} FAILED with exception: {}", simulationId, e.getMessage(), e);
+                logger.error("Exception type: {}", e.getClass().getName());
+                logger.error("Stack trace:", e);
+
                 // Update status to failed
                 SimulationInfo info = activeSimulations.get(simulationId);
                 if (info != null) {
@@ -99,6 +113,12 @@ public class MatsimRunner {
      * Loads and validates a MatSim scenario from the config file.
      */
     private Scenario loadScenario(String configPath) {
+        // Disable strict DTD validation to allow modern network files with additional
+        // attributes
+        // This allows network files with attributes like "allowedModes" that aren't in
+        // the v2 DTD
+        System.setProperty("matsim.preferLocalDtds", "true");
+
         // Load the MatSim configuration from the XML file
         Config config = ConfigUtils.loadConfig(configPath);
 
