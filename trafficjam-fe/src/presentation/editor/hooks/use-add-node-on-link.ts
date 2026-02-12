@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { Network, TrafficLink } from "../../../types";
+import type { Network, TrafficLink, TrafficNode } from "../../../types";
 import nearestPointOnLine from "@turf/nearest-point-on-line";
 import lineSplit from "@turf/line-split";
 import { point, lineString } from "@turf/helpers";
@@ -17,7 +17,7 @@ interface UseAddNodeOnLinkParams {
 function createNodeAtMidpoint(
   link: TrafficLink,
   baseNow: number,
-  newNodes: Map<string, any>,
+  newNodes: Map<string, TrafficNode>,
   newLinks: Map<string, TrafficLink>
 ) {
   const geom = link.geometry;
