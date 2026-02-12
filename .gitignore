@@ -29,7 +29,13 @@ dist-ssr
 *.sln
 *.sw?
 
-#Python compiled code
+# Python compiled code
 _pycache_/
 *.pyc
 __pycache__
+
+# MATSim wrapper and server testing stuff
+trafficjam-be/java/output
+trafficjam-be/java/target
+trafficjam-be/server-output.log
+trafficjam-be/java/temp
