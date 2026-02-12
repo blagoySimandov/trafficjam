@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint } from "../utils/feature-detection";
-import { NETWORK_LAYER_ID } from "../constants";
+import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
 
 interface UseMapInteractionsParams {
   network: Network | null;
@@ -90,8 +90,13 @@ export function useMapInteractions({
       const detected = detectFeaturesAtPoint(event, network);
       const link = detected.link || (canEditAtZoom ? findNearbyLink(event) : undefined);
 
+      // Check if hovering over a node
+      const isHoveringNode = map?.queryRenderedFeatures(event.point, {
+        layers: [NODE_LAYER_ID],
+      }).length ?? 0 > 0;
+
       if (map) {
-        if (link && canEditAtZoom) {
+        if (link && canEditAtZoom && !isHoveringNode) {
           map.getCanvas().style.cursor = "crosshair";
         } else if (link || detected.routes.length > 0 || detected.building) {
           map.getCanvas().style.cursor = "pointer";

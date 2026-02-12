@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import MapGL from "react-map-gl";
+import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../../../types";
@@ -145,7 +145,7 @@ export function EditorMapView({
   );
 
   return (
-    <MapGL
+    <Map
       ref={handleMapRef}
       initialViewState={{
         longitude: DEFAULT_CENTER[0],
@@ -203,6 +203,6 @@ export function EditorMapView({
           latitude={hoverInfo.latitude}
         />
       )}
-    </MapGL>
+    </Map>
   );
 }
