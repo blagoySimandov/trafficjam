@@ -6,6 +6,8 @@ trafficjam-be/utils
 trafficjam-be/public_transport
 trafficjam-be/plans
 package-lock.json
+map-data-service/.env
+map-data-service/*.json
 
 # Logs
 logs
