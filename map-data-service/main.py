@@ -2,7 +2,9 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from models import NetworkResponse
+from config import get_settings
 from gcs_client import fetch_network_from_gcs, filter_network_by_bounds
+from overpass_client import fetch_network_from_overpass
 
 app = FastAPI(
     title="Map Data Service",
@@ -31,20 +33,36 @@ async def get_network(
     if min_lng >= max_lng:
         raise HTTPException(status_code=400, detail="min_lng must be less than max_lng")
 
+    settings = get_settings()
+
+    if settings.data_source == "overpass":
+        return await _fetch_from_overpass(min_lat, min_lng, max_lat, max_lng)
+
+    return await _fetch_from_gcs(min_lat, min_lng, max_lat, max_lng)
+
+
+async def _fetch_from_overpass(
+    min_lat: float, min_lng: float, max_lat: float, max_lng: float
+) -> NetworkResponse:
     try:
-        # Fetch the full network from GCS
+        return await fetch_network_from_overpass(min_lat, min_lng, max_lat, max_lng)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502, detail=f"Failed to fetch from Overpass API: {str(e)}"
+        )
+
+
+async def _fetch_from_gcs(
+    min_lat: float, min_lng: float, max_lat: float, max_lng: float
+) -> NetworkResponse:
+    try:
         full_network = await fetch_network_from_gcs()
     except Exception as e:
         raise HTTPException(
             status_code=502, detail=f"Failed to fetch network data from GCS: {str(e)}"
         )
-
     try:
-        # Filter the network by the requested bounds
-        filtered_network = filter_network_by_bounds(
-            full_network, min_lat, min_lng, max_lat, max_lng
-        )
-        return filtered_network
+        return filter_network_by_bounds(full_network, min_lat, min_lng, max_lat, max_lng)
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to filter network data: {str(e)}"
