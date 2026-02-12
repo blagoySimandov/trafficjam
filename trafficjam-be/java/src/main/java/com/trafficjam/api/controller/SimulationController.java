@@ -37,7 +37,12 @@ public class SimulationController {
             // @RequestParam("plansFile") MultipartFile plansFile, // TODO: Add for
             // agent-based simulation
             @RequestParam(value = "iterations", required = false, defaultValue = "10") Integer iterations,
-            @RequestParam(value = "randomSeed", required = false, defaultValue = "4711") Long randomSeed) {
+            @RequestParam(value = "randomSeed", required = false) Long randomSeed) {
+
+        // Use a random seed if not provided
+        if (randomSeed == null) {
+            randomSeed = (long) java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 1000000);
+        }
 
         try {
             String simulationId = simulationService.startSimulation(
