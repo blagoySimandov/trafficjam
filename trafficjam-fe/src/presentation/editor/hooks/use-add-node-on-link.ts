@@ -14,6 +14,53 @@ interface UseAddNodeOnLinkParams {
   onLinkClick?: (link: TrafficLink) => void;
 }
 
+function createNodeAtMidpoint(
+  link: TrafficLink,
+  baseNow: number,
+  newNodes: Map<string, any>,
+  newLinks: Map<string, TrafficLink>
+) {
+  const geom = link.geometry;
+  const midIdx = Math.floor(geom.length / 2);
+  const mid = geom[midIdx];
+  const newNodeId = `node-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
+  const newNode = {
+    id: newNodeId,
+    osmId: -baseNow,
+    position: mid,
+    connectionCount: 2,
+  };
+  newNodes.set(newNodeId, newNode);
+
+  newLinks.delete(link.id);
+  const left = geom.slice(0, midIdx + 1);
+  left.push(mid);
+  const right = [mid, ...geom.slice(midIdx + 1)];
+
+  const linkAId = `edge-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
+  const linkBId = `edge-${baseNow + 1}-${Math.random().toString(36).slice(2, 7)}`;
+
+  const newLinkA: TrafficLink = {
+    ...link,
+    id: linkAId,
+    osmId: -baseNow,
+    from: link.from,
+    to: newNodeId,
+    geometry: left,
+  };
+  const newLinkB: TrafficLink = {
+    ...link,
+    id: linkBId,
+    osmId: -baseNow - 1,
+    from: newNodeId,
+    to: link.to,
+    geometry: right,
+  };
+
+  newLinks.set(linkAId, newLinkA);
+  newLinks.set(linkBId, newLinkB);
+}
+
 export function useAddNodeOnLink({
   network,
   setNetwork,
@@ -111,47 +158,7 @@ export function useAddNodeOnLink({
             console.error("Turf split failed", err);
           }
         } else {
-          // fallback: create a node at the midpoint of the geometry
-          const geom = link.geometry;
-          const midIdx = Math.floor(geom.length / 2);
-          const mid = geom[midIdx];
-          const newNodeId = `node-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
-          const newNode = {
-            id: newNodeId,
-            osmId: -baseNow,
-            position: mid,
-            connectionCount: 2,
-          };
-          newNodes.set(newNodeId, newNode);
-
-          // remove original link and create two naive splits
-          newLinks.delete(link.id);
-          const left = geom.slice(0, midIdx + 1);
-          left.push(mid);
-          const right = [mid, ...geom.slice(midIdx + 1)];
-
-          const linkAId = `edge-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
-          const linkBId = `edge-${baseNow + 1}-${Math.random().toString(36).slice(2, 7)}`;
-
-          const newLinkA: TrafficLink = {
-            ...link,
-            id: linkAId,
-            osmId: -baseNow,
-            from: link.from,
-            to: newNodeId,
-            geometry: left,
-          };
-          const newLinkB: TrafficLink = {
-            ...link,
-            id: linkBId,
-            osmId: -baseNow - 1,
-            from: newNodeId,
-            to: link.to,
-            geometry: right,
-          };
-
-          newLinks.set(linkAId, newLinkA);
-          newLinks.set(linkBId, newLinkB);
+          createNodeAtMidpoint(link, baseNow, newNodes, newLinks);
         }
 
         setNetwork({
