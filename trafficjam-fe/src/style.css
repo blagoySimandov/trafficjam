@@ -84,6 +84,31 @@ html {
   border-color: #2563eb;
 }
 
+.layer-toggle-panel {
+  position: absolute;
+  left: 40px;
+  top: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.layer-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
 .link-tooltip {
   font-size: 12px;
   line-height: 1.4;

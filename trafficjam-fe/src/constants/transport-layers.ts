@@ -1,3 +1,4 @@
+import type { ExpressionSpecification } from "mapbox-gl";
 import type { LayerProps } from "react-map-gl";
 
 export const TRANSPORT_SOURCE_ID = "transport";
@@ -22,6 +23,38 @@ export const TRANSPORT_COLORS: Record<string, string> = {
 
 export const DEFAULT_TRANSPORT_COLOR = "#666666";
 
+function zoomScaledTransportWidth(base: number, hover: number): ExpressionSpecification {
+  return [
+    "interpolate",
+    ["exponential", 2],
+    ["zoom"],
+    10, [
+      "case",
+      ["boolean", ["feature-state", "hover"], false],
+      hover * 0.03,
+      base * 0.03,
+    ],
+    13, [
+      "case",
+      ["boolean", ["feature-state", "hover"], false],
+      hover * 0.1,
+      base * 0.1,
+    ],
+    15, [
+      "case",
+      ["boolean", ["feature-state", "hover"], false],
+      hover * 0.3,
+      base * 0.3,
+    ],
+    18, [
+      "case",
+      ["boolean", ["feature-state", "hover"], false],
+      hover,
+      base,
+    ],
+  ];
+}
+
 function createTransportLayer(routeType: string, isSubway = false): LayerProps {
   const width = isSubway ? 3 : 2;
   const opacity = isSubway ? 0.8 : 0.7;
@@ -32,12 +65,7 @@ function createTransportLayer(routeType: string, isSubway = false): LayerProps {
     filter: ["==", ["get", "route"], routeType],
     paint: {
       "line-color": ["get", "colour"],
-      "line-width": [
-        "case",
-        ["boolean", ["feature-state", "hover"], false],
-        width + 2,
-        width,
-      ],
+      "line-width": zoomScaledTransportWidth(width, width + 2),
       "line-opacity": [
         "case",
         ["boolean", ["feature-state", "hover"], false],

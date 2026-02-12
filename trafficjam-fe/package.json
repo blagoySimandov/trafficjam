@@ -35,6 +35,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hotkeys-hook": "^5.2.4",
-    "react-map-gl": "^7.1.9"
+    "react-map-gl": "^7.1.9",
+    "recharts": "^3.7.0"
   }
 }

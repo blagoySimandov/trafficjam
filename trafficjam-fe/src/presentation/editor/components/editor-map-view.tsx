@@ -16,6 +16,7 @@ import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
 import { useUndoStack } from "../hooks/use-undo-stack";
 import { EditorControls } from "./editor-controls";
+import { LayerToggle } from "./layer-toggle";
 import { NetworkLayer } from "../../../components/layers/network-layer";
 import { TransportLayer } from "../../../components/layers/transport-layer";
 import { BuildingLayer } from "../../../components/layers/building-layer";
@@ -32,7 +33,10 @@ export function EditorMapView({
   onLinkClick,
 }: EditorMapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
+  const [showNetwork, setShowNetwork] = useState(true);
+  const [showTransport, setShowTransport] = useState(true);
   const [showBuildings, setShowBuildings] = useState(true);
+  const [showNodes, setShowNodes] = useState(false);
   const [editorMode, setEditorMode] = useState(false);
   const mapRef = useRef<MapRef | null>(null);
 
@@ -72,8 +76,6 @@ export function EditorMapView({
     }
   }, [undo, onStatusChange]);
 
-  // Keyboard shortcut for undo (Cmd+Z on Mac, Ctrl+Z on Windows/Linux)
-  // Attach listener once and read latest canUndo/onStatusChange via refs to avoid re-registering
   const canUndoRef = useRef(canUndo);
   const onStatusChangeRef = useRef(onStatusChange);
 
@@ -112,10 +114,6 @@ export function EditorMapView({
     mapRef.current = ref;
   }, []);
 
-  const toggleBuildings = useCallback(() => {
-    setShowBuildings((prev) => !prev);
-  }, [setShowBuildings]);
-
   const toggleEditorMode = useCallback(() => {
     setEditorMode((prev) => !prev);
   }, [setEditorMode]);
@@ -128,6 +126,7 @@ export function EditorMapView({
     },
     [editorMode, handleClick],
   );
+
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
       if (!editorMode) {
@@ -136,6 +135,39 @@ export function EditorMapView({
     },
     [editorMode, handleMouseMove],
   );
+
+  const layerToggle = (
+    <LayerToggle
+      layers={[
+        {
+          key: "roads",
+          label: "Roads",
+          visible: showNetwork,
+          onToggle: () => setShowNetwork((p) => !p),
+        },
+        {
+          key: "nodes",
+          label: "Nodes",
+          visible: showNodes,
+          onToggle: () => setShowNodes((p) => !p),
+        },
+        {
+          key: "transport",
+          label: "Transport",
+          visible: showTransport,
+          onToggle: () => setShowTransport((p) => !p),
+        },
+        {
+          key: "buildings",
+          label: "Buildings",
+          visible: showBuildings,
+          onToggle: () => setShowBuildings((p) => !p),
+        },
+      ]}
+    />
+  );
+
+  const nodesVisible = showNodes || editorMode;
 
   return (
     <Map
@@ -158,24 +190,24 @@ export function EditorMapView({
         onClear={handleClear}
         onExport={exportNetwork}
         loading={loading}
-        showBuildings={showBuildings}
-        onToggleBuildings={toggleBuildings}
+        layerToggle={layerToggle}
         editorMode={editorMode}
         onToggleEditorMode={toggleEditorMode}
         onUndo={handleUndo}
         canUndo={canUndo}
       />
-      {displayNetwork && (
+      {showNetwork && displayNetwork && (
         <NetworkLayer network={displayNetwork} hoverInfo={null} />
       )}
-      {displayNetwork && (
+      {nodesVisible && displayNetwork && (
         <NodeLayer
           network={displayNetwork}
           editorMode={editorMode}
           draggedNodeId={draggedNodeId}
         />
       )}
-      {displayNetwork?.transportRoutes &&
+      {showTransport &&
+        displayNetwork?.transportRoutes &&
         displayNetwork.transportRoutes.size > 0 && (
           <TransportLayer
             routes={displayNetwork.transportRoutes}

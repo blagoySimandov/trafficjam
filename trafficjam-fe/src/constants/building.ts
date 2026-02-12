@@ -43,7 +43,15 @@ export const BUILDING_FILL_LAYER: LayerProps = {
   type: "fill",
   paint: {
     "fill-color": createColorExpression(),
-    "fill-opacity": 0.6,
+    "fill-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      12, 0,
+      13, 0.1,
+      14, 0.3,
+      15, 0.6,
+    ],
   },
 };
 
@@ -52,6 +60,13 @@ export const BUILDING_OUTLINE_LAYER: LayerProps = {
   type: "line",
   paint: {
     "line-color": createColorExpression(),
-    "line-width": 2,
+    "line-width": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      12, 0,
+      14, 0.5,
+      15, 2,
+    ],
   },
 };

@@ -3,7 +3,11 @@ import { DeckGL, TripsLayer, ScatterplotLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MAP_STYLE, MAPBOX_TOKEN } from "../../constants/map";
-import { loadTrips, getVehiclePositions } from "../../event-processing";
+import {
+  loadTrips,
+  getVehiclePositions,
+  type VehiclePosition,
+} from "../../event-processing";
 import type { Trip } from "../../event-processing";
 import {
   useSimulationTime,
@@ -12,6 +16,8 @@ import {
 import { INITIAL_STATE_CORK, DARK_MAP_STYLE } from "./constants";
 import { BackToEditorButton } from "./components/back-button";
 import { PlaybackBar } from "./components/playback-bar";
+import { StatsPanel } from "./components/stats-panel";
+import { useTripStats } from "./hooks/use-trip-stats";
 
 interface VisualizerProps {
   onBack: () => void;
@@ -36,11 +42,11 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
       trailLength: 300,
       currentTime: simulation.time,
     }),
-    new ScatterplotLayer({
+    new ScatterplotLayer<VehiclePosition>({
       id: "cars",
       data: getVehiclePositions(trips, simulation.time),
-      getPosition: (d: [number, number]) => d,
-      getFillColor: [255, 220, 0],
+      getPosition: (d) => d.position,
+      getFillColor: (d) => (d.moving ? [255, 220, 0, 255] : [255, 220, 0, 0]),
       getRadius: 30,
       radiusMinPixels: 4,
       radiusMaxPixels: 8,
@@ -56,11 +62,13 @@ export function Visualizer({ onBack }: VisualizerProps) {
 
   const simulation = useSimulationTime(trips);
   const layers = useLayers(trips, simulation);
+  const stats = useTripStats(trips, simulation.time, simulation.range);
 
   return (
     <DeckGL initialViewState={INITIAL_STATE_CORK} controller layers={layers}>
       <Map mapStyle={DARK_MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
       <BackToEditorButton onClick={onBack} />
+      <StatsPanel stats={stats} currentTime={simulation.time} />
       <Map mapStyle={MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
       <PlaybackBar simulation={simulation} />
     </DeckGL>
