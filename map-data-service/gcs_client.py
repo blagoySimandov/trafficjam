@@ -1,11 +1,10 @@
 import json
 import httpx
-from typing import Optional
 from models import NetworkResponse
 from config import get_settings
 
 # Cache for the network data
-_network_cache: Optional[NetworkResponse] = None
+_network_cache: NetworkResponse | None = None
 
 
 async def fetch_network_from_gcs() -> NetworkResponse:
