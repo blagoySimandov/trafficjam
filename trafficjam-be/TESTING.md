@@ -20,9 +20,16 @@ Expected: `BUILD SUCCESS`
 
 **Open a terminal and start the server (leave it running):**
 
+**PowerShell (Windows):**
 ```powershell
 cd trafficjam-be
 .\run-server-with-logging.ps1
+```
+
+**Bash (Linux/Mac/WSL):**
+```bash
+cd trafficjam-be
+./run-server-with-logging.sh
 ```
 
 This will:
@@ -41,9 +48,16 @@ Tomcat started on port 8080 (http)
 
 **Open a NEW terminal window and run:**
 
+**PowerShell (Windows):**
 ```powershell
 cd trafficjam-be
 powershell -ExecutionPolicy Bypass -File .\test-api.ps1
+```
+
+**Bash (Linux/Mac/WSL):**
+```bash
+cd trafficjam-be
+./test-api.sh
 ```
 
 This automated test script will:
@@ -59,8 +73,14 @@ Expected: All tests pass with `[OK]` messages in green
 
 **In the same terminal, run:**
 
+**PowerShell (Windows):**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\test-sse-full.ps1
+```
+
+**Bash (Linux/Mac/WSL):**
+```bash
+./test-sse-full.sh
 ```
 
 This will:
