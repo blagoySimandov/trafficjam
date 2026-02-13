@@ -10,11 +10,13 @@ import {
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
+  MIN_EDIT_ZOOM,
 } from "../../../constants";
 import { useOSMImport } from "../../../hooks/use-osm-import";
 import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
+import { useNodeAdd } from "../hooks/use-node-add";
 import { useUndoStack } from "../hooks/use-undo-stack";
 import { EditorControls } from "./editor-controls";
 import { NetworkLayer } from "../../../components/layers/network-layer";
@@ -67,13 +69,33 @@ export function EditorMapView({
       editorMode,
     });
 
-  const { isDragging, displayNetwork, draggedNodeId } = useNodeDrag({
+  const {
+    isDragging,
+    displayNetwork: dragDisplayNetwork,
+    draggedNodeId,
+  } = useNodeDrag({
     network,
     mapRef,
     editorMode,
     onNetworkChange: setNetwork,
     onBeforeChange: pushToUndoStack,
   });
+
+  const {
+    isAddingNode,
+    displayNetwork: addDisplayNetwork,
+    tempNodeId,
+  } = useNodeAdd({
+    network,
+    mapRef,
+    editorMode,
+    minZoom: MIN_EDIT_ZOOM,
+    onNetworkChange: setNetwork,
+    onBeforeChange: pushToUndoStack,
+  });
+
+  // Merge display networks - prioritize addDisplayNetwork if adding, otherwise use dragDisplayNetwork
+  const displayNetwork = isAddingNode ? addDisplayNetwork : dragDisplayNetwork;
 
   const handleUndo = useCallback(() => {
     const previousNetwork = undo();
@@ -180,6 +202,7 @@ export function EditorMapView({
           network={displayNetwork}
           editorMode={editorMode}
           draggedNodeId={draggedNodeId}
+          tempNodeId={isAddingNode ? tempNodeId : null}
         />
       )}
       {displayNetwork?.transportRoutes &&
