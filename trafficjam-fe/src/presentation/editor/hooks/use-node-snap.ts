@@ -93,6 +93,12 @@ export function useNodeSnap({
               connectionCount: connectionCount,
             });
 
+            console.log(`[useNodeSnap] Merged node ${nodeId} into ${targetNodeId}:`, {
+              deletedNode: nodeId,
+              targetNode: targetNodeId,
+              targetPosition: snappedPosition,
+            });
+
             onNetworkChange({
               ...network,
               nodes: updatedNodes,
