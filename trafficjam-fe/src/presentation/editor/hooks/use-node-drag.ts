@@ -225,6 +225,12 @@ export function useNodeDrag({
             }
           }
 
+          console.log(`[useNodeDrag] Updated node ${draggedNodeId}:`, {
+            oldPosition: originalNodePosition,
+            newPosition: tempDragPosition,
+            nodeId: draggedNodeId,
+          });
+
           onNetworkChange({
             ...network,
             nodes: updatedNodes,
