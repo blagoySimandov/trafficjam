@@ -1,13 +1,10 @@
-# PostgreSQL 18 Development Database Makefile
-
-#Env variables passed to the db container
-
 .PHONY: help build run stop restart logs shell clean
 
 ############################
 ##@ Database
 ############################
 
+#env variables passed to the db container
 IMAGE_NAME = trafficjam-db
 DOCKERFILE_PATH = docker/Dockerfile.db
 CONTAINER_NAME = trafficjam-db
