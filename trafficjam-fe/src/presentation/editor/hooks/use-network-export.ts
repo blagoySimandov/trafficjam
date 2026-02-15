@@ -16,15 +16,6 @@ export function useNetworkExport(
       return;
     }
     try {
-      // Log sample nodes for verification
-      const sampleNodes = Array.from(network.nodes.values()).slice(0, 3);
-      console.log('[Export] Sample node positions:', sampleNodes.map(n => ({
-        id: n.id,
-        position: n.position,
-        x: n.position[1],
-        y: n.position[0],
-      })));
-
       const xml = networkToMatsim(network);
       const blob = new Blob([xml], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
