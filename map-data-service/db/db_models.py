@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, BigInteger, Integer, Text, Double
+from sqlalchemy import Column, BigInteger, Integer, Text, Double, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON
 from geoalchemy2 import Geometry
 from sqlalchemy.orm import DeclarativeBase
@@ -24,8 +24,8 @@ class LinkDB(Base):
 
     id = Column(Text, primary_key=True)
     osm_id = Column(BigInteger, nullable=False)
-    from_node = Column(Text, nullable=False)
-    to_node = Column(Text, nullable=False)
+    from_node = Column(Text, ForeignKey("nodes.id"), nullable=False)
+    to_node = Column(Text, ForeignKey("nodes.id"), nullable=False)
     geometry = Column(JSON, nullable=False)
     highway = Column(Text)
     lanes = Column(Text)

@@ -27,8 +27,3 @@ fastapi dev
 ```
 
 The API will be available at `http://localhost:8000`.
-
-## API
-
-- `GET /network?min_lat=&min_lng=&max_lat=&max_lng=` - Fetch network data within bounding box
-- `GET /health` - Health check

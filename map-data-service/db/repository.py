@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import json
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from geoalchemy2.functions import ST_Intersects, ST_MakeEnvelope
 
 from db.db_models import NodeDB, LinkDB, BuildingDB, TransportRouteDB
@@ -18,73 +19,48 @@ from constants import VALID_BUILDING_TYPES
 
 
 def _parse_geometry(raw) -> list[tuple[float, float]]:
-    # Handle double-encoded JSON strings from CSV import
-    if isinstance(raw, str):
-        raw = json.loads(raw)
-    # If still a string after one parse (double-encoded), parse again
     if isinstance(raw, str):
         raw = json.loads(raw)
     return [(coord[0], coord[1]) for coord in raw]
 
 
-def _build_link_tags(row: LinkDB) -> dict[str, str]:
-    tags: dict[str, str] = {}
-    if row.highway:
-        tags["highway"] = row.highway
-    if row.lanes:
-        tags["lanes"] = row.lanes
-    if row.maxspeed:
-        tags["maxspeed"] = row.maxspeed
-    if row.oneway:
-        tags["oneway"] = row.oneway
-    if row.name:
-        tags["name"] = row.name
-    if row.ref:
-        tags["ref"] = row.ref
-    if row.surface:
-        tags["surface"] = row.surface
-    return tags
+def _pick_tags(row, mapping: dict[str, str]) -> dict[str, str]:
+    return {key: getattr(row, attr) for attr, key in mapping.items() if getattr(row, attr)}
 
 
-def _build_building_tags(row: BuildingDB) -> dict[str, str]:
-    tags: dict[str, str] = {}
-    if row.building:
-        tags["building"] = row.building
-    if row.name:
-        tags["name"] = row.name
-    if row.shop:
-        tags["shop"] = row.shop
-    if row.addr_street:
-        tags["addr:street"] = row.addr_street
-    if row.building_levels:
-        tags["building:levels"] = row.building_levels
-    return tags
+LINK_TAG_MAPPING = {
+    "highway": "highway",
+    "lanes": "lanes",
+    "maxspeed": "maxspeed",
+    "oneway": "oneway",
+    "name": "name",
+    "ref": "ref",
+    "surface": "surface",
+}
 
+BUILDING_TAG_MAPPING = {
+    "building": "building",
+    "name": "name",
+    "shop": "shop",
+    "addr_street": "addr:street",
+    "building_levels": "building:levels",
+}
 
-def _build_route_tags(row: TransportRouteDB) -> dict[str, str]:
-    tags: dict[str, str] = {}
-    if row.route:
-        tags["route"] = row.route
-    if row.ref:
-        tags["ref"] = row.ref
-    if row.name:
-        tags["name"] = row.name
-    if row.operator:
-        tags["operator"] = row.operator
-    if row.network:
-        tags["network"] = row.network
-    if row.from_:
-        tags["from"] = row.from_
-    if row.to:
-        tags["to"] = row.to
-    if row.colour:
-        tags["colour"] = row.colour
-    return tags
+ROUTE_TAG_MAPPING = {
+    "route": "route",
+    "ref": "ref",
+    "name": "name",
+    "operator": "operator",
+    "network": "network",
+    "from_": "from",
+    "to": "to",
+    "colour": "colour",
+}
 
 
 class MapDataRepository:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(self, session_factory: async_sessionmaker):
+        self.session_factory = session_factory
 
     async def fetch_network(
         self,
@@ -95,10 +71,12 @@ class MapDataRepository:
     ) -> NetworkResponse:
         bbox = ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326)
 
-        nodes = await self._fetch_nodes(bbox)
-        links = await self._fetch_links(bbox)
-        buildings = await self._fetch_buildings(bbox)
-        transport_routes = await self._fetch_transport_routes(bbox)
+        nodes, links, buildings, transport_routes = await asyncio.gather(
+            self._fetch_nodes(bbox),
+            self._fetch_links(bbox),
+            self._fetch_buildings(bbox),
+            self._fetch_transport_routes(bbox),
+        )
 
         return NetworkResponse(
             nodes=nodes,
@@ -108,9 +86,10 @@ class MapDataRepository:
         )
 
     async def _fetch_nodes(self, bbox) -> list[TrafficNode]:
-        stmt = select(NodeDB).where(ST_Intersects(NodeDB.geom, bbox))
-        result = await self.session.execute(stmt)
-        rows = result.scalars().all()
+        async with self.session_factory() as session:
+            stmt = select(NodeDB).where(ST_Intersects(NodeDB.geom, bbox))
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
 
         return [
             TrafficNode(
@@ -123,9 +102,10 @@ class MapDataRepository:
         ]
 
     async def _fetch_links(self, bbox) -> list[TrafficLink]:
-        stmt = select(LinkDB).where(ST_Intersects(LinkDB.geom, bbox))
-        result = await self.session.execute(stmt)
-        rows = result.scalars().all()
+        async with self.session_factory() as session:
+            stmt = select(LinkDB).where(ST_Intersects(LinkDB.geom, bbox))
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
 
         links = []
         for row in rows:
@@ -139,15 +119,16 @@ class MapDataRepository:
                     from_node=row.from_node,
                     to_node=row.to_node,
                     geometry=geometry,
-                    tags=_build_link_tags(row),
+                    tags=_pick_tags(row, LINK_TAG_MAPPING),
                 )
             )
         return links
 
     async def _fetch_buildings(self, bbox) -> list[Building]:
-        stmt = select(BuildingDB).where(ST_Intersects(BuildingDB.geom, bbox))
-        result = await self.session.execute(stmt)
-        rows = result.scalars().all()
+        async with self.session_factory() as session:
+            stmt = select(BuildingDB).where(ST_Intersects(BuildingDB.geom, bbox))
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
 
         buildings = []
         for row in rows:
@@ -163,17 +144,18 @@ class MapDataRepository:
                     position=(row.longitude, row.latitude),
                     geometry=geometry,
                     type=row.type,
-                    tags=_build_building_tags(row),
+                    tags=_pick_tags(row, BUILDING_TAG_MAPPING),
                 )
             )
         return buildings
 
     async def _fetch_transport_routes(self, bbox) -> list[TransportRoute]:
-        stmt = select(TransportRouteDB).where(
-            ST_Intersects(TransportRouteDB.geom, bbox)
-        )
-        result = await self.session.execute(stmt)
-        rows = result.scalars().all()
+        async with self.session_factory() as session:
+            stmt = select(TransportRouteDB).where(
+                ST_Intersects(TransportRouteDB.geom, bbox)
+            )
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
 
         routes = []
         for row in rows:
@@ -186,7 +168,7 @@ class MapDataRepository:
                     osm_id=row.osm_id,
                     way_id=row.way_id,
                     geometry=geometry,
-                    tags=_build_route_tags(row),
+                    tags=_pick_tags(row, ROUTE_TAG_MAPPING),
                 )
             )
         return routes
