@@ -28,7 +28,7 @@ async function assertOk(response: Response) {
 async function start(
   params: StartSimulationParams,
 ): Promise<SimulationResponse> {
-  const response = await fetch(`${BASE_URL}/simulation`, {
+  const response = await fetch(`${BASE_URL}/api/simulations`, {
     method: "POST",
     body: buildFormData(params),
   });
@@ -37,13 +37,13 @@ async function start(
 }
 
 async function getStatus(id: string): Promise<SimulationStatusResponse> {
-  const response = await fetch(`${BASE_URL}/simulation/${id}`);
+  const response = await fetch(`${BASE_URL}/api/simulations/${id}/status`);
   await assertOk(response);
   return response.json();
 }
 
 async function* streamEvents(id: string): AsyncGenerator<Event> {
-  const response = await fetch(`${BASE_URL}/simulation/${id}/events`, {
+  const response = await fetch(`${BASE_URL}/api/simulations/${id}/events`, {
     headers: { Accept: "text/event-stream" },
   });
   await assertOk(response);
@@ -51,7 +51,7 @@ async function* streamEvents(id: string): AsyncGenerator<Event> {
 }
 
 async function stop(id: string): Promise<void> {
-  const response = await fetch(`${BASE_URL}/simulation/${id}`, {
+  const response = await fetch(`${BASE_URL}/api/simulations/${id}`, {
     method: "DELETE",
   });
   await assertOk(response);

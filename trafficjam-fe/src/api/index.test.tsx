@@ -117,7 +117,7 @@ describe("simulationApi.start", () => {
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toContain("/simulation");
+    expect(url).toContain("/api/simulations");
     expect(init.method).toBe("POST");
     expect(init.body).toBeInstanceOf(FormData);
     expect(result).toEqual(expected);
@@ -138,7 +138,7 @@ describe("simulationApi.getStatus", () => {
     const result = await simulationApi.getStatus("abc");
 
     expect(mockFetch).toHaveBeenCalledOnce();
-    expect(mockFetch.mock.calls[0][0]).toContain("/simulation/abc");
+    expect(mockFetch.mock.calls[0][0]).toContain("/api/simulations/abc/status");
     expect(result).toEqual(expected);
   });
 
@@ -156,7 +156,7 @@ describe("simulationApi.stop", () => {
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toContain("/simulation/abc");
+    expect(url).toContain("/api/simulations/abc");
     expect(init.method).toBe("DELETE");
   });
 
