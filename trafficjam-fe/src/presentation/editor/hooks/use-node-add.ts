@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback} from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
@@ -67,60 +67,56 @@ export function useNodeAdd({
         })()
       : network;
 
-  useEffect(() => {
+  const handleMouseDown = useCallback((e: MapMouseEvent) => {
+    if (!editorMode || !network) return;
+
     const map = mapRef.current;
     if (!map || !editorMode) return;
 
-    const mapCanvas = map.getMap();
+    const zoom = map.getZoom();
+    if (zoom < minZoom) return;
 
-    const handleMouseDown = (e: MapMouseEvent) => {
-      if (!editorMode || !network) return;
-
-      const zoom = map.getZoom();
-      if (zoom < minZoom) return;
-
-      // Check if clicking on an existing node - if so, don't add a new one
+     // Check if clicking on an existing node - if so, don't add a new one
       const features = map.queryRenderedFeatures(e.point, {
         layers: [NODE_LAYER_ID],
       });
-
       if (features && features.length > 0) return;
 
+    const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
+    setTempNodePosition(newPosition);
+    setTempLinkEndPosition(newPosition);
+    setIsAddingNode(true);
+    isAddingRef.current = true;
 
-      const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
-      setTempNodePosition(newPosition);
-      setTempLinkEndPosition(newPosition);
-      setIsAddingNode(true);
-      isAddingRef.current = true;
+    map.getMap().getCanvas().style.cursor = "crosshair";
+    map.dragPan.disable();
 
-      if (map.dragPan) {
-        mapCanvas.getCanvas().style.cursor = "crosshair";
-        map.dragPan.disable();
-      }
+    e.preventDefault();
+  }, [editorMode, network, mapRef, minZoom]);
 
-      e.preventDefault();
-    };
-
-    const handleMouseMove = (e: MapMouseEvent) => {
+  const handleMouseMove = useCallback(
+    (e: MapMouseEvent) => {
       if (!isAddingRef.current || !tempNodePosition) return;
 
       const currentPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
       setTempLinkEndPosition(currentPosition);
-    };
-
-    const handleMouseUp = (e: MapMouseEvent) => {
-      if (!isAddingRef.current || !tempNodePosition || !network) return;
+    },
+    [tempNodePosition],
+  );
+   
+  const handleMouseUp = useCallback((e: MapMouseEvent) => {
+    if (!isAddingRef.current || !tempNodePosition || !network) return;
+    
+    const map = mapRef.current;
+    if (!map) return;
 
       const releasePosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
-      
       const snapResult = findSnapPoint(releasePosition, network, []);
-      
+
       if (snapResult?.isNode && snapResult.nodeId) {
-        // Successfully snapping to an existing node - create the node and link
         if (onBeforeChange) {
           onBeforeChange(network);
         }
-
         const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const newLinkId = `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -141,7 +137,7 @@ export function useNodeAdd({
             highway: "unclassified",
           },
         };
-
+        
         const updatedNodes = new Map(network.nodes);
         updatedNodes.set(newNodeId, newNode);
 
@@ -162,18 +158,23 @@ export function useNodeAdd({
           links: updatedLinks,
         });
       }
-      // If not snapping to a node, cancel the operation (don't create anything)
+      
+    isAddingRef.current = false;
+    setIsAddingNode(false);
+    setTempNodePosition(null);
+    setTempLinkEndPosition(null);
 
-      isAddingRef.current = false;
-      setIsAddingNode(false);
-      setTempNodePosition(null);
-      setTempLinkEndPosition(null);
+    map.getMap().getCanvas().style.cursor = "";
+    map.dragPan.enable();
+  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef]);
 
-      if (map.dragPan) {
-        mapCanvas.getCanvas().style.cursor = "";
-        map.dragPan.enable();
-      }
-    };
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !editorMode) return;
+    
+    const mapCanvas = map.getMap();
+
+    
 
     mapCanvas.on("mousedown", handleMouseDown);
     mapCanvas.on("mousemove", handleMouseMove);
@@ -184,7 +185,7 @@ export function useNodeAdd({
       mapCanvas.off("mousemove", handleMouseMove);
       mapCanvas.off("mouseup", handleMouseUp);
     };
-  }, [network, mapRef, editorMode, minZoom, onNetworkChange, onBeforeChange, tempNodePosition]);
+  }, [mapRef, editorMode, handleMouseDown, handleMouseUp, handleMouseMove]);
 
   return {
     isAddingNode,
