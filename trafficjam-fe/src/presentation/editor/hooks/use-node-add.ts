@@ -117,8 +117,8 @@ export function useNodeAdd({
         if (onBeforeChange) {
           onBeforeChange(network);
         }
-        const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const newLinkId = `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const newLinkId = `link-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
         const newNode: TrafficNode = {
           id: newNodeId,
