@@ -1,11 +1,17 @@
+export type SimulationStatus =
+  | "starting"
+  | "running"
+  | "completed"
+  | "failed";
+
 export interface SimulationResponse {
   simulationId: string;
-  status: string;
+  status: SimulationStatus;
 }
 
 export interface SimulationStatusResponse {
   simulationId: string;
-  status: string;
+  status: SimulationStatus;
   error?: string;
 }
 
