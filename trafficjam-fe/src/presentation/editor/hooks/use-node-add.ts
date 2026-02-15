@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback} from "react";
+import { useState, useRef, useEffect, useCallback, useMemo} from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
@@ -24,12 +24,12 @@ export function useNodeAdd({
   const [isAddingNode, setIsAddingNode] = useState(false);
   const [tempNodePosition, setTempNodePosition] = useState<LngLatTuple | null>(null);
   const [tempLinkEndPosition, setTempLinkEndPosition] = useState<LngLatTuple | null>(null);
-  const [tempNodeId] = useState<string>("temp-new-node");
+  const tempNodeId = "temp-new-node";
   const isAddingRef = useRef(false);
 
   // Create a temporary network with the new node and connecting link
-  const displayNetwork = 
-    isAddingNode && tempNodePosition && network
+  const displayNetwork = useMemo(() => {
+    return isAddingNode && tempNodePosition && network
       ? (() => {
           const updatedNodes = new Map(network.nodes);
           
@@ -66,6 +66,8 @@ export function useNodeAdd({
           };
         })()
       : network;
+  }, [isAddingNode, tempNodePosition, tempLinkEndPosition, network]);
+
 
   const handleMouseDown = useCallback((e: MapMouseEvent) => {
     if (!editorMode || !network) return;
