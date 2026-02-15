@@ -1,40 +1,38 @@
-import { useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import type { Network } from "../../../types";
 import { networkToMatsim } from "../../../osm/matsim";
+import { simulationApi } from "../../../api/simengine";
 
 interface UseNetworkExportOptions {
   onStatusChange: (status: string) => void;
+}
+
+function networkToFile(network: Network): File {
+  const xml = networkToMatsim(network);
+  return new File([xml], `network_${Date.now()}.xml`, {
+    type: "application/xml",
+  });
 }
 
 export function useNetworkExport(
   network: Network | null,
   { onStatusChange }: UseNetworkExportOptions
 ) {
-  const exportNetwork = useCallback(() => {
-    if (!network) {
-      onStatusChange("No network to export");
-      return;
-    }
-    try {
-      const xml = networkToMatsim(network);
-      const blob = new Blob([xml], { type: "application/xml" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      const filename = `network_${Date.now()}.xml`;
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      onStatusChange(
-        `Exported ${network.links.size} links, ${network.nodes.size} nodes`
-      );
-    } catch (err) {
+  const mutation = useMutation({
+    mutationFn: () => {
+      if (!network) throw new Error("No network to export");
+      return simulationApi.start({ networkFile: networkToFile(network) });
+    },
+    onMutate: () => onStatusChange("Sending network to simulation..."),
+    onSuccess: (data) =>
+      onStatusChange(`Simulation started: ${data.simulationId}`),
+    onError: (err) => {
       console.error(err);
       onStatusChange("Export failed");
-    }
-  }, [network, onStatusChange]);
+    },
+  });
+
+  const exportNetwork = () => mutation.mutate();
 
   return { exportNetwork };
 }

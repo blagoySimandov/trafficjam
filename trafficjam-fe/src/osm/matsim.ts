@@ -62,7 +62,7 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
     linksXml.push(
       `    <link id="${l.id}" from="${l.from}" to="${l.to}" length="${length.toFixed(
         2
-      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" allowedModes="car" />`
+      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" modes="car" />`
     );
   }
   linksXml.push("  </links>");
