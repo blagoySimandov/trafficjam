@@ -17,8 +17,9 @@ from models import (
 )
 from constants import VALID_BUILDING_TYPES
 
-
 def _parse_geometry(raw) -> list[tuple[float, float]]:
+    if isinstance(raw, str):
+        raw = json.loads(raw)
     if isinstance(raw, str):
         raw = json.loads(raw)
     return [(coord[0], coord[1]) for coord in raw]
