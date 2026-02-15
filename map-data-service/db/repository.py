@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from geoalchemy2.functions import ST_Intersects, ST_MakeEnvelope
 
-from db_models import NodeDB, LinkDB, BuildingDB, TransportRouteDB
+from db.db_models import NodeDB, LinkDB, BuildingDB, TransportRouteDB
 from models import (
     TrafficNode,
     TrafficLink,

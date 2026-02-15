@@ -5,8 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import NetworkResponse
-from database import get_db, engine
-from repository import MapDataRepository
+from db import get_db, engine, MapDataRepository
 
 
 @asynccontextmanager
