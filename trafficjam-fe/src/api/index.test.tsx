@@ -148,6 +148,28 @@ describe("simulationApi.getStatus", () => {
   });
 });
 
+describe("simulationApi.streamEvents", () => {
+  it("fetches and yields decoded events", async () => {
+    const event = { time: 100, type: "entered link", vehicle: "v1", link: "l1" };
+    mockFetch.mockResolvedValueOnce(createSSEResponse([`data: ${JSON.stringify(event)}`]));
+
+    const events = [];
+    for await (const e of simulationApi.streamEvents("abc")) events.push(e);
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toContain("/api/simulations/abc/events");
+    expect(init.headers.Accept).toBe("text/event-stream");
+    expect(events).toEqual([event]);
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
+    const gen = simulationApi.streamEvents("abc");
+    await expect(gen.next()).rejects.toThrow("500");
+  });
+});
+
 describe("simulationApi.stop", () => {
   it("sends DELETE request", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 204 }));

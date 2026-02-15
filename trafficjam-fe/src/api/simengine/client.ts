@@ -19,7 +19,7 @@ function buildFormData(params: StartSimulationParams): FormData {
   return formData;
 }
 
-async function assertOk(response: Response) {
+function assertOk(response: Response) {
   if (!response.ok) {
     throw new Error(`Simulation engine error: ${response.status}`);
   }
@@ -32,21 +32,21 @@ async function start(
     method: "POST",
     body: buildFormData(params),
   });
-  await assertOk(response);
-  return response.json();
+  assertOk(response);
+  return await response.json();
 }
 
 async function getStatus(id: string): Promise<SimulationStatusResponse> {
   const response = await fetch(`${BASE_URL}/api/simulations/${id}/status`);
-  await assertOk(response);
-  return response.json();
+  assertOk(response);
+  return await response.json();
 }
 
 async function* streamEvents(id: string): AsyncGenerator<Event> {
   const response = await fetch(`${BASE_URL}/api/simulations/${id}/events`, {
     headers: { Accept: "text/event-stream" },
   });
-  await assertOk(response);
+  assertOk(response);
   yield* decodeEventStream(response);
 }
 
@@ -54,7 +54,7 @@ async function stop(id: string): Promise<void> {
   const response = await fetch(`${BASE_URL}/api/simulations/${id}`, {
     method: "DELETE",
   });
-  await assertOk(response);
+  assertOk(response);
 }
 
 export const simulationApi = { start, getStatus, streamEvents, stop };
