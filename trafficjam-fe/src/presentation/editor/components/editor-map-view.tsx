@@ -23,14 +23,19 @@ import { BuildingLayer } from "../../../components/layers/building-layer";
 import { NodeLayer } from "./layers/node-layer";
 import { CombinedTooltip } from "../../../components/combined-tooltip";
 
+// Alias the native Map constructor to avoid conflict with react-map-gl Map component
+const NativeMap = globalThis.Map;
+
 interface EditorMapViewProps {
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink) => void;
+  onRegisterLinkUpdater: (updater: (link: TrafficLink) => void) => void;
 }
 
 export function EditorMapView({
   onStatusChange,
   onLinkClick,
+  onRegisterLinkUpdater,
 }: EditorMapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
   const [showBuildings, setShowBuildings] = useState(true);
@@ -44,6 +49,34 @@ export function EditorMapView({
     onStatusChange,
     onNetworkChange: setNetwork,
   });
+
+  // Function to update a link in the network
+  const updateLinkInNetwork = useCallback(
+    (updatedLink: TrafficLink) => {
+      if (!network) return;
+
+      // Update the link in the network
+      const updatedLinks = new NativeMap(network.links);
+      updatedLinks.set(updatedLink.id, updatedLink);
+
+      const updatedNetwork = {
+        ...network,
+        links: updatedLinks,
+      };
+
+      pushToUndoStack(network);
+      setNetwork(updatedNetwork);
+      onStatusChange(
+        `Updated link: ${updatedLink.tags.name || updatedLink.tags.highway}`,
+      );
+    },
+    [network, pushToUndoStack, onStatusChange],
+  );
+
+  // Register the update function with the parent component
+  useEffect(() => {
+    onRegisterLinkUpdater(updateLinkInNetwork);
+  }, [updateLinkInNetwork, onRegisterLinkUpdater]);
 
   const handleClear = useCallback(() => {
     clear();
