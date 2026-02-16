@@ -3,24 +3,21 @@ from typing import Optional
 
 
 class TrafficNode(BaseModel):
-    id: str
-    osm_id: int
+    id: int
     position: tuple[float, float]
     connection_count: int
 
 
 class TrafficLink(BaseModel):
-    id: str
-    osm_id: int
-    from_node: str
-    to_node: str
+    id: int
+    from_node: int
+    to_node: int
     geometry: list[tuple[float, float]]
     tags: dict[str, str]
 
 
 class Building(BaseModel):
-    id: str
-    osm_id: int
+    id: int
     position: tuple[float, float]
     geometry: list[tuple[float, float]]
     type: Optional[str] = None
@@ -28,10 +25,8 @@ class Building(BaseModel):
 
 
 class TransportRoute(BaseModel):
-    id: str
-    osm_id: int
-    way_id: int
-    geometry: list[tuple[float, float]]
+    id: int
+    geometry: list[list[tuple[float, float]]]
     tags: dict[str, str]
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from geoalchemy2.functions import ST_Intersects, ST_MakeEnvelope
 
@@ -95,7 +95,6 @@ class MapDataRepository:
         return [
             TrafficNode(
                 id=row.id,
-                osm_id=row.osm_id,
                 position=(row.longitude, row.latitude),
                 connection_count=row.connection_count,
             )
@@ -116,7 +115,6 @@ class MapDataRepository:
             links.append(
                 TrafficLink(
                     id=row.id,
-                    osm_id=row.osm_id,
                     from_node=row.from_node,
                     to_node=row.to_node,
                     geometry=geometry,
@@ -141,7 +139,6 @@ class MapDataRepository:
             buildings.append(
                 Building(
                     id=row.id,
-                    osm_id=row.osm_id,
                     position=(row.longitude, row.latitude),
                     geometry=geometry,
                     type=row.type,
@@ -152,24 +149,59 @@ class MapDataRepository:
 
     async def _fetch_transport_routes(self, bbox) -> list[TransportRoute]:
         async with self.session_factory() as session:
-            stmt = select(TransportRouteDB).where(
-                ST_Intersects(TransportRouteDB.geom, bbox)
+            T = TransportRouteDB
+            stmt = (
+                select(
+                    func.min(T.id).label("id"),
+                    func.ST_AsGeoJSON(
+                        func.ST_LineMerge(func.ST_Collect(T.geom))
+                    ).label("merged_geom"),
+                    T.colour,
+                    T.from_,
+                    T.name,
+                    T.network,
+                    T.operator,
+                    T.ref,
+                    T.route,
+                    T.to,
+                )
+                .where(ST_Intersects(T.geom, bbox))
+                .group_by(
+                    T.name, T.ref, T.route, T.colour,
+                    T.network, T.operator, T.from_, T.to,
+                )
             )
             result = await session.execute(stmt)
-            rows = result.scalars().all()
+            rows = result.all()
 
         routes = []
         for row in rows:
-            geometry = _parse_geometry(row.geometry)
-            if len(geometry) < 2:
+            geojson = json.loads(row.merged_geom)
+            if geojson["type"] == "LineString":
+                geometry = [[(c[0], c[1]) for c in geojson["coordinates"]]]
+            elif geojson["type"] == "MultiLineString":
+                geometry = [
+                    [(c[0], c[1]) for c in line]
+                    for line in geojson["coordinates"]
+                ]
+            else:
                 continue
+
+            tags = {}
+            if row.route: tags["route"] = row.route
+            if row.ref: tags["ref"] = row.ref
+            if row.name: tags["name"] = row.name
+            if row.operator: tags["operator"] = row.operator
+            if row.network: tags["network"] = row.network
+            if row.from_: tags["from"] = row.from_
+            if row.to: tags["to"] = row.to
+            if row.colour: tags["colour"] = row.colour
+
             routes.append(
                 TransportRoute(
                     id=row.id,
-                    osm_id=row.osm_id,
-                    way_id=row.way_id,
                     geometry=geometry,
-                    tags=_pick_tags(row, ROUTE_TAG_MAPPING),
+                    tags=tags,
                 )
             )
         return routes

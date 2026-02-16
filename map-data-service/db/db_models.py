@@ -11,8 +11,7 @@ class Base(DeclarativeBase):
 class NodeDB(Base):
     __tablename__ = "nodes"
 
-    id = Column(Text, primary_key=True)
-    osm_id = Column(BigInteger, nullable=False)
+    id = Column(BigInteger, primary_key=True)
     longitude = Column(Double, nullable=False)
     latitude = Column(Double, nullable=False)
     connection_count = Column(Integer, nullable=False)
@@ -22,10 +21,9 @@ class NodeDB(Base):
 class LinkDB(Base):
     __tablename__ = "links"
 
-    id = Column(Text, primary_key=True)
-    osm_id = Column(BigInteger, nullable=False)
-    from_node = Column(Text, nullable=False)
-    to_node = Column(Text, nullable=False)
+    id = Column(BigInteger, primary_key=True)
+    from_node = Column(BigInteger, nullable=False)
+    to_node = Column(BigInteger, nullable=False)
     geometry = Column(JSON, nullable=False)
     highway = Column(Text)
     lanes = Column(Text)
@@ -40,8 +38,7 @@ class LinkDB(Base):
 class BuildingDB(Base):
     __tablename__ = "buildings"
 
-    id = Column(Text, primary_key=True)
-    osm_id = Column(BigInteger, nullable=False)
+    id = Column(BigInteger, primary_key=True)
     longitude = Column(Double, nullable=False)
     latitude = Column(Double, nullable=False)
     geometry = Column(JSON, nullable=False)
@@ -57,8 +54,7 @@ class BuildingDB(Base):
 class TransportRouteDB(Base):
     __tablename__ = "transport_routes"
 
-    id = Column(Text, primary_key=True)
-    osm_id = Column(Integer, nullable=False)
+    id = Column(BigInteger, primary_key=True)
     way_id = Column(Integer, nullable=False)
     geometry = Column(JSON, nullable=False)
     colour = Column(Text)

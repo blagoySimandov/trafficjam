@@ -1,0 +1,718 @@
+warning: in the working copy of 'map-data-service/requirements.txt', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/map-data-service/alembic.ini b/map-data-service/alembic.ini[m
+[1mdeleted file mode 100644[m
+[1mindex dd8e1dd..0000000[m
+[1m--- a/map-data-service/alembic.ini[m
+[1m+++ /dev/null[m
+[36m@@ -1,40 +0,0 @@[m
+[31m-[alembic][m
+[31m-script_location = %(here)s/migrations[m
+[31m-prepend_sys_path = .[m
+[31m-path_separator = os[m
+[31m-# URL is overridden by env.py from DATABASE_URL[m
+[31m-sqlalchemy.url = driver://user:pass@localhost/dbname[m
+[31m-[m
+[31m-[loggers][m
+[31m-keys = root,sqlalchemy,alembic[m
+[31m-[m
+[31m-[handlers][m
+[31m-keys = console[m
+[31m-[m
+[31m-[formatters][m
+[31m-keys = generic[m
+[31m-[m
+[31m-[logger_root][m
+[31m-level = WARNING[m
+[31m-handlers = console[m
+[31m-qualname =[m
+[31m-[m
+[31m-[logger_sqlalchemy][m
+[31m-level = WARNING[m
+[31m-handlers =[m
+[31m-qualname = sqlalchemy.engine[m
+[31m-[m
+[31m-[logger_alembic][m
+[31m-level = INFO[m
+[31m-handlers =[m
+[31m-qualname = alembic[m
+[31m-[m
+[31m-[handler_console][m
+[31m-class = StreamHandler[m
+[31m-args = (sys.stderr,)[m
+[31m-level = NOTSET[m
+[31m-formatter = generic[m
+[31m-[m
+[31m-[formatter_generic][m
+[31m-format = %(levelname)-5.5s [%(name)s] %(message)s[m
+[31m-datefmt = %H:%M:%S[m
+[1mdiff --git a/map-data-service/db/database.py b/map-data-service/db/database.py[m
+[1mindex 9bb46c3..10302a2 100644[m
+[1m--- a/map-data-service/db/database.py[m
+[1m+++ b/map-data-service/db/database.py[m
+[36m@@ -10,6 +10,10 @@[m [msettings = get_settings()[m
+ engine = create_async_engine([m
+     settings.database_url,[m
+     pool_pre_ping=True,[m
+[32m+[m[32m    pool_size=5,[m
+[32m+[m[32m    max_overflow=10,[m
+[32m+[m[32m    pool_recycle=300,[m
+[32m+[m[32m    connect_args={"statement_cache_size": 0},[m
+ )[m
+ [m
+ AsyncSessionLocal = async_sessionmaker([m
+[1mdiff --git a/map-data-service/db/db_models.py b/map-data-service/db/db_models.py[m
+[1mindex 75956a0..69573df 100644[m
+[1m--- a/map-data-service/db/db_models.py[m
+[1m+++ b/map-data-service/db/db_models.py[m
+[36m@@ -11,8 +11,7 @@[m [mclass Base(DeclarativeBase):[m
+ class NodeDB(Base):[m
+     __tablename__ = "nodes"[m
+ [m
+[31m-    id = Column(Text, primary_key=True)[m
+[31m-    osm_id = Column(BigInteger, nullable=False)[m
+[32m+[m[32m    id = Column(BigInteger, primary_key=True)[m
+     longitude = Column(Double, nullable=False)[m
+     latitude = Column(Double, nullable=False)[m
+     connection_count = Column(Integer, nullable=False)[m
+[36m@@ -22,10 +21,9 @@[m [mclass NodeDB(Base):[m
+ class LinkDB(Base):[m
+     __tablename__ = "links"[m
+ [m
+[31m-    id = Column(Text, primary_key=True)[m
+[31m-    osm_id = Column(BigInteger, nullable=False)[m
+[31m-    from_node = Column(Text, nullable=False)[m
+[31m-    to_node = Column(Text, nullable=False)[m
+[32m+[m[32m    id = Column(BigInteger, primary_key=True)[m
+[32m+[m[32m    from_node = Column(BigInteger, nullable=False)[m
+[32m+[m[32m    to_node = Column(BigInteger, nullable=False)[m
+     geometry = Column(JSON, nullable=False)[m
+     highway = Column(Text)[m
+     lanes = Column(Text)[m
+[36m@@ -40,8 +38,7 @@[m [mclass LinkDB(Base):[m
+ class BuildingDB(Base):[m
+     __tablename__ = "buildings"[m
+ [m
+[31m-    id = Column(Text, primary_key=True)[m
+[31m-    osm_id = Column(BigInteger, nullable=False)[m
+[32m+[m[32m    id = Column(BigInteger, primary_key=True)[m
+     longitude = Column(Double, nullable=False)[m
+     latitude = Column(Double, nullable=False)[m
+     geometry = Column(JSON, nullable=False)[m
+[36m@@ -57,8 +54,7 @@[m [mclass BuildingDB(Base):[m
+ class TransportRouteDB(Base):[m
+     __tablename__ = "transport_routes"[m
+ [m
+[31m-    id = Column(Text, primary_key=True)[m
+[31m-    osm_id = Column(Integer, nullable=False)[m
+[32m+[m[32m    id = Column(BigInteger, primary_key=True)[m
+     way_id = Column(Integer, nullable=False)[m
+     geometry = Column(JSON, nullable=False)[m
+     colour = Column(Text)[m
+[1mdiff --git a/map-data-service/db/repository.py b/map-data-service/db/repository.py[m
+[1mindex c397251..6efd04b 100644[m
+[1m--- a/map-data-service/db/repository.py[m
+[1m+++ b/map-data-service/db/repository.py[m
+[36m@@ -95,7 +95,6 @@[m [mclass MapDataRepository:[m
+         return [[m
+             TrafficNode([m
+                 id=row.id,[m
+[31m-                osm_id=row.osm_id,[m
+                 position=(row.longitude, row.latitude),[m
+                 connection_count=row.connection_count,[m
+             )[m
+[36m@@ -116,7 +115,6 @@[m [mclass MapDataRepository:[m
+             links.append([m
+                 TrafficLink([m
+                     id=row.id,[m
+[31m-                    osm_id=row.osm_id,[m
+                     from_node=row.from_node,[m
+                     to_node=row.to_node,[m
+                     geometry=geometry,[m
+[36m@@ -141,7 +139,6 @@[m [mclass MapDataRepository:[m
+             buildings.append([m
+                 Building([m
+                     id=row.id,[m
+[31m-                    osm_id=row.osm_id,[m
+                     position=(row.longitude, row.latitude),[m
+                     geometry=geometry,[m
+                     type=row.type,[m
+[36m@@ -166,7 +163,6 @@[m [mclass MapDataRepository:[m
+             routes.append([m
+                 TransportRoute([m
+                     id=row.id,[m
+[31m-                    osm_id=row.osm_id,[m
+                     way_id=row.way_id,[m
+                     geometry=geometry,[m
+                     tags=_pick_tags(row, ROUTE_TAG_MAPPING),[m
+[1mdiff --git a/map-data-service/main.py b/map-data-service/main.py[m
+[1mindex 3ae62f2..adac974 100644[m
+[1m--- a/map-data-service/main.py[m
+[1m+++ b/map-data-service/main.py[m
+[36m@@ -1,6 +1,9 @@[m
+[32m+[m[32mimport logging[m
+ from contextlib import asynccontextmanager[m
+ [m
+ from fastapi import FastAPI, Query, HTTPException[m
+[32m+[m
+[32m+[m[32mlogger = logging.getLogger(__name__)[m
+ from fastapi.middleware.cors import CORSMiddleware[m
+ [m
+ from models import NetworkResponse[m
+[36m@@ -46,6 +49,7 @@[m [masync def get_network([m
+         repository = MapDataRepository(AsyncSessionLocal)[m
+         return await repository.fetch_network(min_lat, min_lng, max_lat, max_lng)[m
+     except Exception as e:[m
+[32m+[m[32m        logger.exception("Failed to fetch network data")[m
+         raise HTTPException([m
+             status_code=500, detail="Failed to fetch network data"[m
+         )[m
+[1mdiff --git a/map-data-service/migrations/README b/map-data-service/migrations/README[m
+[1mdeleted file mode 100644[m
+[1mindex 98e4f9c..0000000[m
+[1m--- a/map-data-service/migrations/README[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-Generic single-database configuration.[m
+\ No newline at end of file[m
+[1mdiff --git a/map-data-service/migrations/env.py b/map-data-service/migrations/env.py[m
+[1mdeleted file mode 100644[m
+[1mindex 52c5505..0000000[m
+[1m--- a/map-data-service/migrations/env.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,59 +0,0 @@[m
+[31m-import asyncio[m
+[31m-from logging.config import fileConfig[m
+[31m-[m
+[31m-from sqlalchemy import pool[m
+[31m-from sqlalchemy.ext.asyncio import async_engine_from_config[m
+[31m-[m
+[31m-from alembic import context[m
+[31m-[m
+[31m-from db.db_models import Base[m
+[31m-from config import get_settings[m
+[31m-[m
+[31m-config = context.config[m
+[31m-[m
+[31m-settings = get_settings()[m
+[31m-config.set_main_option("sqlalchemy.url", settings.database_url)[m
+[31m-[m
+[31m-if config.config_file_name is not None:[m
+[31m-    fileConfig(config.config_file_name)[m
+[31m-[m
+[31m-target_metadata = Base.metadata[m
+[31m-[m
+[31m-[m
+[31m-def run_migrations_offline() -> None:[m
+[31m-    url = config.get_main_option("sqlalchemy.url")[m
+[31m-    context.configure([m
+[31m-        url=url,[m
+[31m-        target_metadata=target_metadata,[m
+[31m-        literal_binds=True,[m
+[31m-        dialect_opts={"paramstyle": "named"},[m
+[31m-    )[m
+[31m-[m
+[31m-    with context.begin_transaction():[m
+[31m-        context.run_migrations()[m
+[31m-[m
+[31m-[m
+[31m-def do_run_migrations(connection):[m
+[31m-    context.configure(connection=connection, target_metadata=target_metadata)[m
+[31m-[m
+[31m-    with context.begin_transaction():[m
+[31m-        context.run_migrations()[m
+[31m-[m
+[31m-[m
+[31m-async def run_migrations_online() -> None:[m
+[31m-    connectable = async_engine_from_config([m
+[31m-        config.get_section(config.config_ini_section, {}),[m
+[31m-        prefix="sqlalchemy.",[m
+[31m-        poolclass=pool.NullPool,[m
+[31m-    )[m
+[31m-[m
+[31m-    async with connectable.connect() as connection:[m
+[31m-        await connection.run_sync(do_run_migrations)[m
+[31m-[m
+[31m-    await connectable.dispose()[m
+[31m-[m
+[31m-[m
+[31m-if context.is_offline_mode():[m
+[31m-    run_migrations_offline()[m
+[31m-else:[m
+[31m-    asyncio.run(run_migrations_online())[m
+[1mdiff --git a/map-data-service/migrations/script.py.mako b/map-data-service/migrations/script.py.mako[m
+[1mdeleted file mode 100644[m
+[1mindex 1101630..0000000[m
+[1m--- a/map-data-service/migrations/script.py.mako[m
+[1m+++ /dev/null[m
+[36m@@ -1,28 +0,0 @@[m
+[31m-"""${message}[m
+[31m-[m
+[31m-Revision ID: ${up_revision}[m
+[31m-Revises: ${down_revision | comma,n}[m
+[31m-Create Date: ${create_date}[m
+[31m-[m
+[31m-"""[m
+[31m-from typing import Sequence, Union[m
+[31m-[m
+[31m-from alembic import op[m
+[31m-import sqlalchemy as sa[m
+[31m-${imports if imports else ""}[m
+[31m-[m
+[31m-# revision identifiers, used by Alembic.[m
+[31m-revision: str = ${repr(up_revision)}[m
+[31m-down_revision: Union[str, Sequence[str], None] = ${repr(down_revision)}[m
+[31m-branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}[m
+[31m-depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}[m
+[31m-[m
+[31m-[m
+[31m-def upgrade() -> None:[m
+[31m-    """Upgrade schema."""[m
+[31m-    ${upgrades if upgrades else "pass"}[m
+[31m-[m
+[31m-[m
+[31m-def downgrade() -> None:[m
+[31m-    """Downgrade schema."""[m
+[31m-    ${downgrades if downgrades else "pass"}[m
+[1mdiff --git a/map-data-service/migrations/versions/001_enable_postgis.py b/map-data-service/migrations/versions/001_enable_postgis.py[m
+[1mdeleted file mode 100644[m
+[1mindex ca0ac16..0000000[m
+[1m--- a/map-data-service/migrations/versions/001_enable_postgis.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,21 +0,0 @@[m
+[31m-"""Enable PostGIS extension[m
+[31m-[m
+[31m-Revision ID: 001[m
+[31m-Revises:[m
+[31m-Create Date: 2026-02-15[m
+[31m-"""[m
+[31m-[m
+[31m-from alembic import op[m
+[31m-[m
+[31m-revision = "001"[m
+[31m-down_revision = None[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade() -> None:[m
+[31m-    op.execute("CREATE EXTENSION IF NOT EXISTS postgis")[m
+[31m-[m
+[31m-[m
+[31m-def downgrade() -> None:[m
+[31m-    op.execute("DROP EXTENSION IF EXISTS postgis")[m
+[1mdiff --git a/map-data-service/migrations/versions/002_add_geometry_columns.py b/map-data-service/migrations/versions/002_add_geometry_columns.py[m
+[1mdeleted file mode 100644[m
+[1mindex f2c34b0..0000000[m
+[1m--- a/map-data-service/migrations/versions/002_add_geometry_columns.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,90 +0,0 @@[m
+[31m-"""Add PostGIS geometry columns and populate from existing data[m
+[31m-[m
+[31m-Revision ID: 002[m
+[31m-Revises: 001[m
+[31m-Create Date: 2026-02-15[m
+[31m-"""[m
+[31m-[m
+[31m-from alembic import op[m
+[31m-[m
+[31m-revision = "002"[m
+[31m-down_revision = "001"[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade() -> None:[m
+[31m-    # Add geometry columns[m
+[31m-    op.execute("ALTER TABLE nodes ADD COLUMN geom geometry(POINT, 4326)")[m
+[31m-    op.execute("ALTER TABLE links ADD COLUMN geom geometry(LINESTRING, 4326)")[m
+[31m-    op.execute("ALTER TABLE buildings ADD COLUMN geom geometry(POINT, 4326)")[m
+[31m-    op.execute("ALTER TABLE transport_routes ADD COLUMN geom geometry(LINESTRING, 4326)")[m
+[31m-[m
+[31m-    # Populate nodes geom from longitude/latitude[m
+[31m-    op.execute("""[m
+[31m-        UPDATE nodes[m
+[31m-        SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)[m
+[31m-    """)[m
+[31m-[m
+[31m-    # Populate links geom from JSON geometry array[m
+[31m-    # Filter to rows where geometry is a JSON array (not a scalar)[m
+[31m-    op.execute("""[m
+[31m-        UPDATE links[m
+[31m-        SET geom = ST_SetSRID([m
+[31m-            ST_MakeLine([m
+[31m-                ARRAY([m
+[31m-                    SELECT ST_MakePoint([m
+[31m-                        (coord->>0)::double precision,[m
+[31m-                        (coord->>1)::double precision[m
+[31m-                    )[m
+[31m-                    FROM json_array_elements(geometry) AS coord[m
+[31m-                )[m
+[31m-            ),[m
+[31m-            4326[m
+[31m-        )[m
+[31m-        WHERE geometry IS NOT NULL[m
+[31m-          AND json_typeof(geometry) = 'array'[m
+[31m-    """)[m
+[31m-[m
+[31m-    # Populate buildings geom from longitude/latitude[m
+[31m-    op.execute("""[m
+[31m-        UPDATE buildings[m
+[31m-        SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)[m
+[31m-    """)[m
+[31m-[m
+[31m-    # Populate transport_routes geom from JSON geometry array[m
+[31m-    op.execute("""[m
+[31m-        UPDATE transport_routes[m
+[31m-        SET geom = ST_SetSRID([m
+[31m-            ST_MakeLine([m
+[31m-                ARRAY([m
+[31m-                    SELECT ST_MakePoint([m
+[31m-                        (coord->>0)::double precision,[m
+[31m-                        (coord->>1)::double precision[m
+[31m-                    )[m
+[31m-                    FROM json_array_elements(geometry) AS coord[m
+[31m-                )[m
+[31m-            ),[m
+[31m-            4326[m
+[31m-        )[m
+[31m-        WHERE geometry IS NOT NULL[m
+[31m-          AND json_typeof(geometry) = 'array'[m
+[31m-    """)[m
+[31m-[m
+[31m-    # Create spatial indexes[m
+[31m-    op.execute("CREATE INDEX idx_nodes_geom ON nodes USING GIST (geom)")[m
+[31m-    op.execute("CREATE INDEX idx_links_geom ON links USING GIST (geom)")[m
+[31m-    op.execute("CREATE INDEX idx_buildings_geom ON buildings USING GIST (geom)")[m
+[31m-    op.execute("CREATE INDEX idx_transport_routes_geom ON transport_routes USING GIST (geom)")[m
+[31m-[m
+[31m-[m
+[31m-def downgrade() -> None:[m
+[31m-    op.execute("DROP INDEX IF EXISTS idx_nodes_geom")[m
+[31m-    op.execute("DROP INDEX IF EXISTS idx_links_geom")[m
+[31m-    op.execute("DROP INDEX IF EXISTS idx_buildings_geom")[m
+[31m-    op.execute("DROP INDEX IF EXISTS idx_transport_routes_geom")[m
+[31m-[m
+[31m-    op.drop_column("nodes", "geom")[m
+[31m-    op.drop_column("links", "geom")[m
+[31m-    op.drop_column("buildings", "geom")[m
+[31m-    op.drop_column("transport_routes", "geom")[m
+[1mdiff --git a/map-data-service/migrations/versions/003_populate_geometry_from_json_strings.py b/map-data-service/migrations/versions/003_populate_geometry_from_json_strings.py[m
+[1mdeleted file mode 100644[m
+[1mindex 9ab2c6e..0000000[m
+[1m--- a/map-data-service/migrations/versions/003_populate_geometry_from_json_strings.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,78 +0,0 @@[m
+[31m-"""Populate geometry columns from double-encoded JSON strings[m
+[31m-[m
+[31m-The CSV import stored geometry as JSON strings (e.g. '"[[...]]"')[m
+[31m-rather than native JSON arrays. This migration unwraps them.[m
+[31m-[m
+[31m-Revision ID: 003[m
+[31m-Revises: 002[m
+[31m-Create Date: 2026-02-15[m
+[31m-"""[m
+[31m-[m
+[31m-from alembic import op[m
+[31m-[m
+[31m-revision = "003"[m
+[31m-down_revision = "002"[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade() -> None:[m
+[31m-    # Links: unwrap JSON string -> JSON array -> PostGIS LineString[m
+[31m-    # Use a subquery approach to safely handle non-array values[m
+[31m-    op.execute("""[m
+[31m-        UPDATE links[m
+[31m-        SET geom = sub.geom[m
+[31m-        FROM ([m
+[31m-            SELECT id,[m
+[31m-                   ST_SetSRID([m
+[31m-                       ST_MakeLine([m
+[31m-                           ARRAY([m
+[31m-                               SELECT ST_MakePoint([m
+[31m-                                   (coord->>0)::double precision,[m
+[31m-                                   (coord->>1)::double precision[m
+[31m-                               )[m
+[31m-                               FROM json_array_elements((geometry #>> '{}')::json) AS coord[m
+[31m-                           )[m
+[31m-                       ),[m
+[31m-                       4326[m
+[31m-                   ) AS geom[m
+[31m-            FROM links[m
+[31m-            WHERE geometry IS NOT NULL[m
+[31m-              AND geom IS NULL[m
+[31m-              AND json_typeof(geometry) = 'string'[m
+[31m-              AND json_typeof((geometry #>> '{}')::json) = 'array'[m
+[31m-        ) sub[m
+[31m-        WHERE links.id = sub.id[m
+[31m-    """)[m
+[31m-[m
+[31m-    # Transport routes: same approach[m
+[31m-    op.execute("""[m
+[31m-        UPDATE transport_routes[m
+[31m-        SET geom = sub.geom[m
+[31m-        FROM ([m
+[31m-            SELECT id,[m
+[31m-                   ST_SetSRID([m
+[31m-                       ST_MakeLine([m
+[31m-                           ARRAY([m
+[31m-                               SELECT ST_MakePoint([m
+[31m-                                   (coord->>0)::double precision,[m
+[31m-                                   (coord->>1)::double precision[m
+[31m-                               )[m
+[31m-                               FROM json_array_elements((geometry #>> '{}')::json) AS coord[m
+[31m-                           )[m
+[31m-                       ),[m
+[31m-                       4326[m
+[31m-                   ) AS geom[m
+[31m-            FROM transport_routes[m
+[31m-            WHERE geometry IS NOT NULL[m
+[31m-              AND geom IS NULL[m
+[31m-              AND json_typeof(geometry) = 'string'[m
+[31m-              AND json_typeof((geometry #>> '{}')::json) = 'array'[m
+[31m-        ) sub[m
+[31m-        WHERE transport_routes.id = sub.id[m
+[31m-    """)[m
+[31m-[m
+[31m-[m
+[31m-def downgrade() -> None:[m
+[31m-    op.execute("UPDATE links SET geom = NULL")[m
+[31m-    op.execute("UPDATE transport_routes SET geom = NULL")[m
+[1mdiff --git a/map-data-service/models.py b/map-data-service/models.py[m
+[1mindex 69d7fdf..6af90b4 100644[m
+[1m--- a/map-data-service/models.py[m
+[1m+++ b/map-data-service/models.py[m
+[36m@@ -3,24 +3,21 @@[m [mfrom typing import Optional[m
+ [m
+ [m
+ class TrafficNode(BaseModel):[m
+[31m-    id: str[m
+[31m-    osm_id: int[m
+[32m+[m[32m    id: int[m
+     position: tuple[float, float][m
+     connection_count: int[m
+ [m
+ [m
+ class TrafficLink(BaseModel):[m
+[31m-    id: str[m
+[31m-    osm_id: int[m
+[31m-    from_node: str[m
+[31m-    to_node: str[m
+[32m+[m[32m    id: int[m
+[32m+[m[32m    from_node: int[m
+[32m+[m[32m    to_node: int[m
+     geometry: list[tuple[float, float]][m
+     tags: dict[str, str][m
+ [m
+ [m
+ class Building(BaseModel):[m
+[31m-    id: str[m
+[31m-    osm_id: int[m
+[32m+[m[32m    id: int[m
+     position: tuple[float, float][m
+     geometry: list[tuple[float, float]][m
+     type: Optional[str] = None[m
+[36m@@ -28,8 +25,7 @@[m [mclass Building(BaseModel):[m
+ [m
+ [m
+ class TransportRoute(BaseModel):[m
+[31m-    id: str[m
+[31m-    osm_id: int[m
+[32m+[m[32m    id: int[m
+     way_id: int[m
+     geometry: list[tuple[float, float]][m
+     tags: dict[str, str][m
+[1mdiff --git a/map-data-service/requirements.txt b/map-data-service/requirements.txt[m
+[1mindex 378fef0..a33ad68 100644[m
+[1m--- a/map-data-service/requirements.txt[m
+[1m+++ b/map-data-service/requirements.txt[m
+[36m@@ -1,4 +1,3 @@[m
+[31m-alembic==1.15.0[m
+ annotated-doc==0.0.4[m
+ annotated-types==0.7.0[m
+ anyio==4.12.1[m
+[36m@@ -17,7 +16,6 @@[m [mhttptools==0.7.1[m
+ httpx==0.28.1[m
+ idna==3.11[m
+ Jinja2==3.1.6[m
+[31m-Mako==1.3.10[m
+ markdown-it-py==4.0.0[m
+ MarkupSafe==3.0.3[m
+ mdurl==0.1.2[m
+[1mdiff --git a/trafficjam-fe/src/api/map-data-service.ts b/trafficjam-fe/src/api/map-data-service.ts[m
+[1mindex a9616e5..c358c29 100644[m
+[1m--- a/trafficjam-fe/src/api/map-data-service.ts[m
+[1m+++ b/trafficjam-fe/src/api/map-data-service.ts[m
+[36m@@ -12,24 +12,21 @@[m [mimport type {[m
+ const BASE_URL = import.meta.env.VITE_MAP_DATA_SERVICE_URL || "http://localhost:8000";[m
+ [m
+ interface ApiTrafficNode {[m
+[31m-  id: string;[m
+[31m-  osm_id: number;[m
+[32m+[m[32m  id: number;[m
+   position: [number, number];[m
+   connection_count: number;[m
+ }[m
+ [m
+ interface ApiTrafficLink {[m
+[31m-  id: string;[m
+[31m-  osm_id: number;[m
+[31m-  from_node: string;[m
+[31m-  to_node: string;[m
+[32m+[m[32m  id: number;[m
+[32m+[m[32m  from_node: number;[m
+[32m+[m[32m  to_node: number;[m
+   geometry: [number, number][];[m
+   tags: Record<string, string>;[m
+ }[m
+ [m
+ interface ApiBuilding {[m
+[31m-  id: string;[m
+[31m-  osm_id: number;[m
+[32m+[m[32m  id: number;[m
+   position: [number, number];[m
+   geometry: [number, number][];[m
+   type: string | null;[m
+[36m@@ -37,8 +34,7 @@[m [minterface ApiBuilding {[m
+ }[m
+ [m
+ interface ApiTransportRoute {[m
+[31m-  id: string;[m
+[31m-  osm_id: number;[m
+[32m+[m[32m  id: number;[m
+   way_id: number;[m
+   geometry: [number, number][];[m
+   tags: Record<string, string>;[m
+[36m@@ -61,8 +57,7 @@[m [mfunction swapCoords(coords: [number, number][]): LngLatTuple[] {[m
+ [m
+ function mapNode(api: ApiTrafficNode): TrafficNode {[m
+   return {[m
+[31m-    id: api.id,[m
+[31m-    osmId: api.osm_id,[m
+[32m+[m[32m    id: String(api.id),[m
+     position: swapCoord(api.position),[m
+     connectionCount: api.connection_count,[m
+   };[m
+[36m@@ -70,10 +65,9 @@[m [mfunction mapNode(api: ApiTrafficNode): TrafficNode {[m
+ [m
+ function mapLink(api: ApiTrafficLink): TrafficLink {[m
+   return {[m
+[31m-    id: api.id,[m
+[31m-    osmId: api.osm_id,[m
+[31m-    from: api.from_node,[m
+[31m-    to: api.to_node,[m
+[32m+[m[32m    id: String(api.id),[m
+[32m+[m[32m    from: String(api.from_node),[m
+[32m+[m[32m    to: String(api.to_node),[m
+     geometry: swapCoords(api.geometry),[m
+     tags: {[m
+       highway: api.tags.highway ?? "",[m
+[36m@@ -88,8 +82,7 @@[m [mfunction mapLink(api: ApiTrafficLink): TrafficLink {[m
+ function mapBuilding(api: ApiBuilding): Building | null {[m
+   if (!api.type) return null;[m
+   return {[m
+[31m-    id: api.id,[m
+[31m-    osmId: api.osm_id,[m
+[32m+[m[32m    id: String(api.id),[m
+     position: swapCoord(api.position),[m
+     geometry: api.geometry.length > 0 ? swapCoords(api.geometry) : undefined,[m
+     type: api.type as BuildingType,[m
+[36m@@ -104,8 +97,7 @@[m [mfunction mapBuilding(api: ApiBuilding): Building | null {[m
+ [m
+ function mapTransportRoute(api: ApiTransportRoute): TransportRoute {[m
+   return {[m
+[31m-    id: api.id,[m
+[31m-    osmId: api.osm_id,[m
+[32m+[m[32m    id: String(api.id),[m
+     wayId: api.way_id,[m
+     geometry: swapCoords(api.geometry),[m
+     tags: {[m
+[1mdiff --git a/trafficjam-fe/src/presentation/editor/hooks/use-add-node-on-link.ts b/trafficjam-fe/src/presentation/editor/hooks/use-add-node-on-link.ts[m
+[1mindex 7f11e08..b8b6021 100644[m
+[1m--- a/trafficjam-fe/src/presentation/editor/hooks/use-add-node-on-link.ts[m
+[1m+++ b/trafficjam-fe/src/presentation/editor/hooks/use-add-node-on-link.ts[m
+[36m@@ -26,7 +26,6 @@[m [mfunction createNodeAtMidpoint([m
+   const newNodeId = `node-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;[m
+   const newNode = {[m
+     id: newNodeId,[m
+[31m-    osmId: -baseNow,[m
+     position: mid,[m
+     connectionCount: 2,[m
+   };[m
+[36m@@ -43,7 +42,6 @@[m [mfunction createNodeAtMidpoint([m
+   const newLinkA: TrafficLink = {[m
+     ...link,[m
+     id: linkAId,[m
+[31m-    osmId: -baseNow,[m
+     from: link.from,[m
+     to: newNodeId,[m
+     geometry: left,[m
+[36m@@ -51,7 +49,6 @@[m [mfunction createNodeAtMidpoint([m
+   const newLinkB: TrafficLink = {[m
+     ...link,[m
+     id: linkBId,[m
+[31m-    osmId: -baseNow - 1,[m
+     from: newNodeId,[m
+     to: link.to,[m
+     geometry: right,[m
+[36m@@ -105,7 +102,6 @@[m [mexport function useAddNodeOnLink({[m
+ [m
+               const newNode = {[m
+                 id: newNodeId,[m
+[31m-                osmId: -baseNow,[m
+                 position: [snappedCoord[1], snappedCoord[0]] as [number, number],[m
+                 connectionCount: 2,[m
+               };[m
+[36m@@ -120,7 +116,6 @@[m [mexport function useAddNodeOnLink({[m
+               const newLinkA: TrafficLink = {[m
+                 ...link,[m
+                 id: linkAId,[m
+[31m-                osmId: -baseNow,[m
+                 from: link.from,[m
+                 to: newNodeId,[m
+                 geometry: leftCoords,[m
+[36m@@ -129,7 +124,6 @@[m [mexport function useAddNodeOnLink({[m
+               const newLinkB: TrafficLink = {[m
+                 ...link,[m
+                 id: linkBId,[m
+[31m-                osmId: -baseNow - 1,[m
+                 from: newNodeId,[m
+                 to: link.to,[m
+                 geometry: rightCoords,[m
+[1mdiff --git a/trafficjam-fe/src/types/network.ts b/trafficjam-fe/src/types/network.ts[m
+[1mindex faaa3ef..fb68f5f 100644[m
+[1m--- a/trafficjam-fe/src/types/network.ts[m
+[1m+++ b/trafficjam-fe/src/types/network.ts[m
+[36m@@ -2,14 +2,12 @@[m [mexport type LngLatTuple = [number, number];[m
+ [m
+ export interface TrafficNode {[m
+   id: string;[m
+[31m-  osmId: number;[m
+   position: LngLatTuple;[m
+   connectionCount: number;[m
+ }[m
+ [m
+ export interface TrafficLink {[m
+   id: string;[m
+[31m-  osmId: number;[m
+   from: string;[m
+   to: string;[m
+   geometry: LngLatTuple[];[m
+[36m@@ -24,7 +22,6 @@[m [mexport interface TrafficLink {[m
+ [m
+ export interface TransportRoute {[m
+   id: string;[m
+[31m-  osmId: number;[m
+   wayId: number;[m
+   geometry: LngLatTuple[];[m
+   tags: {[m
+[36m@@ -41,7 +38,6 @@[m [mexport type BuildingType = "retail" | "apartments" | "supermarket" | "school" |[m
+ [m
+ export interface Building {[m
+   id: string;[m
+[31m-  osmId: number;[m
+   position: LngLatTuple;[m
+   geometry?: LngLatTuple[];[m
+   type: BuildingType;[m
