@@ -6,14 +6,20 @@ interface NodeLayerProps {
   network: Network;
   editorMode: boolean;
   draggedNodeId: string | null;
+  tempNodeId?: string | null;
 }
 
 export function NodeLayer({
   network,
   editorMode,
   draggedNodeId,
+  tempNodeId,
 }: NodeLayerProps) {
-  const { geojson, layerStyle } = useNodeLayerStyle(network, draggedNodeId);
+  const { geojson, layerStyle } = useNodeLayerStyle(
+    network,
+    draggedNodeId,
+    tempNodeId,
+  );
 
   if (!editorMode) return null;
 
