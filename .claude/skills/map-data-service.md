@@ -10,7 +10,7 @@
 
 ## Conventions
 
-- Functions: snake*case, private prefixed with `*`
+- Functions: snake_case, private prefixed with `*`
 - Models: PascalCase Pydantic classes
 - Files: snake_case
 - Type hints on all functions
