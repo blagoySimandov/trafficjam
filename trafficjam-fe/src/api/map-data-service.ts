@@ -35,8 +35,7 @@ interface ApiBuilding {
 
 interface ApiTransportRoute {
   id: number;
-  way_id: number;
-  geometry: [number, number][];
+  geometry: [number, number][][];
   tags: Record<string, string>;
 }
 
@@ -98,8 +97,7 @@ function mapBuilding(api: ApiBuilding): Building | null {
 function mapTransportRoute(api: ApiTransportRoute): TransportRoute {
   return {
     id: String(api.id),
-    wayId: api.way_id,
-    geometry: swapCoords(api.geometry),
+    geometry: api.geometry.map((line) => swapCoords(line)),
     tags: {
       route: api.tags.route ?? "",
       ref: api.tags.ref,

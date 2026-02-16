@@ -22,8 +22,7 @@ export interface TrafficLink {
 
 export interface TransportRoute {
   id: string;
-  wayId: number;
-  geometry: LngLatTuple[];
+  geometry: LngLatTuple[][];
   tags: {
     route: string;
     ref?: string;
