@@ -4,7 +4,6 @@ from haversine import haversine, Unit
 
 
 def calculate_area_wgs84(bounds: Dict[str, float]) -> float:
-    """Calculate area in km² from WGS84 (EPSG:4326) bounds using haversine formula."""
     north, south = bounds["north"], bounds["south"]
     east, west = bounds["east"], bounds["west"]
 
