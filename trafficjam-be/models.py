@@ -101,9 +101,3 @@ class PlanCreationRequest(BaseModel):
     bounds: dict[str, float]  # {"north": ..., "south": ..., "east": ..., "west": ...}
     buildings: list[Building]
     country_code: str = "IRL"
-
-
-class PlanCreationResponse(BaseModel):
-    person_count: int
-    xml_content: str | None = None
-    matsim_response: dict | None = None

@@ -22,7 +22,7 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/plan_creation", response_model=PlanCreationResponse)
+@app.post("/plan_creation")
 async def plan_creation(request: PlanCreationRequest):
     writer = MATSimXMLWriter()
     writer.create_plans_document()
@@ -46,18 +46,9 @@ async def plan_creation(request: PlanCreationRequest):
     writer.write_to_stream(stream)
     xml_content = stream.getvalue()
 
-    response = PlanCreationResponse(
-        person_count=writer.get_person_count(),
-        xml_content=xml_content,
-    )
-
     # make it write to postgre
     with open("output/test.xml", "w", encoding="utf-8") as f:
         f.write(xml_content)
-    return response
-
-
-def convert_to_trip(xml_content: str):
     return
 
 
