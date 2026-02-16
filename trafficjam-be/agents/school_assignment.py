@@ -6,7 +6,6 @@ from models import Building, Child
 def assign_school_to_child(
     child: Child, schools: list[Building], kindergartens: list[Building]
 ) -> Child:
-    """Assign a school to a child based on age. Returns updated Child."""
     age = child.age
     school = None
     needs_dropoff = False

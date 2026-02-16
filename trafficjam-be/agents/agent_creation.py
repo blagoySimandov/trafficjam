@@ -17,8 +17,9 @@ from agents.agent_attributes import (
 logger = logging.getLogger(__name__)
 
 
-def calculate_population_from_bounds(bounds: dict[str, float], country_code: str) -> int:
-    """Calculate population from WGS84 bounds using haversine-based area calculation."""
+def calculate_population_from_bounds(
+    bounds: dict[str, float], country_code: str
+) -> int:
     area_km2 = calculate_area_wgs84(bounds)
     return estimate_population(area_km2, country_code)
 
@@ -28,7 +29,6 @@ def create_child(
     schools: list[Building],
     kindergartens: list[Building],
 ) -> Child:
-    """Create a child agent with school assignment."""
     age = generate_child_age()
 
     child = Child(
@@ -119,15 +119,6 @@ def create_agents_from_network(
     transport_routes: list,
     country_code: str = "IRL",
 ) -> list[Agent]:
-    """
-    Creates realistic MATSim agents with:
-    - Households where children are created first
-    - Parent transport preferences influenced by school dropoff needs
-    - Diverse work locations
-    - Age-based demographics and behaviors
-
-    Bounds must be in WGS84 (EPSG:4326) format.
-    """
     total_population = calculate_population_from_bounds(bounds, country_code)
     logger.info(f"Creating ~{total_population} agents for {country_code}")
 
