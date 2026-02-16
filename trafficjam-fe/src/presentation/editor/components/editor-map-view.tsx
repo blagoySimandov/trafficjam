@@ -54,12 +54,10 @@ export function EditorMapView({
     onNetworkChange: setNetwork,
   });
 
-  // Function to update a link in the network
   const updateLinkInNetwork = useCallback(
     (updatedLink: TrafficLink) => {
       if (!network) return;
 
-      // Update the link in the network
       const updatedLinks = new NativeMap(network.links);
       updatedLinks.set(updatedLink.id, updatedLink);
 
@@ -77,7 +75,6 @@ export function EditorMapView({
     [network, pushToUndoStack, onStatusChange],
   );
 
-  // Register the update function with the parent component
   useEffect(() => {
     onRegisterLinkUpdater(updateLinkInNetwork);
   }, [updateLinkInNetwork, onRegisterLinkUpdater]);
