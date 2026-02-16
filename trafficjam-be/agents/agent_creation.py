@@ -34,7 +34,6 @@ def create_child(
     schools: list[Building],
     kindergartens: list[Building],
 ) -> Child:
-    """Create a child agent with school assignment."""
     age = generate_child_age()
 
     child = Child(
@@ -127,13 +126,6 @@ def create_agents_from_network(
     country_code: str = "UNK",
     country_name: str = "UNK",
 ) -> list[Agent]:
-    """
-    Creates realistic MATSim agents with:
-    - Households where children are created first
-    - Parent transport preferences influenced by school dropoff needs
-    - Diverse work locations
-    - Age-based demographics and behaviors
-    """
     total_population = calculate_population_from_bounds(bounds, crs, country_code)
     logger.info(f"Creating ~{total_population} agents for {country_name}")
 

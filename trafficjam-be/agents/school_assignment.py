@@ -6,7 +6,6 @@ from models import Building, Child
 def assign_school_to_child(
     child: Child, schools: list[Building], kindergartens: list[Building]
 ) -> Child:
-    """Assign a school to a child based on age. Returns updated Child."""
     age = child.age
     school = None
     needs_dropoff = False
@@ -30,7 +29,6 @@ def assign_school_to_child(
 def get_schools_from_buildings(
     buildings: list[Building],
 ) -> tuple[list[Building], list[Building]]:
-    """Extract schools and kindergartens from buildings list."""
     schools = [b for b in buildings if b.type == "school"]
     kindergartens = [b for b in buildings if b.type == "kindergarten"]
     return schools, kindergartens

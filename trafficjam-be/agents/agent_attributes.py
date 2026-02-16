@@ -8,10 +8,10 @@ from models import Building
 DEFAULT_AMENITY_RADIUS = 2  # kilometers
 
 
+# TODO: use a library for that
 def get_bounding_box(
     lat: float, lon: float, radius: float
 ) -> tuple[float, float, float, float]:
-    """Get lat/lon bounding box for a radius in kilometers around a point."""
     delta_lat = radius / 111.32
     delta_lon = radius / (111.32 * math.cos(math.radians(lat)))
 
@@ -72,7 +72,6 @@ def determine_employment_status(age: int) -> tuple[bool, bool]:
 def determine_transport_preferences(
     age: int, employed: bool, has_transport: bool, needs_to_dropoff: bool
 ) -> tuple[bool, bool]:
-    """Returns (uses_public_transport, has_car) based on demographics."""
     if 16 <= age <= 25:
         uses_public_transport = has_transport and random.random() > 0.4
     elif age >= 65:
