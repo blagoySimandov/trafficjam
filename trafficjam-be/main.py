@@ -35,7 +35,6 @@ async def plan_creation(request: PlanCreationRequest):
         country_code=request.country_code,
     )
 
-    # Cap agents for now
     if len(agents) > MAX_AGENTS:
         agents = agents[:MAX_AGENTS]
 
