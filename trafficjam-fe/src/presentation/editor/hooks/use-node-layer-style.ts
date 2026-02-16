@@ -4,11 +4,15 @@ import type { Network } from "../../../types";
 import { nodeToGeoJSON } from "../../../utils";
 import { NODE_CIRCLE_LAYER, COLORS } from "../../../constants";
 
-export function useNodeLayerStyle(network: Network, draggedNodeId: string | null) {
+export function useNodeLayerStyle(
+  network: Network, 
+  draggedNodeId: string | null,
+  tempNodeId?: string | null
+) {
   const geojson = useMemo(() => nodeToGeoJSON(network), [network]);
 
   const layerStyle: LayerProps = useMemo(() => {
-    if (!draggedNodeId) return NODE_CIRCLE_LAYER;
+    if (!draggedNodeId && !tempNodeId) return NODE_CIRCLE_LAYER;
 
     return {
       ...NODE_CIRCLE_LAYER,
@@ -34,6 +38,8 @@ export function useNodeLayerStyle(network: Network, draggedNodeId: string | null
               7,
             ],
           ],
+          ["==", ["get", "id"], tempNodeId || ""],
+          6, // Fixed size for temp nodes
           [
             "interpolate",
             ["linear"],
@@ -52,11 +58,19 @@ export function useNodeLayerStyle(network: Network, draggedNodeId: string | null
           "case",
           ["==", ["get", "id"], draggedNodeId],
           COLORS.nodeDragged,
+          ["==", ["get", "id"], tempNodeId || ""],
+          COLORS.nodeTemp,
           COLORS.nodeDefault,
+        ],
+        "circle-opacity": [
+          "case",
+          ["==", ["get", "id"], tempNodeId || ""],
+          0.7, // Semi-transparent for temp nodes
+          1.0,
         ],
       },
     } as LayerProps;
-  }, [draggedNodeId]);
+  }, [draggedNodeId, tempNodeId]);
 
   return { geojson, layerStyle };
 }
