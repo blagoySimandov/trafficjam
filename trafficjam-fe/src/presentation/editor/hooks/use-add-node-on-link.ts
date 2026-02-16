@@ -26,7 +26,6 @@ function createNodeAtMidpoint(
   const newNodeId = `node-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
   const newNode = {
     id: newNodeId,
-    osmId: -baseNow,
     position: mid,
     connectionCount: 2,
   };
@@ -43,7 +42,6 @@ function createNodeAtMidpoint(
   const newLinkA: TrafficLink = {
     ...link,
     id: linkAId,
-    osmId: -baseNow,
     from: link.from,
     to: newNodeId,
     geometry: left,
@@ -51,7 +49,6 @@ function createNodeAtMidpoint(
   const newLinkB: TrafficLink = {
     ...link,
     id: linkBId,
-    osmId: -baseNow - 1,
     from: newNodeId,
     to: link.to,
     geometry: right,
@@ -105,7 +102,6 @@ export function useAddNodeOnLink({
 
               const newNode = {
                 id: newNodeId,
-                osmId: -baseNow,
                 position: [snappedCoord[1], snappedCoord[0]] as [number, number],
                 connectionCount: 2,
               };
@@ -120,7 +116,6 @@ export function useAddNodeOnLink({
               const newLinkA: TrafficLink = {
                 ...link,
                 id: linkAId,
-                osmId: -baseNow,
                 from: link.from,
                 to: newNodeId,
                 geometry: leftCoords,
@@ -129,7 +124,6 @@ export function useAddNodeOnLink({
               const newLinkB: TrafficLink = {
                 ...link,
                 id: linkBId,
-                osmId: -baseNow - 1,
                 from: newNodeId,
                 to: link.to,
                 geometry: rightCoords,
