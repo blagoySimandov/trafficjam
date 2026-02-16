@@ -17,7 +17,6 @@ import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
 import { useNodeAdd } from "../hooks/use-node-add";
-import { useUndoStack } from "../hooks/use-undo-stack";
 import { EditorControls } from "./editor-controls";
 import { NetworkLayer } from "../../../components/layers/network-layer";
 import { TransportLayer } from "../../../components/layers/transport-layer";
@@ -25,69 +24,52 @@ import { BuildingLayer } from "../../../components/layers/building-layer";
 import { NodeLayer } from "./layers/node-layer";
 import { CombinedTooltip } from "../../../components/combined-tooltip";
 
-// Alias the native Map constructor to avoid conflict with react-map-gl Map component
-const NativeMap = globalThis.Map;
-
 interface EditorMapViewProps {
+  network: Network | null;
+  onNetworkChange: (network: Network) => void;
+  onNetworkSave: (network: Network, message: string) => void;
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink) => void;
-  onRegisterLinkUpdater: (updater: (link: TrafficLink) => void) => void;
+  onUndo: () => void;
+  onClear: () => void;
+  canUndo: boolean;
   selectedLinkId: string | null;
 }
 
 export function EditorMapView({
+  network,
   onStatusChange,
   onLinkClick,
-  onRegisterLinkUpdater,
+  onNetworkChange,
+  onNetworkSave,
+  onUndo,
+  onClear,
+  canUndo,
   selectedLinkId,
 }: EditorMapViewProps) {
-  const [network, setNetwork] = useState<Network | null>(null);
   const [showBuildings, setShowBuildings] = useState(true);
   const [editorMode, setEditorMode] = useState(false);
   const mapRef = useRef<MapRef | null>(null);
 
-  const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
   const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
-  const { loading, importData, clear } = useOSMImport(mapRef, {
+  const { loading, importData } = useOSMImport(mapRef, {
     onStatusChange,
-    onNetworkChange: setNetwork,
-  });
-
-  const updateLinkInNetwork = useCallback(
-    (updatedLink: TrafficLink) => {
-      if (!network) return;
-
-      const updatedLinks = new NativeMap(network.links);
-      updatedLinks.set(updatedLink.id, updatedLink);
-
-      const updatedNetwork = {
-        ...network,
-        links: updatedLinks,
-      };
-
-      pushToUndoStack(network);
-      setNetwork(updatedNetwork);
-      onStatusChange(
-        `Updated link: ${updatedLink.tags.name || updatedLink.tags.highway}`,
-      );
+    onNetworkChange: (network: Network | null) => {
+      if (network) {
+        onNetworkChange(network);
+      }
     },
-    [network, pushToUndoStack, onStatusChange],
-  );
-
-  useEffect(() => {
-    onRegisterLinkUpdater(updateLinkInNetwork);
-  }, [updateLinkInNetwork, onRegisterLinkUpdater]);
-
-  const handleClear = useCallback(() => {
-    clear();
-    clearUndoStack();
-  }, [clear, clearUndoStack]);
+  });
 
   const handleLinkClickLocal = useAddNodeOnLink({
     network,
-    setNetwork,
-    pushToUndoStack,
+    setNetwork: (updatedNetwork: Network | null) => {
+      if (updatedNetwork) {
+        onNetworkSave(updatedNetwork, "Added node on link");
+      }
+    },
+    pushToUndoStack: () => {}, // No-op since Editor handles undo
     onStatusChange,
     editorMode,
     onLinkClick,
@@ -109,8 +91,12 @@ export function EditorMapView({
     network,
     mapRef,
     editorMode,
-    onNetworkChange: setNetwork,
-    onBeforeChange: pushToUndoStack,
+    onNetworkChange: (updatedNetwork: Network | null) => {
+      if (updatedNetwork) {
+        onNetworkSave(updatedNetwork, "Moved node");
+      }
+    },
+    onBeforeChange: () => {}, // No-op since Editor handles undo
   });
 
   const {
@@ -125,34 +111,18 @@ export function EditorMapView({
     mapRef,
     editorMode,
     minZoom: MIN_EDIT_ZOOM,
-    onNetworkChange: setNetwork,
-    onBeforeChange: pushToUndoStack,
+    onNetworkChange: (updatedNetwork: Network | null) => {
+      if (updatedNetwork) {
+        onNetworkSave(updatedNetwork, "Added node");
+      }
+    },
+    onBeforeChange: () => {}, // No-op since Editor handles undo
   });
 
   // Merge display networks - prioritize addDisplayNetwork if adding, otherwise use dragDisplayNetwork
   const displayNetwork = isAddingNode ? addDisplayNetwork : dragDisplayNetwork;
 
-  const handleUndo = useCallback(() => {
-    const previousNetwork = undo();
-    if (previousNetwork) {
-      setNetwork(previousNetwork);
-      onStatusChange("Undid node operation");
-    }
-  }, [undo, onStatusChange]);
-
   // Keyboard shortcut for undo (Cmd+Z on Mac, Ctrl+Z on Windows/Linux)
-  // Attach listener once and read latest canUndo/onStatusChange via refs to avoid re-registering
-  const canUndoRef = useRef(canUndo);
-  const onStatusChangeRef = useRef(onStatusChange);
-
-  useEffect(() => {
-    canUndoRef.current = canUndo;
-  }, [canUndo]);
-
-  useEffect(() => {
-    onStatusChangeRef.current = onStatusChange;
-  }, [onStatusChange]);
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -162,19 +132,15 @@ export function EditorMapView({
       ) {
         event.preventDefault();
 
-        if (!canUndoRef.current) return;
+        if (!canUndo) return;
 
-        const previousNetwork = undo();
-        if (previousNetwork) {
-          setNetwork(previousNetwork);
-          onStatusChangeRef.current("Undid node operation");
-        }
+        onUndo();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo]);
+  }, [onUndo, canUndo]);
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
@@ -242,14 +208,14 @@ export function EditorMapView({
     >
       <EditorControls
         onImport={importData}
-        onClear={handleClear}
+        onClear={onClear}
         onExport={exportNetwork}
         loading={loading}
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
         editorMode={editorMode}
         onToggleEditorMode={toggleEditorMode}
-        onUndo={handleUndo}
+        onUndo={onUndo}
         canUndo={canUndo}
       />
       {displayNetwork && (

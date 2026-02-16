@@ -1,24 +1,28 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import type { TrafficLink } from "../../types";
+import type { Network, TrafficLink } from "../../types";
 import { HIGHWAY_TYPES } from "../../constants";
 import { AttributeField } from "./components/attribute-field";
 import { DevToolsSection } from "./components/dev-tools-section";
+import { useUpdateLink } from "./hooks/use-update-link";
 import { LANE_OPTIONS, MAXSPEED_OPTIONS, ONEWAY_OPTIONS } from "./constants";
 import styles from "./link-attribute-panel.module.css";
 
 interface LinkAttributePanelProps {
   link: TrafficLink;
+  network: Network | null;
   onClose: () => void;
-  onSave: (updatedLink: TrafficLink) => void;
+  onSave: (updatedNetwork: Network, message: string) => void;
 }
 
 export function LinkAttributePanel({
   link,
+  network,
   onClose,
   onSave,
 }: LinkAttributePanelProps) {
   const [editedLink, setEditedLink] = useState<TrafficLink>(link);
+  const { updateLink } = useUpdateLink(network, onSave);
 
   // Update local state when the link prop changes
   useEffect(() => {
@@ -79,7 +83,7 @@ export function LinkAttributePanel({
   };
 
   const handleSave = () => {
-    onSave(editedLink);
+    updateLink(editedLink);
     onClose();
   };
 
