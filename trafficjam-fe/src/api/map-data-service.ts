@@ -1,3 +1,4 @@
+//TODO: refactor into the decoder/client pattern used int the simengine
 import type {
   Network,
   TrafficNode,
@@ -9,7 +10,8 @@ import type {
   LngLatBounds,
 } from "../types";
 
-const BASE_URL = import.meta.env.VITE_MAP_DATA_SERVICE_URL || "http://localhost:8000";
+const BASE_URL =
+  import.meta.env.VITE_MAP_DATA_SERVICE_URL || "http://localhost:8000";
 
 interface ApiTrafficNode {
   id: number;
