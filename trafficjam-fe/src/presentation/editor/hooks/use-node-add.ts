@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo} from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
@@ -69,20 +69,20 @@ export function useNodeAdd({
   }, [isAddingNode, tempNodePosition, tempLinkEndPosition, network]);
 
 
-  const handleMouseDown = useCallback((e: MapMouseEvent) => {
-    if (!editorMode || !network) return;
+  const handleMouseDown = useCallback((e: MapMouseEvent): boolean => {
+    if (!editorMode || !network) return false;
 
     const map = mapRef.current;
-    if (!map || !editorMode) return;
+    if (!map) return false;
 
     const zoom = map.getZoom();
-    if (zoom < minZoom) return;
+    if (zoom < minZoom) return false;
 
-     // Check if clicking on an existing node - if so, don't add a new one
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: [NODE_LAYER_ID],
-      });
-      if (features && features.length > 0) return;
+    // Check if clicking on an existing node - if so, don't add a new one
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: [NODE_LAYER_ID],
+    });
+    if (features && features.length > 0) return false;
 
     const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
     setTempNodePosition(newPosition);
@@ -93,24 +93,26 @@ export function useNodeAdd({
     map.getMap().getCanvas().style.cursor = "crosshair";
     map.dragPan.disable();
 
-    e.preventDefault();
+    return true; // Event consumed
   }, [editorMode, network, mapRef, minZoom]);
 
   const handleMouseMove = useCallback(
-    (e: MapMouseEvent) => {
-      if (!isAddingRef.current || !tempNodePosition) return;
+    (e: MapMouseEvent): boolean => {
+      if (!isAddingRef.current || !tempNodePosition) return false;
 
       const currentPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
       setTempLinkEndPosition(currentPosition);
+      
+      return true; // Event consumed
     },
     [tempNodePosition],
   );
    
-  const handleMouseUp = useCallback((e: MapMouseEvent) => {
-    if (!isAddingRef.current || !tempNodePosition || !network) return;
+  const handleMouseUp = useCallback((e: MapMouseEvent): boolean => {
+    if (!isAddingRef.current || !tempNodePosition || !network) return false;
     
     const map = mapRef.current;
-    if (!map) return;
+    if (!map) return false;
 
       const releasePosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
       const snapResult = findSnapPoint(releasePosition, network, []);
@@ -168,30 +170,16 @@ export function useNodeAdd({
 
     map.getMap().getCanvas().style.cursor = "";
     map.dragPan.enable();
+    
+    return true; // Event consumed
   }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !editorMode) return;
-    
-    const mapCanvas = map.getMap();
-
-    
-
-    mapCanvas.on("mousedown", handleMouseDown);
-    mapCanvas.on("mousemove", handleMouseMove);
-    mapCanvas.on("mouseup", handleMouseUp);
-
-    return () => {
-      mapCanvas.off("mousedown", handleMouseDown);
-      mapCanvas.off("mousemove", handleMouseMove);
-      mapCanvas.off("mouseup", handleMouseUp);
-    };
-  }, [mapRef, editorMode, handleMouseDown, handleMouseUp, handleMouseMove]);
 
   return {
     isAddingNode,
     displayNetwork,
     tempNodeId,
+    onMouseDown: handleMouseDown,
+    onMouseMove: handleMouseMove,
+    onMouseUp: handleMouseUp,
   };
 }

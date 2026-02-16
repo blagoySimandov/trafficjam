@@ -85,6 +85,9 @@ export function EditorMapView({
     isAddingNode,
     displayNetwork: addDisplayNetwork,
     tempNodeId,
+    onMouseDown: nodeAddMouseDown,
+    onMouseMove: nodeAddMouseMove,
+    onMouseUp: nodeAddMouseUp,
   } = useNodeAdd({
     network,
     mapRef,
@@ -159,11 +162,32 @@ export function EditorMapView({
     },
     [handleClick],
   );
+
+  const handleMapMouseDown = useCallback(
+    (event: MapMouseEvent) => {
+      // Node add gets priority in editor mode
+      if (nodeAddMouseDown(event)) return;
+    },
+    [nodeAddMouseDown],
+  );
+
+  const handleMapMouseUp = useCallback(
+    (event: MapMouseEvent) => {
+      // Node add gets priority in editor mode
+      if (nodeAddMouseUp(event)) return;
+    },
+    [nodeAddMouseUp],
+  );
+
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
+      // Node add gets priority when actively adding
+      if (nodeAddMouseMove(event)) return;
+
+      // Otherwise, handle hover effects
       handleMouseMove(event);
     },
-    [handleMouseMove],
+    [nodeAddMouseMove, handleMouseMove],
   );
 
   return (
@@ -179,6 +203,8 @@ export function EditorMapView({
       mapboxAccessToken={MAPBOX_TOKEN}
       interactiveLayerIds={network ? INTERACTIVE_LAYER_IDS : []}
       onClick={handleMapClick}
+      onMouseDown={handleMapMouseDown}
+      onMouseUp={handleMapMouseUp}
       onMouseMove={handleMapMouseMove}
       onMouseLeave={handleMouseLeave}
     >
