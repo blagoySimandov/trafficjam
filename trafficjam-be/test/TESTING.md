@@ -144,3 +144,44 @@ Monitor memory usage and verify:
 - Output files are created correctly
 
 ---
+
+## 5. Run Persistence Tests (Linux/WSL)
+
+These tests verify that the application can successfully read and write to the PostgreSQL database.
+
+### Prerequisites
+
+You need the following Python packages installed in your environment:
+
+```bash
+cd trafficjam-be
+pip install pytest pytest-asyncio asyncpg sqlmodel httpx
+```
+
+### 1. Start the Database
+
+Ensure you have the database running (and no other services using port 5432).
+
+```bash
+# Verify no other postgres container is running
+docker rm -f trafficjam-db || true
+
+# Start the database container
+docker run -d \
+  --name trafficjam-db \
+  -e POSTGRES_DB=trafficjam \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=admin \
+  -p 5432:5432 \
+  -v trafficjam_db_data:/var/lib/postgresql/data \
+  trafficjam-db
+```
+
+### 2. Run the Tests
+
+Run this command from the `trafficjam-be` directory:
+
+```bash
+PYTHONPATH=. DATABASE_URL="postgresql+asyncpg://admin:admin@localhost:5432/trafficjam" pytest test/test_persistence.py -v
+```
+
