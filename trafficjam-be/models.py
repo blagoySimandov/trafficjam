@@ -94,3 +94,16 @@ class Adult(Agent):
     work_type: Optional[str] = None
     children: list[Child] = []
     needs_to_dropoff_children: bool = False
+
+
+# Request/Response types
+class PlanCreationRequest(BaseModel):
+    bounds: dict[str, float]  # {"north": ..., "south": ..., "east": ..., "west": ...}
+    buildings: list[Building]
+    country_code: str = "IRL"
+
+
+class PlanCreationResponse(BaseModel):
+    person_count: int
+    xml_content: str | None = None
+    matsim_response: dict | None = None

@@ -170,41 +170,9 @@ def generate_plan_child(child: Child) -> DailyPlan | None:
     return plan
 
 
-def generate_plan_non_employed(
-    adult: Adult, buildings: list[Building]
-) -> DailyPlan | None:
-    if adult.employed or adult.age >= 65:
-        return None
-
-    mode = _get_mode(adult)
-    plan = DailyPlan()
-
-    _add(
-        plan,
-        ActivityType.HOME,
-        adult.home.position,
-        end_time=generate_departure_time_elderly(),
-    )
-
-    shop = _find_nearby_shopping(adult.home, buildings)
-    if shop:
-        _add(
-            plan,
-            ActivityType.SHOPPING,
-            shop.position,
-            mode,
-            duration=generate_errand_duration(),
-        )
-
-    _add(plan, ActivityType.HOME, adult.home.position, mode)
-
-    return plan
-
-
-def generate_plan_elderly(adult: Adult, buildings: list[Building]) -> DailyPlan | None:
-    if adult.age < 65:
-        return None
-
+def _generate_errand_plan(
+    adult: Adult, buildings: list[Building], healthcare_chance: float = 0.0
+) -> DailyPlan:
     mode = _get_mode(adult)
     plan = DailyPlan()
 
@@ -218,13 +186,29 @@ def generate_plan_elderly(adult: Adult, buildings: list[Building]) -> DailyPlan 
     shop = _find_nearby_shopping(adult.home, buildings)
     if shop:
         act_type = (
-            ActivityType.HEALTHCARE if random.random() < 0.3 else ActivityType.SHOPPING
+            ActivityType.HEALTHCARE
+            if healthcare_chance > 0 and random.random() < healthcare_chance
+            else ActivityType.SHOPPING
         )
         _add(plan, act_type, shop.position, mode, duration=generate_errand_duration())
 
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
     return plan
+
+
+def generate_plan_non_employed(
+    adult: Adult, buildings: list[Building]
+) -> DailyPlan | None:
+    if adult.employed or adult.age >= 65:
+        return None
+    return _generate_errand_plan(adult, buildings)
+
+
+def generate_plan_elderly(adult: Adult, buildings: list[Building]) -> DailyPlan | None:
+    if adult.age < 65:
+        return None
+    return _generate_errand_plan(adult, buildings, healthcare_chance=0.3)
 
 
 def generate_plan_for_agent(
