@@ -1,6 +1,5 @@
 from io import StringIO
 
-import httpx
 from fastapi import FastAPI
 
 from models import PlanCreationRequest, PlanCreationResponse
@@ -52,22 +51,14 @@ async def plan_creation(request: PlanCreationRequest):
         xml_content=xml_content,
     )
 
-    try:
-        async with httpx.AsyncClient() as client:
-            matsim_response = await client.post(
-                f"{MATSIM_WRAPPER_URL}/plans",
-                content=xml_content,
-                headers={"Content-Type": "application/xml"},
-                timeout=60.0,
-            )
-            response.matsim_response = {
-                "status_code": matsim_response.status_code,
-                "body": matsim_response.text,
-            }
-    except httpx.RequestError as e:
-        response.matsim_response = {"error": str(e)}
-
+    # make it write to postgre
+    with open("output/test.xml", "w", encoding="utf-8") as f:
+        f.write(xml_content)
     return response
+
+
+def convert_to_trip(xml_content: str):
+    return
 
 
 if __name__ == "__main__":
