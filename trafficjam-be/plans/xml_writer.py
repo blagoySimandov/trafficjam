@@ -33,7 +33,6 @@ class MATSimXMLWriter:
     def create_plans_document(self) -> ET.Element:
         self.plans_element = ET.Element("plans")
 
-        # Add attributes element with CRS
         attributes = ET.SubElement(self.plans_element, "attributes")
         crs_attr = ET.SubElement(attributes, "attribute")
         crs_attr.set("name", "coordinateReferenceSystem")
@@ -57,7 +56,6 @@ class MATSimXMLWriter:
         if selected:
             plan_elem.set("selected", "yes")
 
-        # Interleave activities and legs
         for i, activity in enumerate(plan.activities):
             act = ET.SubElement(plan_elem, "act")
             act.set("type", activity.type.value)
@@ -70,7 +68,6 @@ class MATSimXMLWriter:
             if activity.duration:
                 act.set("dur", activity.duration.strftime("%H:%M:%S"))
 
-            # Add leg after activity (except for last activity)
             if i < len(plan.transport):
                 leg = ET.SubElement(plan_elem, "leg")
                 leg.set("mode", plan.transport[i].mode)
@@ -86,10 +83,8 @@ class MATSimXMLWriter:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Add indentation for readability
         _indent_xml(self.plans_element)
 
-        # Create the XML string with declaration and doctype
         xml_str = ET.tostring(self.plans_element, encoding="unicode")
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -115,7 +110,6 @@ class MATSimXMLWriter:
         stream.write(xml_str)
 
     def get_person_count(self) -> int:
-        """Return the number of persons added."""
         return self._person_count
 
 
@@ -124,16 +118,6 @@ def write_plans_xml(
     output_path: str | Path,
     crs: str = "EPSG:4326",
 ) -> int:
-    """Convenience function to write multiple plans to a file.
-
-    Args:
-        plans: List of (person_id, DailyPlan) tuples
-        output_path: Path to write the XML file
-        crs: Coordinate reference system (default WGS84)
-
-    Returns:
-        Number of persons written
-    """
     writer = MATSimXMLWriter(crs=crs)
     writer.create_plans_document()
 
