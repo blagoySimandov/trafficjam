@@ -2,14 +2,9 @@ import { useState, useCallback } from "react";
 import { EditorMapView } from "./components/editor-map-view";
 import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
-import { InfoPanel } from "../../components/info-panel";
+import { LinkAttributePanel } from "./components/link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
 import type { TrafficLink } from "../../types";
-
-interface InfoData {
-  title: string;
-  data: Record<string, unknown>;
-}
 
 interface EditorProps {
   onRunSimulation: () => void;
@@ -17,20 +12,39 @@ interface EditorProps {
 
 export function Editor({ onRunSimulation }: EditorProps) {
   const [status, setStatus] = useState("");
-  const [info, setInfo] = useState<InfoData | null>(null);
+  const [selectedLink, setSelectedLink] = useState<TrafficLink | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const [updateLinkInNetwork, setUpdateLinkInNetwork] = useState<
+    ((link: TrafficLink) => void) | null
+  >(null);
+
   const handleLinkClick = useCallback((link: TrafficLink) => {
-    setInfo({
-      title: `Link: ${link.tags.name || link.tags.highway}`,
-      data: {
-        id: link.id,
-        type: link.tags.highway,
-        lanes: link.tags.lanes,
-        maxspeed: link.tags.maxspeed,
-        oneway: link.tags.oneway,
-      },
-    });
+    setSelectedLink(link);
+  }, []);
+
+  const handleLinkSave = useCallback(
+    (updatedLink: TrafficLink) => {
+      if (updateLinkInNetwork) {
+        updateLinkInNetwork(updatedLink);
+      }
+      setSelectedLink(updatedLink);
+      setStatus(
+        `Updated link: ${updatedLink.tags.name || updatedLink.tags.highway}`,
+      );
+    },
+    [updateLinkInNetwork],
+  );
+
+  const handleRegisterLinkUpdater = useCallback(
+    (updater: (link: TrafficLink) => void) => {
+      setUpdateLinkInNetwork(() => updater);
+    },
+    [],
+  );
+
+  const handleClosePanel = useCallback(() => {
+    setSelectedLink(null);
   }, []);
 
   const handleLaunch = useCallback(() => {
@@ -40,8 +54,18 @@ export function Editor({ onRunSimulation }: EditorProps) {
 
   return (
     <>
-      <EditorMapView onStatusChange={setStatus} onLinkClick={handleLinkClick} />
-      {info && <InfoPanel title={info.title} data={info.data} />}
+      <EditorMapView
+        onStatusChange={setStatus}
+        onLinkClick={handleLinkClick}
+        onRegisterLinkUpdater={handleRegisterLinkUpdater}
+      />
+      {selectedLink && (
+        <LinkAttributePanel
+          link={selectedLink}
+          onClose={handleClosePanel}
+          onSave={handleLinkSave}
+        />
+      )}
       {status && <StatusBar message={status} />}
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
       {dialogOpen && (
