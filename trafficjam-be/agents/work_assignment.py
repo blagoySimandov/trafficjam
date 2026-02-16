@@ -1,7 +1,6 @@
 import random
 
-
-from models import Building
+from models import Adult, Building
 
 SUPERMARKET_TAGS = ["supermarket", "convenience"]
 HEALTHCARE_TAGS = ["hospital", "clinic", "pharmacy", "doctors", "dentist"]
@@ -46,18 +45,16 @@ def calculate_work_distribution_weights(
     return available_categories, weights
 
 
-def assign_work_location(agent: dict, buildings: list[Building]) -> None:
+def assign_work_location(adult: Adult, buildings: list[Building]) -> Adult:
     work_categories = categorize_work_buildings(buildings)
     available_categories, weights = calculate_work_distribution_weights(work_categories)
 
     if not available_categories:
-        return
+        return adult
 
     category, category_buildings = random.choices(
         available_categories, weights=weights
     )[0]
     work_building = random.choice(category_buildings)
 
-    agent["work_building_id"] = work_building.id
-    agent["work_location"] = work_building.position
-    agent["work_type"] = category
+    return adult.model_copy(update={"work": work_building, "work_type": category})

@@ -19,14 +19,14 @@ def get_bounding_box(
 
 
 def find_nearby_or_closest(
-    agent_pos: tuple[float, float],
+    position: tuple[float, float],
     buildings: list[Building],
     radius: float = DEFAULT_AMENITY_RADIUS,
 ) -> Building | None:
     if not buildings:
         return None
 
-    lat, lon = agent_pos
+    lat, lon = position
     lat_min, lat_max, lon_min, lon_max = get_bounding_box(lat, lon, radius)
 
     candidates = [
@@ -39,64 +39,52 @@ def find_nearby_or_closest(
         within_radius = [
             b
             for b in candidates
-            if haversine(agent_pos, b.position, unit=Unit.KILOMETERS) <= radius
+            if haversine(position, b.position, unit=Unit.KILOMETERS) <= radius
         ]
         if within_radius:
             return random.choice(within_radius)
 
     return min(
-        buildings, key=lambda b: haversine(agent_pos, b.position, unit=Unit.KILOMETERS)
+        buildings, key=lambda b: haversine(position, b.position, unit=Unit.KILOMETERS)
     )
 
 
-def generate_age_distribution() -> int:
+def generate_child_age() -> int:
+    return random.randint(0, 17)
+
+
+def generate_adult_age() -> int:
     return random.choices(
-        [random.randint(0, 17), random.randint(18, 64), random.randint(65, 90)],
-        weights=[0.2, 0.65, 0.15],
+        [random.randint(18, 64), random.randint(65, 90)],
+        weights=[0.8, 0.2],
     )[0]
 
 
-def assign_employment_status(agent: dict) -> None:
-    age = agent["age"]
-
+def determine_employment_status(age: int) -> tuple[bool, bool]:
+    """Returns (employed, is_student) based on age."""
     if 18 <= age < 65:
-        agent["employed"] = random.random() > 0.1
-        agent["is_student"] = 18 <= age <= 25 and random.random() > 0.3
-    else:
-        agent["employed"] = False
-        agent["is_student"] = False
+        employed = random.random() > 0.1
+        is_student = 18 <= age <= 25 and random.random() > 0.3
+        return employed, is_student
+    return False, False
 
 
-def assign_transport_mode(agent: dict, has_transport: bool) -> None:
-    age = agent["age"]
-
+def determine_transport_preferences(
+    age: int, employed: bool, has_transport: bool, needs_to_dropoff: bool
+) -> tuple[bool, bool]:
+    """Returns (uses_public_transport, has_car) based on demographics."""
     if 16 <= age <= 25:
-        agent["uses_public_transport"] = has_transport and random.random() > 0.4
+        uses_public_transport = has_transport and random.random() > 0.4
     elif age >= 65:
-        agent["uses_public_transport"] = has_transport and random.random() > 0.6
-    elif not agent.get("employed"):
-        agent["uses_public_transport"] = has_transport and random.random() > 0.5
+        uses_public_transport = has_transport and random.random() > 0.6
+    elif not employed:
+        uses_public_transport = has_transport and random.random() > 0.5
     else:
-        agent["uses_public_transport"] = has_transport and random.random() > 0.7
+        uses_public_transport = has_transport and random.random() > 0.7
 
-    agent["has_car"] = not agent["uses_public_transport"] or (
-        age >= 25 and random.random() > 0.3
-    )
+    if needs_to_dropoff:
+        has_car = random.random() > 0.15
+    else:
+        has_car = not uses_public_transport or (age >= 25 and random.random() > 0.3)
 
-
-def assign_amenity_preferences(
-    agent: dict, buildings: list[Building], radius: float = DEFAULT_AMENITY_RADIUS
-) -> None:
-    agent_home = agent["home_location"]
-
-    supermarkets = [b for b in buildings if b.type == "supermarket"]
-    if supermarkets:
-        selected = find_nearby_or_closest(agent_home, supermarkets, radius)
-        if selected:
-            agent["preferred_supermarket"] = selected.position
-
-    hospitals = [b for b in buildings if b.type in ["hospital", "clinic", "doctors"]]
-    if hospitals:
-        selected = find_nearby_or_closest(agent_home, hospitals, radius)
-        if selected:
-            agent["preferred_healthcare"] = selected.position
+    return uses_public_transport, has_car
