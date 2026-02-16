@@ -30,12 +30,14 @@ interface EditorMapViewProps {
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink) => void;
   onRegisterLinkUpdater: (updater: (link: TrafficLink) => void) => void;
+  selectedLinkId: string | null;
 }
 
 export function EditorMapView({
   onStatusChange,
   onLinkClick,
   onRegisterLinkUpdater,
+  selectedLinkId,
 }: EditorMapViewProps) {
   const [network, setNetwork] = useState<Network | null>(null);
   const [showBuildings, setShowBuildings] = useState(true);
@@ -206,7 +208,11 @@ export function EditorMapView({
         canUndo={canUndo}
       />
       {displayNetwork && (
-        <NetworkLayer network={displayNetwork} hoverInfo={null} />
+        <NetworkLayer
+          network={displayNetwork}
+          hoverInfo={null}
+          selectedLinkId={selectedLinkId}
+        />
       )}
       {displayNetwork && (
         <NodeLayer
