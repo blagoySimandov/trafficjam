@@ -97,17 +97,30 @@ public class MatsimRunner {
                 info.status = "COMPLETED";
 
             } catch (Exception e) {
-                logger.error("Simulation {} FAILED with exception: {}", simulationId, e.getMessage(), e);
-                logger.error("Exception type: {}", e.getClass().getName());
-                logger.error("Stack trace:", e);
+                // Check if this was an intentional interruption (stop command)
+                if (e instanceof InterruptedException
+                        || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
+                    logger.info("Simulation {} was stopped by user request.", simulationId);
 
-                // Update status to failed
-                SimulationInfo info = activeSimulations.get(simulationId);
-                if (info != null) {
-                    info.status = "FAILED";
-                    info.error = e.getMessage();
+                    // Ensure status is marked as STOPPED if not already
+                    SimulationInfo info = activeSimulations.get(simulationId);
+                    if (info != null && !"STOPPED".equals(info.status)) {
+                        info.status = "STOPPED";
+                    }
+                } else {
+                    // unexpected error
+                    logger.error("Simulation {} FAILED with exception: {}", simulationId, e.getMessage(), e);
+                    logger.error("Exception type: {}", e.getClass().getName());
+                    logger.error("Stack trace:", e);
+
+                    // Update status to failed
+                    SimulationInfo info = activeSimulations.get(simulationId);
+                    if (info != null) {
+                        info.status = "FAILED";
+                        info.error = e.getMessage();
+                    }
+                    throw new RuntimeException("Simulation " + simulationId + " failed", e);
                 }
-                throw new RuntimeException("Simulation " + simulationId + " failed", e);
             }
         });
 
