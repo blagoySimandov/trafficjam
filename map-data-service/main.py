@@ -1,6 +1,9 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query, HTTPException
+
+logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
 
 from models import NetworkResponse
@@ -46,6 +49,7 @@ async def get_network(
         repository = MapDataRepository(AsyncSessionLocal)
         return await repository.fetch_network(min_lat, min_lng, max_lat, max_lng)
     except Exception as e:
+        logger.exception("Failed to fetch network data")
         raise HTTPException(
             status_code=500, detail="Failed to fetch network data"
         )
