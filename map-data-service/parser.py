@@ -33,12 +33,10 @@ def _bucket_elements(
     return nodes_by_id, ways, relations
 
 
-def _count_endpoint_connections(highway_ways: list[OSMWay]) -> dict[int, int]:
+def _count_node_connections(highway_ways: list[OSMWay]) -> dict[int, int]:
     counts: dict[int, int] = {}
     for way in highway_ways:
-        if len(way.nodes) < 2:
-            continue
-        for node_id in (way.nodes[0], way.nodes[-1]):
+        for node_id in way.nodes:
             counts[node_id] = counts.get(node_id, 0) + 1
     return counts
 
@@ -55,13 +53,13 @@ def _resolve_geometry(
     return coords
 
 
-def _register_endpoint_nodes(
+def _register_all_nodes(
     way: OSMWay,
     geometry: list[tuple[float, float]],
     traffic_nodes: dict[int, TrafficNode],
     connection_counts: dict[int, int],
 ) -> None:
-    for nid, coord in ((way.nodes[0], geometry[0]), (way.nodes[-1], geometry[-1])):
+    for nid, coord in zip(way.nodes, geometry):
         if nid not in traffic_nodes:
             traffic_nodes[nid] = TrafficNode(
                 id=f"n{nid}",
@@ -95,7 +93,7 @@ def _build_traffic_graph(
         geometry = _resolve_geometry(way.nodes, nodes_by_id)
         if geometry is None or len(geometry) < 2:
             continue
-        _register_endpoint_nodes(way, geometry, traffic_nodes, connection_counts)
+        _register_all_nodes(way, geometry, traffic_nodes, connection_counts)
         traffic_links.append(_make_traffic_link(way, geometry))
     return list(traffic_nodes.values()), traffic_links
 
@@ -200,7 +198,7 @@ def parse_osm_response(data: dict) -> NetworkResponse:
 
     building_ways = [w for w in ways if "building" in w.tags]
 
-    connection_counts = _count_endpoint_connections(highway_ways)
+    connection_counts = _count_node_connections(highway_ways)
 
     nodes, links = _build_traffic_graph(highway_ways, nodes_by_id, connection_counts)
 
