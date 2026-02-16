@@ -14,3 +14,5 @@ BUILDING_TAG_KEYS = frozenset(
 VALID_BUILDING_TYPES = frozenset(
     {"retail", "apartments", "supermarket", "school", "kindergarten", "parking"}
 )
+
+SHOP_TYPES = frozenset({"supermarket", "retail", "shop", "commercial"})
