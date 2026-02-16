@@ -1,0 +1,44 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "trips.csv"
+  },
+  "width": "container",
+  "height": 400,
+  "transform": [
+    {
+      "calculate": "floor(datum.start_time / 3600) % 24",
+      "as": "hour"
+    }
+  ],
+  "mark": {
+    "type": "line",
+    "point": true,
+    "strokeWidth": 3
+  },
+  "encoding": {
+    "x": {
+      "field": "hour",
+      "type": "quantitative",
+      "scale": {
+        "domain": [0, 23]
+      },
+      "axis": {
+        "title": "Hour of Day",
+        "tickCount": 24,
+        "labelExpr": "datum.value + ':00'"
+      }
+    },
+    "y": {
+      "aggregate": "count",
+      "type": "quantitative",
+      "axis": {
+        "title": "Number of Trips"
+      }
+    },
+    "tooltip": [
+      {"field": "hour", "type": "quantitative", "title": "Hour"},
+      {"aggregate": "count", "type": "quantitative", "title": "Trips"}
+    ]
+  }
+}

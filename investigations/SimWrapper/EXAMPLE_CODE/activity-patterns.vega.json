@@ -1,0 +1,33 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "trips.csv"
+  },
+  "width": "container",
+  "height": 400,
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "field": "end_act",
+      "type": "nominal",
+      "title": "Destination Activity",
+      "axis": {
+        "labelAngle": -45
+      }
+    },
+    "y": {
+      "aggregate": "count",
+      "type": "quantitative",
+      "title": "Number of Trips"
+    },
+    "color": {
+      "field": "end_act",
+      "type": "nominal",
+      "legend": null
+    },
+    "tooltip": [
+      {"field": "end_act", "type": "nominal", "title": "Activity"},
+      {"aggregate": "count", "type": "quantitative", "title": "Trips"}
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+header:
+  tab: "Cork Analysis"
+  title: "Cork Traffic Analysis Dashboard"
+  description: "Trip data visualization and statistics"
+
+layout:
+  row1:
+    - type: "vega"
+      title: "Hourly Trip Volume"
+      config: "hourly-volume-direct.vega.json"
+      width: 2
+      height: 12
+      
+  row2:
+    - type: "vega"
+      title: "Mode Share"
+      config: "mode-share-chart.vega.json"
+      width: 1
+      height: 10
+      
+    - type: "vega"
+      title: "Trip Duration by Mode"
+      config: "duration-by-mode.vega.json"
+      width: 1
+      height: 10
+      
+  row3:
+    - type: "vega"
+      title: "Time-of-Day Mode Usage Heatmap"
+      config: "time-mode-heatmap.vega.json"
+      width: 2
+      height: 10
+  
+  row4:
+    - type: "vega"
+      title: "Activity Flows (Origin → Destination)"
+      config: "sankey-activities.vega.json"
+      width: 1
+      height: 12
+      
+    - type: "vega"
+      title: "Mode Usage by Hour (Stacked)"
+      config: "stacked-bar-hour-mode.vega.json"
+      width: 1
+      height: 12
+      
+  row5:
+    - type: "csv"
+      title: "Raw Trip Data"
+      dataset: "trips.csv"
+      width: 2
+      height: 8
