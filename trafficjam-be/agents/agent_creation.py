@@ -3,7 +3,7 @@ import random
 import uuid
 
 from models import Building, Child, Adult, Agent, TransportMode
-from utils.geo import calculate_area_wgs84, calculate_area_projected
+from utils.geo import calculate_area_wgs84
 from utils.population import estimate_population
 from agents.work_assignment import assign_work_location
 from agents.school_assignment import assign_school_to_child, get_schools_from_buildings
@@ -17,15 +17,9 @@ from agents.agent_attributes import (
 logger = logging.getLogger(__name__)
 
 
-def calculate_population_from_bounds(
-    bounds: dict[str, float], crs: str, country_code: str
-) -> int:
-    if crs != "EPSG:4326":
-        area_km2 = calculate_area_projected(bounds)
-    else:
-        logger.warning("Using WGS84 coordinates, falling back to Haversine")
-        area_km2 = calculate_area_wgs84(bounds)
-
+def calculate_population_from_bounds(bounds: dict[str, float], country_code: str) -> int:
+    """Calculate population from WGS84 bounds using haversine-based area calculation."""
+    area_km2 = calculate_area_wgs84(bounds)
     return estimate_population(area_km2, country_code)
 
 
@@ -123,9 +117,7 @@ def create_agents_from_network(
     bounds: dict[str, float],
     buildings: list[Building],
     transport_routes: list,
-    crs: str = "EPSG:4326",
-    country_code: str = "UNK",
-    country_name: str = "UNK",
+    country_code: str = "IRL",
 ) -> list[Agent]:
     """
     Creates realistic MATSim agents with:
@@ -133,9 +125,11 @@ def create_agents_from_network(
     - Parent transport preferences influenced by school dropoff needs
     - Diverse work locations
     - Age-based demographics and behaviors
+
+    Bounds must be in WGS84 (EPSG:4326) format.
     """
-    total_population = calculate_population_from_bounds(bounds, crs, country_code)
-    logger.info(f"Creating ~{total_population} agents for {country_name}")
+    total_population = calculate_population_from_bounds(bounds, country_code)
+    logger.info(f"Creating ~{total_population} agents for {country_code}")
 
     residential_buildings = [
         b for b in buildings if b.type in [None, "residential", "apartments", "house"]
