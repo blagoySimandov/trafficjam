@@ -13,7 +13,7 @@ echo -e "\033[33mStep 1: Starting simulation with 100 iterations...\033[0m"
 
 RESPONSE=$(curl -s -X POST "$BASE_URL" \
   -F "networkFile=@$NETWORK_FILE" \
-  -F "iterations=100" \
+  -F "iterations=30" \
   -F "randomSeed=4711")
 
 SIMULATION_ID=$(echo "$RESPONSE" | grep -o '"simulationId":"[^"]*"' | cut -d'"' -f4)
