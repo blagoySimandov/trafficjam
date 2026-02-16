@@ -1,53 +1,36 @@
 import random
 
-
-from models import Building
+from models import Building, Child
 
 
 def assign_school_to_child(
-    child: dict, schools: list[Building], kindergartens: list[Building]
-) -> None:
-    age = child["age"]
+    child: Child, schools: list[Building], kindergartens: list[Building]
+) -> Child:
+    """Assign a school to a child based on age. Returns updated Child."""
+    age = child.age
+    school = None
+    needs_dropoff = False
 
     if 3 <= age <= 5:
         if kindergartens:
             school = random.choice(kindergartens)
-            child["school_location"] = school.position
-            child["needs_dropoff"] = True
+            needs_dropoff = True
     elif 6 <= age <= 11:
         if schools:
             school = random.choice(schools)
-            child["school_location"] = school.position
-            child["needs_dropoff"] = True
-    elif 12 <= age <= 18:
+            needs_dropoff = True
+    elif 12 <= age <= 17:
         if schools:
             school = random.choice(schools)
-            child["school_location"] = school.position
-            child["needs_dropoff"] = False
+            needs_dropoff = False
+
+    return child.model_copy(update={"school": school, "needs_dropoff": needs_dropoff})
 
 
-def assign_children_to_parents(agents: list[dict], buildings: list[Building]) -> None:
-    adults = [a for a in agents if 25 <= a["age"] <= 45]
-    children = [a for a in agents if 3 <= a["age"] <= 18]
-
+def get_schools_from_buildings(
+    buildings: list[Building],
+) -> tuple[list[Building], list[Building]]:
+    """Extract schools and kindergartens from buildings list."""
     schools = [b for b in buildings if b.type == "school"]
     kindergartens = [b for b in buildings if b.type == "kindergarten"]
-
-    for child in children:
-        assign_school_to_child(child, schools, kindergartens)
-
-    children_needing_parents = [c for c in children if c.get("needs_dropoff")]
-
-    for child in children_needing_parents:
-        if adults:
-            parent = random.choice(adults)
-
-            if "children" not in parent:
-                parent["children"] = []
-
-            parent["children"].append(
-                {
-                    "id": child["id"],
-                    "school_location": child.get("school_location"),
-                }
-            )
+    return schools, kindergartens
