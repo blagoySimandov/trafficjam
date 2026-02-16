@@ -1,6 +1,19 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from typing import List
+from fastapi import FastAPI, Depends, HTTPException
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import select
 
-app = FastAPI()
+from database import init_db, get_session
+from db_models import Job, Event
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize the database on startup
+    await init_db()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
@@ -11,6 +24,55 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+# --- Persistence Endpoints ---
+
+@app.post("/jobs", response_model=Job)
+async def create_job(session: AsyncSession = Depends(get_session)):
+    """Create a new job with PENDING status"""
+    job = Job()
+    session.add(job)
+    await session.commit()
+    await session.refresh(job)
+    return job
+
+@app.get("/jobs/{job_id}", response_model=Job)
+async def get_job(job_id: int, session: AsyncSession = Depends(get_session)):
+    """Get job details by ID"""
+    job = await session.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+@app.post("/jobs/{job_id}/events", response_model=Event)
+async def create_event(job_id: int, event_data: Event, session: AsyncSession = Depends(get_session)):
+    """Create a new event for a specific job"""
+    job = await session.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # We create a new event instance to ensure we link it to the correct job_id
+    event = Event(
+        job_id=job_id,
+        type=event_data.type,
+        payload=event_data.payload
+    )
+    session.add(event)
+    await session.commit()
+    await session.refresh(event)
+    return event
+
+@app.get("/jobs/{job_id}/events", response_model=List[Event])
+async def get_job_events(job_id: int, session: AsyncSession = Depends(get_session)):
+    """Get all events for a specific job"""
+    # Check if job exists first
+    job = await session.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    statement = select(Event).where(Event.job_id == job_id)
+    result = await session.exec(statement)
+    return result.all()
 
 
 if __name__ == "__main__":
