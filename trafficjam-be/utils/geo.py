@@ -1,9 +1,7 @@
-from typing import Dict
-
 from haversine import haversine, Unit
 
 
-def calculate_area_wgs84(bounds: Dict[str, float]) -> float:
+def calculate_area_wgs84(bounds: dict[str, float]) -> float:
     north, south = bounds["north"], bounds["south"]
     east, west = bounds["east"], bounds["west"]
 

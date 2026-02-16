@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: TrafficJam Simulation API
+  description: REST API for starting, monitoring, and stopping MatSim traffic simulations.
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /api/simulations:
+    post:
+      summary: Start a new simulation
+      description: Starts a new MatSim simulation with an uploaded network file.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                networkFile:
+                  type: string
+                  format: binary
+                  description: The MatSim network.xml file.
+                iterations:
+                  type: integer
+                  default: 10
+                  description: Number of simulation iterations.
+                randomSeed:
+                  type: integer
+                  format: int64
+                  description: Random seed for the simulation.
+              required:
+                - networkFile
+      responses:
+        '200':
+          description: Simulation started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResponse'
+        '400':
+          description: Invalid request parameters
+        '500':
+          description: Internal server error
+
+  /api/simulations/{id}/status:
+    get:
+      summary: Get simulation status
+      description: Returns the current status of a simulation by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The simulation ID.
+      responses:
+        '200':
+          description: Simulation status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationStatusResponse'
+        '404':
+          description: Simulation not found
+
+  /api/simulations/{id}/events:
+    get:
+      summary: Stream simulation events
+      description: Streams simulation events in real-time via Server-Sent Events (SSE).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The simulation ID.
+      responses:
+        '200':
+          description: Real-time event stream
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/TransformedEvent'
+
+  /api/simulations/{id}:
+    delete:
+      summary: Stop a simulation
+      description: Terminates a running simulation.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The simulation ID.
+      responses:
+        '204':
+          description: Simulation stopped successfully
+        '404':
+          description: Simulation not found
+
+components:
+  schemas:
+    SimulationResponse:
+      type: object
+      properties:
+        simulationId:
+          type: string
+          description: Unique identifier for the simulation.
+        status:
+          type: string
+          description: Current status of the simulation.
+          example: RUNNING
+    
+    SimulationStatusResponse:
+      type: object
+      properties:
+        simulationId:
+          type: string
+          description: Unique identifier for the simulation.
+        status:
+          type: string
+          description: Current status (e.g., RUNNING, COMPLETED, ERROR).
+        error:
+          type: string
+          description: Error message if the simulation failed.
+          nullable: true
+
+    TransformedEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Event type (e.g., departure, arrival, entered link).
+        time:
+          type: number
+          format: double
+          description: Simulation time in seconds.
+        agentId:
+          type: string
+          description: ID of the agent/person involved.
+          nullable: true
+        linkId:
+          type: string
+          description: ID of the road link involved.
+          nullable: true
+        activityType:
+          type: string
+          description: Type of activity (if applicable).
+          nullable: true
+        x:
+          type: number
+          format: double
+          description: X coordinate.
+          nullable: true
+        y:
+          type: number
+          format: double
+          description: Y coordinate.
+          nullable: true

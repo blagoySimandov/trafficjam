@@ -16,9 +16,12 @@ java/
 ## Build
 
 ```bash
-cd java
 mvn clean install
 ```
+
+## Development
+
+Ensure JDK 17 and Maven are installed to build and run the service. The OpenAPI schema is automatically generated at runtime; you can view the interactive documentation at `/swagger-ui.html` or download the raw spec from `/api-docs`.
 
 ## Implementation
 

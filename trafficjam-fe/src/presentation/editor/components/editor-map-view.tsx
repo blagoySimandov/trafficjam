@@ -3,17 +3,20 @@ import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../../../types";
+import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
+  MIN_EDIT_ZOOM,
 } from "../../../constants";
 import { useOSMImport } from "../../../hooks/use-osm-import";
 import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
+import { useNodeAdd } from "../hooks/use-node-add";
 import { useUndoStack } from "../hooks/use-undo-stack";
 import { EditorControls } from "./editor-controls";
 import { NetworkLayer } from "../../../components/layers/network-layer";
@@ -49,20 +52,53 @@ export function EditorMapView({
     clearUndoStack();
   }, [clear, clearUndoStack]);
 
+  const handleLinkClickLocal = useAddNodeOnLink({
+    network,
+    setNetwork,
+    pushToUndoStack,
+    onStatusChange,
+    editorMode,
+    onLinkClick,
+  });
+
   const { hoverInfo, handleClick, handleMouseMove, handleMouseLeave } =
     useMapInteractions({
       network,
       mapRef,
-      onLinkClick,
+      onLinkClick: handleLinkClickLocal,
+      editorMode,
     });
 
-  const { isDragging, displayNetwork, draggedNodeId } = useNodeDrag({
+  const {
+    isDragging,
+    displayNetwork: dragDisplayNetwork,
+    draggedNodeId,
+  } = useNodeDrag({
     network,
     mapRef,
     editorMode,
     onNetworkChange: setNetwork,
     onBeforeChange: pushToUndoStack,
   });
+
+  const {
+    isAddingNode,
+    displayNetwork: addDisplayNetwork,
+    tempNodeId,
+    onMouseDown: nodeAddMouseDown,
+    onMouseMove: nodeAddMouseMove,
+    onMouseUp: nodeAddMouseUp,
+  } = useNodeAdd({
+    network,
+    mapRef,
+    editorMode,
+    minZoom: MIN_EDIT_ZOOM,
+    onNetworkChange: setNetwork,
+    onBeforeChange: pushToUndoStack,
+  });
+
+  // Merge display networks - prioritize addDisplayNetwork if adding, otherwise use dragDisplayNetwork
+  const displayNetwork = isAddingNode ? addDisplayNetwork : dragDisplayNetwork;
 
   const handleUndo = useCallback(() => {
     const previousNetwork = undo();
@@ -122,19 +158,36 @@ export function EditorMapView({
 
   const handleMapClick = useCallback(
     (event: MapMouseEvent) => {
-      if (!editorMode) {
-        handleClick(event);
-      }
+      handleClick(event);
     },
-    [editorMode, handleClick],
+    [handleClick],
   );
+
+  const handleMapMouseDown = useCallback(
+    (event: MapMouseEvent) => {
+      // Node add gets priority in editor mode
+      if (nodeAddMouseDown(event)) return;
+    },
+    [nodeAddMouseDown],
+  );
+
+  const handleMapMouseUp = useCallback(
+    (event: MapMouseEvent) => {
+      // Node add gets priority in editor mode
+      if (nodeAddMouseUp(event)) return;
+    },
+    [nodeAddMouseUp],
+  );
+
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
-      if (!editorMode) {
-        handleMouseMove(event);
-      }
+      // Node add gets priority when actively adding
+      if (nodeAddMouseMove(event)) return;
+
+      // Otherwise, handle hover effects
+      handleMouseMove(event);
     },
-    [editorMode, handleMouseMove],
+    [nodeAddMouseMove, handleMouseMove],
   );
 
   return (
@@ -150,6 +203,8 @@ export function EditorMapView({
       mapboxAccessToken={MAPBOX_TOKEN}
       interactiveLayerIds={network ? INTERACTIVE_LAYER_IDS : []}
       onClick={handleMapClick}
+      onMouseDown={handleMapMouseDown}
+      onMouseUp={handleMapMouseUp}
       onMouseMove={handleMapMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -173,6 +228,7 @@ export function EditorMapView({
           network={displayNetwork}
           editorMode={editorMode}
           draggedNodeId={draggedNodeId}
+          tempNodeId={isAddingNode ? tempNodeId : null}
         />
       )}
       {displayNetwork?.transportRoutes &&
