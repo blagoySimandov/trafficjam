@@ -142,9 +142,9 @@ export function LinkAttributePanel({
             value={editedLink.tags.maxspeed?.toString() || ""}
             onChange={(e) => handleMaxspeedChange(e.target.value)}
           >
-            {MAXSPEED_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {Object.entries(MAXSPEED_OPTIONS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
               </option>
             ))}
           </select>
@@ -156,9 +156,9 @@ export function LinkAttributePanel({
             value={editedLink.tags.oneway ? "true" : "false"}
             onChange={(e) => handleOnewayChange(e.target.value)}
           >
-            {ONEWAY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {Object.entries(ONEWAY_OPTIONS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
               </option>
             ))}
           </select>
