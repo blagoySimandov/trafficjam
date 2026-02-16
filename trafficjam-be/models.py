@@ -4,6 +4,13 @@ from enum import Enum
 from datetime import time
 
 
+class TransportMode(str, Enum):
+    CAR = "car"
+    PUBLIC_TRANSPORT = "pt"
+    WALK = "walk"
+    BIKE = "bike"
+
+
 class Building(BaseModel):
     id: str
     osm_id: int

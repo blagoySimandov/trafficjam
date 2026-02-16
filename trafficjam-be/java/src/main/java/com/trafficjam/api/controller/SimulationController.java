@@ -4,7 +4,14 @@ import com.trafficjam.api.dto.SimulationResponse;
 import com.trafficjam.api.dto.SimulationStatusResponse;
 import com.trafficjam.matsim.MatsimRunner;
 import com.trafficjam.service.SimulationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +26,7 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api/simulations")
 @CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173" })
+@Tag(name = "Simulations", description = "Endpoints for managing traffic simulations")
 public class SimulationController {
 
     private final SimulationService simulationService;
@@ -31,13 +39,20 @@ public class SimulationController {
      * Starts a new MatSim simulation with uploaded network file.
      * Plans file support will be added in future for full agent-based simulation.
      */
-    @PostMapping(consumes = "multipart/form-data")
+    @Operation(summary = "Start a new simulation", description = "Uploads a network file and starts a new MatSim simulation.")
+    @ApiResponse(responseCode = "200", description = "Simulation started successfully", content = @Content(schema = @Schema(implementation = SimulationResponse.class)))
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SimulationResponse> startSimulation(
-            @RequestParam("networkFile") MultipartFile networkFile,
+            @Parameter(description = "The MatSim network.xml file", required = true) @RequestParam("networkFile") MultipartFile networkFile,
             // @RequestParam("plansFile") MultipartFile plansFile, // TODO: Add for
             // agent-based simulation
-            @RequestParam(value = "iterations", required = false, defaultValue = "10") Integer iterations,
-            @RequestParam(value = "randomSeed", required = false, defaultValue = "4711") Long randomSeed) {
+            @Parameter(description = "Number of simulation iterations") @RequestParam(value = "iterations", required = false, defaultValue = "10") Integer iterations,
+            @Parameter(description = "Random seed for the simulation") @RequestParam(value = "randomSeed", required = false) Long randomSeed) {
+
+        // Use a random seed if not provided
+        if (randomSeed == null) {
+            randomSeed = (long) java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 1000000);
+        }
 
         try {
             String simulationId = simulationService.startSimulation(
@@ -54,8 +69,12 @@ public class SimulationController {
     /**
      * Gets the current status of a simulation.
      */
+    @Operation(summary = "Get simulation status", description = "Retrieves the current status of a simulation by its ID.")
+    @ApiResponse(responseCode = "200", description = "Status retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Simulation not found")
     @GetMapping("/{id}/status")
-    public ResponseEntity<SimulationStatusResponse> getSimulationStatus(@PathVariable String id) {
+    public ResponseEntity<SimulationStatusResponse> getSimulationStatus(
+            @Parameter(description = "Unique simulation ID") @PathVariable String id) {
         MatsimRunner.SimulationStatus status = simulationService.getSimulationStatus(id);
 
         if (status == null) {
@@ -73,8 +92,10 @@ public class SimulationController {
     /**
      * Streams simulation events in real-time via Server-Sent Events.
      */
-    @GetMapping("/{id}/events")
-    public SseEmitter streamEvents(@PathVariable String id) {
+    @Operation(summary = "Stream simulation events", description = "Connects to a real-time stream of simulation events using Server-Sent Events (SSE).")
+    @GetMapping(value = "/{id}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamEvents(
+            @Parameter(description = "Unique simulation ID") @PathVariable String id) {
         // Create SSE emitter with 30 minute timeout
         SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
 
@@ -87,9 +108,12 @@ public class SimulationController {
     /**
      * Stops a running simulation.
      */
+    @Operation(summary = "Stop a simulation", description = "Terminates a running simulation process.")
+    @ApiResponse(responseCode = "204", description = "Simulation stopped")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void stopSimulation(@PathVariable String id) {
+    public void stopSimulation(
+            @Parameter(description = "Unique simulation ID") @PathVariable String id) {
         simulationService.stopSimulation(id);
     }
 }

@@ -1,12 +1,105 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE population SYSTEM "http://www.matsim.org/files/dtd/population_v6.dtd">
-<!--
-    Default empty plans file for MVP.
-    MatSim requires a plans file even if no agents are defined.
-    This allows network-only simulations to run without errors.
-    
-    Future: Replace with user-uploaded or auto-generated agent plans.
--->
 <population>
-    <!-- No agents defined for MVP - network-only simulation -->
+<!--  ======================================================================  -->
+<person id="agent_0">
+<plan selected="yes">
+<activity type="h" link="354137_365408_0" end_time="08:55:21"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="354138_354139_0" end_time="17:00:20"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354137_365408_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_1">
+<plan selected="yes">
+<activity type="h" link="365408_354218_0" end_time="08:58:26"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="354213_385453_0" end_time="17:29:09"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="365408_354218_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_2">
+<plan selected="yes">
+<activity type="h" link="354138_354213_0" end_time="08:48:07"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="1505344355_365404_0" end_time="17:58:50"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354138_354213_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_3">
+<plan selected="yes">
+<activity type="h" link="354138_354215_0" end_time="08:01:47"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="5260468735_1505338369_0" end_time="17:32:29"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354138_354215_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_4">
+<plan selected="yes">
+<activity type="h" link="354139_354138_0" end_time="08:40:29"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="354215_354218_0" end_time="17:50:07"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354139_354138_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_5">
+<plan selected="yes">
+<activity type="h" link="354139_1505344355_0" end_time="08:49:50"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="5260468735_1417090904_0" end_time="17:49:01"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354139_1505344355_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_6">
+<plan selected="yes">
+<activity type="h" link="354139_5260468735_0" end_time="08:29:49"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="365408_1486494400_0" end_time="17:01:53"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354139_5260468735_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_7">
+<plan selected="yes">
+<activity type="h" link="354213_385458_0" end_time="08:21:36"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="1505344355_1505344360_0" end_time="17:01:25"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354213_385458_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_8">
+<plan selected="yes">
+<activity type="h" link="354213_1486422176_0" end_time="08:39:13"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="5260468735_354139_0" end_time="17:55:46"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="354213_1486422176_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
+<person id="agent_9">
+<plan selected="yes">
+<activity type="h" link="5260468735_5260468743_0" end_time="08:54:27"> </activity>
+<leg mode="car"> </leg>
+<activity type="w" link="354137_354138_0" end_time="17:04:06"> </activity>
+<leg mode="car"> </leg>
+<activity type="h" link="5260468735_5260468743_0"> </activity>
+</plan>
+</person>
+<!--  ======================================================================  -->
 </population>
