@@ -5,7 +5,7 @@ import json
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from geoalchemy2.functions import ST_Intersects, ST_MakeEnvelope
+from geoalchemy2.functions import ST_Intersects, ST_MakeEnvelope, ST_X, ST_Y, ST_AsGeoJSON
 
 from db.db_models import NodeDB, LinkDB, BuildingDB, TransportRouteDB
 from models import (
@@ -88,9 +88,14 @@ class MapDataRepository:
 
     async def _fetch_nodes(self, bbox) -> list[TrafficNode]:
         async with self.session_factory() as session:
-            stmt = select(NodeDB).where(ST_Intersects(NodeDB.geom, bbox))
+            stmt = select(
+                NodeDB.id,
+                ST_X(NodeDB.geom).label("longitude"),
+                ST_Y(NodeDB.geom).label("latitude"),
+                NodeDB.connection_count,
+            ).where(ST_Intersects(NodeDB.geom, bbox))
             result = await session.execute(stmt)
-            rows = result.scalars().all()
+            rows = result.all()
 
         return [
             TrafficNode(
@@ -103,13 +108,26 @@ class MapDataRepository:
 
     async def _fetch_links(self, bbox) -> list[TrafficLink]:
         async with self.session_factory() as session:
-            stmt = select(LinkDB).where(ST_Intersects(LinkDB.geom, bbox))
+            stmt = select(
+                LinkDB.id,
+                LinkDB.from_node,
+                LinkDB.to_node,
+                ST_AsGeoJSON(LinkDB.geom).label("geom_json"),
+                LinkDB.highway,
+                LinkDB.lanes,
+                LinkDB.maxspeed,
+                LinkDB.oneway,
+                LinkDB.name,
+                LinkDB.ref,
+                LinkDB.surface,
+            ).where(ST_Intersects(LinkDB.geom, bbox))
             result = await session.execute(stmt)
-            rows = result.scalars().all()
+            rows = result.all()
 
         links = []
         for row in rows:
-            geometry = _parse_geometry(row.geometry)
+            coords = json.loads(row.geom_json)["coordinates"]
+            geometry = [(c[0], c[1]) for c in coords]
             if len(geometry) < 2:
                 continue
             links.append(
@@ -125,9 +143,20 @@ class MapDataRepository:
 
     async def _fetch_buildings(self, bbox) -> list[Building]:
         async with self.session_factory() as session:
-            stmt = select(BuildingDB).where(ST_Intersects(BuildingDB.geom, bbox))
+            stmt = select(
+                BuildingDB.id,
+                ST_X(BuildingDB.geom).label("longitude"),
+                ST_Y(BuildingDB.geom).label("latitude"),
+                BuildingDB.geometry,
+                BuildingDB.type,
+                BuildingDB.building,
+                BuildingDB.building_levels,
+                BuildingDB.name,
+                BuildingDB.addr_street,
+                BuildingDB.shop,
+            ).where(ST_Intersects(BuildingDB.geom, bbox))
             result = await session.execute(stmt)
-            rows = result.scalars().all()
+            rows = result.all()
 
         buildings = []
         for row in rows:
