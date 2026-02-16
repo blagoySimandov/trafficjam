@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Integer, Text, Double
+from sqlalchemy import Column, BigInteger, Integer, Text
 from sqlalchemy.dialects.postgresql import JSON
 from geoalchemy2 import Geometry
 from sqlalchemy.orm import DeclarativeBase
@@ -12,10 +12,8 @@ class NodeDB(Base):
     __tablename__ = "nodes"
 
     id = Column(BigInteger, primary_key=True)
-    longitude = Column(Double, nullable=False)
-    latitude = Column(Double, nullable=False)
     connection_count = Column(Integer, nullable=False)
-    geom = Column(Geometry(geometry_type="POINT", srid=4326))
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
 
 
 class LinkDB(Base):
@@ -24,7 +22,6 @@ class LinkDB(Base):
     id = Column(BigInteger, primary_key=True)
     from_node = Column(BigInteger, nullable=False)
     to_node = Column(BigInteger, nullable=False)
-    geometry = Column(JSON, nullable=False)
     highway = Column(Text)
     lanes = Column(Text)
     maxspeed = Column(Text)
@@ -39,8 +36,6 @@ class BuildingDB(Base):
     __tablename__ = "buildings"
 
     id = Column(BigInteger, primary_key=True)
-    longitude = Column(Double, nullable=False)
-    latitude = Column(Double, nullable=False)
     geometry = Column(JSON, nullable=False)
     type = Column(Text)
     building = Column(Text)
@@ -48,7 +43,7 @@ class BuildingDB(Base):
     name = Column(Text)
     addr_street = Column(Text)
     shop = Column(Text)
-    geom = Column(Geometry(geometry_type="POINT", srid=4326))
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
 
 
 class TransportRouteDB(Base):
@@ -56,7 +51,6 @@ class TransportRouteDB(Base):
 
     id = Column(BigInteger, primary_key=True)
     way_id = Column(Integer, nullable=False)
-    geometry = Column(JSON, nullable=False)
     colour = Column(Text)
     from_ = Column("from", Text)
     name = Column(Text)

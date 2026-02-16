@@ -36,7 +36,6 @@ export function useNodeAdd({
           // Add temporary node
           const tempNode: TrafficNode = {
             id: tempNodeId,
-            osmId: -1,
             position: tempNodePosition,
             connectionCount: 0,
           };
@@ -48,7 +47,6 @@ export function useNodeAdd({
           if (tempLinkEndPosition) {
             const tempLink: TrafficLink = {
               id: "temp-new-link",
-              osmId: -1,
               from: tempNodeId,
               to: "temp",
               geometry: [tempNodePosition, tempLinkEndPosition],
@@ -126,14 +124,12 @@ export function useNodeAdd({
 
         const newNode: TrafficNode = {
           id: newNodeId,
-          osmId: -1,
           position: tempNodePosition,
           connectionCount: 1,
         };
 
         const newLink: TrafficLink = {
           id: newLinkId,
-          osmId: -1,
           from: newNodeId,
           to: snapResult.nodeId,
           geometry: [tempNodePosition, snapResult.point],
