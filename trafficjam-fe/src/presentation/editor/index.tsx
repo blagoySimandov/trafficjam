@@ -58,6 +58,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
         onStatusChange={setStatus}
         onLinkClick={handleLinkClick}
         onRegisterLinkUpdater={handleRegisterLinkUpdater}
+        selectedLinkId={selectedLink?.id || null}
       />
       {selectedLink && (
         <LinkAttributePanel

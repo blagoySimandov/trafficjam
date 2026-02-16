@@ -22,11 +22,13 @@ function calculateWeight(baseWeight: number, lanes: number): number {
 }
 
 export function networkToGeoJSON(
-  network: Network
+  network: Network,
+  selectedLinkId?: string | null,
 ): FeatureCollection<LineString, LinkFeatureProperties> {
   const features: Feature<LineString, LinkFeatureProperties>[] = [];
 
   for (const link of network.links.values()) {
+    const isSelected = selectedLinkId === link.id;
     const style = ROAD_STYLES[link.tags.highway] || DEFAULT_STYLE;
     const lanes = link.tags.lanes || 1;
     const weight = calculateWeight(style.baseWeight, lanes);
@@ -39,11 +41,11 @@ export function networkToGeoJSON(
         highway: link.tags.highway,
         lanes,
         oneway: link.tags.oneway || false,
-        color: style.color,
-        casingColor: style.casingColor,
-        weight,
-        zIndex: style.zIndex,
-        hasGlow: style.glow || false,
+        color: isSelected ? "#3b82f6" : style.color,
+        casingColor: isSelected ? "#1e40af" : style.casingColor,
+        weight: isSelected ? weight * 1.5 : weight,
+        zIndex: isSelected ? 1000 : style.zIndex,
+        hasGlow: isSelected ? true : (style.glow || false),
         name: link.tags.name,
         maxspeed: link.tags.maxspeed,
       },
