@@ -3,7 +3,7 @@ from io import StringIO
 from fastapi import FastAPI
 
 from models import PlanCreationRequest
-from plans import generate_plan_for_agent, MATSimXMLWriter
+from agents.plans import generate_plan_for_agent, MATSimXMLWriter
 from agents.agent_creation import create_agents_from_network
 
 app = FastAPI()
