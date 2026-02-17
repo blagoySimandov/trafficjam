@@ -124,9 +124,14 @@ public class SimulationService {
                     }
 
                     // Send status update
+                    String statusText = currentStatus.status;
+                    if ("RUNNING".equals(statusText) && currentStatus.iteration != null) {
+                        statusText += " - Iteration " + currentStatus.iteration;
+                    }
+
                     emitter.send(SseEmitter.event()
                             .name("status")
-                            .data(currentStatus.status));
+                            .data(statusText));
 
                     // Check if simulation finished
                     if ("COMPLETED".equals(currentStatus.status) ||
