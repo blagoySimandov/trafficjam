@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
-import type { Network, TrafficNode, LngLatTuple } from "../../../types";
+import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
 import { useNodeSnap } from "./use-node-snap";
 import { findSnapPoint } from "../../../utils/snap-to-network";
@@ -21,7 +21,7 @@ function updateNodeAndLinks(
   nodeId: string,
   newPosition: LngLatTuple,
   oldPosition?: LngLatTuple
-): { updatedNodes: Map<string, TrafficNode>; updatedLinks: Map<string, any> } {
+): { updatedNodes: Map<string, TrafficNode>; updatedLinks: Map<string, TrafficLink> } {
   const updatedNodes = new Map(network.nodes);
   const node = updatedNodes.get(nodeId);
   if (!node) {
