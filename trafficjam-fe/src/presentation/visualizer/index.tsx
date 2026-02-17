@@ -3,8 +3,12 @@ import { DeckGL, TripsLayer, ScatterplotLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MAP_STYLE, MAPBOX_TOKEN } from "../../constants/map";
-import { loadTrips, getVehiclePositions } from "../../event-processing";
-import type { Trip } from "../../event-processing";
+import {
+  loadTrips,
+  getVehiclePositions,
+  getStoppedPositions,
+} from "../../event-processing";
+import type { Trip, AgentStop } from "../../event-processing";
 import {
   useSimulationTime,
   type SimulationTimeState,
@@ -17,14 +21,11 @@ interface VisualizerProps {
   onBack: () => void;
 }
 
-// export function Visualizer() {
-//   const { data: trips = [] } = useQuery({
-//     queryKey: ["trips"],
-//     queryFn: loadTrips,
-//   });
-//   const positions = getVehiclePositions(trips, simulation.time);
-
-function useLayers(trips: Trip[], simulation: SimulationTimeState) {
+function useLayers(
+  trips: Trip[],
+  stops: AgentStop[],
+  simulation: SimulationTimeState,
+) {
   return [
     new TripsLayer({
       id: "trails",
@@ -33,7 +34,8 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
       getTimestamps: (d: Trip) => d.timestamps,
       getColor: [253, 128, 93],
       widthMinPixels: 2,
-      trailLength: 300,
+      trailLength: 180,
+      fadeTrail: true,
       currentTime: simulation.time,
     }),
     new ScatterplotLayer({
@@ -45,17 +47,29 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
       radiusMinPixels: 4,
       radiusMaxPixels: 8,
     }),
+    new ScatterplotLayer({
+      id: "stopped",
+      data: getStoppedPositions(stops, simulation.time),
+      getPosition: (d: [number, number]) => d,
+      getFillColor: [30, 60, 150, 100],
+      getRadius: 20,
+      radiusMinPixels: 3,
+      radiusMaxPixels: 6,
+    }),
   ];
 }
 
 export function Visualizer({ onBack }: VisualizerProps) {
-  const { data: trips = [] } = useQuery({
+  const { data } = useQuery({
     queryKey: ["trips"],
     queryFn: loadTrips,
   });
 
+  const trips = data?.trips ?? [];
+  const stops = data?.stops ?? [];
+
   const simulation = useSimulationTime(trips);
-  const layers = useLayers(trips, simulation);
+  const layers = useLayers(trips, stops, simulation);
 
   return (
     <DeckGL initialViewState={INITIAL_STATE_CORK} controller layers={layers}>
