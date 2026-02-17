@@ -87,6 +87,9 @@ export function EditorMapView({
     isDragging,
     displayNetwork: dragDisplayNetwork,
     draggedNodeId,
+    onMouseDown: nodeDragMouseDown,
+    onMouseMove: nodeDragMouseMove,
+    onMouseUp: nodeDragMouseUp,
   } = useNodeDrag({
     network,
     mapRef,
@@ -163,29 +166,27 @@ export function EditorMapView({
 
   const handleMapMouseDown = useCallback(
     (event: MapMouseEvent) => {
-      // Node add gets priority in editor mode
+      if (nodeDragMouseDown(event)) return;
       if (nodeAddMouseDown(event)) return;
     },
-    [nodeAddMouseDown],
+    [nodeDragMouseDown, nodeAddMouseDown],
   );
 
   const handleMapMouseUp = useCallback(
     (event: MapMouseEvent) => {
-      // Node add gets priority in editor mode
+      if (nodeDragMouseUp()) return;
       if (nodeAddMouseUp(event)) return;
     },
-    [nodeAddMouseUp],
+    [nodeDragMouseUp, nodeAddMouseUp],
   );
 
   const handleMapMouseMove = useCallback(
     (event: MapMouseEvent) => {
-      // Node add gets priority when actively adding
+      if (nodeDragMouseMove(event)) return;
       if (nodeAddMouseMove(event)) return;
-
-      // Otherwise, handle hover effects
       handleMouseMove(event);
     },
-    [nodeAddMouseMove, handleMouseMove],
+    [nodeDragMouseMove, nodeAddMouseMove, handleMouseMove],
   );
 
   return (
@@ -200,6 +201,7 @@ export function EditorMapView({
       mapStyle={MAP_STYLE}
       mapboxAccessToken={MAPBOX_TOKEN}
       interactiveLayerIds={network ? INTERACTIVE_LAYER_IDS : []}
+      dragPan={!draggedNodeId && !isAddingNode}
       onClick={handleMapClick}
       onMouseDown={handleMapMouseDown}
       onMouseUp={handleMapMouseUp}

@@ -125,6 +125,9 @@ export function useNodeDrag({
       map.dragPan.disable();
     }
 
+    e.originalEvent.preventDefault();
+    e.originalEvent.stopPropagation();
+
     return true;
   }, [editorMode, network, mapRef]);
 
