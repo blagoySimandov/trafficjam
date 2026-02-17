@@ -14,24 +14,21 @@ const BASE_URL =
   import.meta.env.VITE_MAP_DATA_SERVICE_URL || "http://localhost:8000";
 
 interface ApiTrafficNode {
-  id: string;
-  osm_id: number;
+  id: number;
   position: [number, number];
   connection_count: number;
 }
 
 interface ApiTrafficLink {
-  id: string;
-  osm_id: number;
-  from_node: string;
-  to_node: string;
+  id: number;
+  from_node: number;
+  to_node: number;
   geometry: [number, number][];
   tags: Record<string, string>;
 }
 
 interface ApiBuilding {
-  id: string;
-  osm_id: number;
+  id: number;
   position: [number, number];
   geometry: [number, number][];
   type: string | null;
@@ -39,10 +36,8 @@ interface ApiBuilding {
 }
 
 interface ApiTransportRoute {
-  id: string;
-  osm_id: number;
-  way_id: number;
-  geometry: [number, number][];
+  id: number;
+  geometry: [number, number][][];
   tags: Record<string, string>;
 }
 
@@ -63,8 +58,7 @@ function swapCoords(coords: [number, number][]): LngLatTuple[] {
 
 function mapNode(api: ApiTrafficNode): TrafficNode {
   return {
-    id: api.id,
-    osmId: api.osm_id,
+    id: String(api.id),
     position: swapCoord(api.position),
     connectionCount: api.connection_count,
   };
@@ -72,10 +66,9 @@ function mapNode(api: ApiTrafficNode): TrafficNode {
 
 function mapLink(api: ApiTrafficLink): TrafficLink {
   return {
-    id: api.id,
-    osmId: api.osm_id,
-    from: api.from_node,
-    to: api.to_node,
+    id: String(api.id),
+    from: String(api.from_node),
+    to: String(api.to_node),
     geometry: swapCoords(api.geometry),
     tags: {
       highway: api.tags.highway ?? "",
@@ -90,8 +83,7 @@ function mapLink(api: ApiTrafficLink): TrafficLink {
 function mapBuilding(api: ApiBuilding): Building | null {
   if (!api.type) return null;
   return {
-    id: api.id,
-    osmId: api.osm_id,
+    id: String(api.id),
     position: swapCoord(api.position),
     geometry: api.geometry.length > 0 ? swapCoords(api.geometry) : undefined,
     type: api.type as BuildingType,
@@ -106,10 +98,8 @@ function mapBuilding(api: ApiBuilding): Building | null {
 
 function mapTransportRoute(api: ApiTransportRoute): TransportRoute {
   return {
-    id: api.id,
-    osmId: api.osm_id,
-    wayId: api.way_id,
-    geometry: swapCoords(api.geometry),
+    id: String(api.id),
+    geometry: api.geometry.map((line) => swapCoords(line)),
     tags: {
       route: api.tags.route ?? "",
       ref: api.tags.ref,
