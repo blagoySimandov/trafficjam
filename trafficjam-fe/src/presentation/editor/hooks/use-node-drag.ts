@@ -4,6 +4,7 @@ import type { Network, TrafficNode, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
 import { useNodeSnap } from "./use-node-snap";
 import { findSnapPoint } from "../../../utils/snap-to-network";
+import { safeQueryRenderedFeatures } from "../../../utils/feature-detection";
 
 interface UseNodeDragParams {
   network: Network | null;
@@ -99,9 +100,7 @@ export function useNodeDrag({
     const map = mapRef.current;
     if (!map) return false;
 
-    const features = map.queryRenderedFeatures(e.point, {
-      layers: [NODE_LAYER_ID],
-    });
+    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID]);
 
     if (!features || features.length === 0) return false;
 
