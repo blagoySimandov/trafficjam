@@ -41,4 +41,5 @@ uvloop==0.22.1
 watchfiles==1.1.1
 websockets==16.0
 haversine == 2.9.0
+geopy == 2.4.1
 
