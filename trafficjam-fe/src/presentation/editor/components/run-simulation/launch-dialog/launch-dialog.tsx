@@ -12,11 +12,12 @@ interface LaunchDialogProps {
 }
 
 function useTripStats() {
-  const { data: trips = [] } = useQuery({
+  const { data } = useQuery({
     queryKey: ["trips"],
     queryFn: loadTrips,
   });
 
+  const trips = data?.trips ?? [];
   if (trips.length === 0) return null;
 
   const [min, max] = getTimeRange(trips);
