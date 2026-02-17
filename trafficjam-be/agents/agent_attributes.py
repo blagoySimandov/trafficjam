@@ -61,7 +61,6 @@ def generate_adult_age() -> int:
 
 
 def determine_employment_status(age: int) -> tuple[bool, bool]:
-    """Returns (employed, is_student) based on age."""
     if 18 <= age < 65:
         employed = random.random() > 0.1
         is_student = 18 <= age <= 25 and random.random() > 0.3
@@ -72,7 +71,6 @@ def determine_employment_status(age: int) -> tuple[bool, bool]:
 def determine_transport_preferences(
     age: int, employed: bool, has_transport: bool, needs_to_dropoff: bool
 ) -> tuple[bool, bool]:
-    """Returns (uses_public_transport, has_car) based on demographics."""
     if 16 <= age <= 25:
         uses_public_transport = has_transport and random.random() > 0.4
     elif age >= 65:

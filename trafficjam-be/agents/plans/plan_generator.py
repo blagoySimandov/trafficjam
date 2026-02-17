@@ -87,6 +87,7 @@ def generate_plan_adult_dropoff_work(adult: Adult) -> DailyPlan:
         adult.home.position,
         end_time=generate_departure_time_school(child.age),
     )
+    # Dropping off the kid
     _add(
         plan,
         ActivityType.EDUCATION,
@@ -100,6 +101,14 @@ def generate_plan_adult_dropoff_work(adult: Adult) -> DailyPlan:
         adult.work.position,
         mode,
         duration=generate_work_duration(),
+    )
+    # Picking up the kid
+    _add(
+        plan,
+        ActivityType.EDUCATION,
+        child.school.position,
+        mode,
+        duration=time(minute=random.randint(5, 10)),
     )
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
