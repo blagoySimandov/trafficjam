@@ -43,7 +43,12 @@ beforeEach(() => {
 
 describe("decodeEventStream", () => {
   it("parses a single SSE event", async () => {
-    const event = { time: 100, type: "entered link", vehicle: "v1", link: "l1" };
+    const event = {
+      time: 100,
+      type: "entered link",
+      vehicle: "v1",
+      link: "l1",
+    };
     const response = createSSEResponse([`data: ${JSON.stringify(event)}`]);
     const events = [];
     for await (const e of decodeEventStream(response)) events.push(e);
@@ -66,7 +71,13 @@ describe("decodeEventStream", () => {
   });
 
   it("skips empty lines and non-data lines", async () => {
-    const event = { time: 100, type: "departure", person: "p1", link: "l1", legMode: "car" };
+    const event = {
+      time: 100,
+      type: "departure",
+      person: "p1",
+      link: "l1",
+      legMode: "car",
+    };
     const response = createSSEResponse([
       "",
       ": comment",
@@ -80,7 +91,12 @@ describe("decodeEventStream", () => {
   });
 
   it("handles chunked delivery", async () => {
-    const event = { time: 100, type: "entered link", vehicle: "v1", link: "l1" };
+    const event = {
+      time: 100,
+      type: "entered link",
+      vehicle: "v1",
+      link: "l1",
+    };
     const full = `data: ${JSON.stringify(event)}\n`;
     const mid = Math.floor(full.length / 2);
 
@@ -113,7 +129,10 @@ describe("simulationApi.start", () => {
     mockFetch.mockResolvedValueOnce(jsonResponse(expected));
 
     const file = new File(["<network/>"], "network.xml", { type: "text/xml" });
-    const result = await simulationApi.start({ networkFile: file, iterations: 10 });
+    const result = await simulationApi.start({
+      networkFile: file,
+      iterations: 10,
+    });
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, init] = mockFetch.mock.calls[0];
@@ -126,7 +145,9 @@ describe("simulationApi.start", () => {
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
     const file = new File([""], "network.xml");
-    await expect(simulationApi.start({ networkFile: file })).rejects.toThrow("500");
+    await expect(simulationApi.start({ networkFile: file })).rejects.toThrow(
+      "500",
+    );
   });
 });
 
@@ -145,6 +166,35 @@ describe("simulationApi.getStatus", () => {
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
     await expect(simulationApi.getStatus("bad")).rejects.toThrow("404");
+  });
+});
+
+describe("simulationApi.streamEvents", () => {
+  it("fetches and yields decoded events", async () => {
+    const event = {
+      time: 100,
+      type: "entered link",
+      vehicle: "v1",
+      link: "l1",
+    };
+    mockFetch.mockResolvedValueOnce(
+      createSSEResponse([`data: ${JSON.stringify(event)}`]),
+    );
+
+    const events = [];
+    for await (const e of simulationApi.streamEvents("abc")) events.push(e);
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toContain("/api/simulations/abc/events");
+    expect(init.headers.Accept).toBe("text/event-stream");
+    expect(events).toEqual([event]);
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
+    const gen = simulationApi.streamEvents("abc");
+    await expect(gen.next()).rejects.toThrow("500");
   });
 });
 
