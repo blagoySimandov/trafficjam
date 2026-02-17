@@ -11,6 +11,10 @@ DEFAULT_AMENITY_RADIUS = 2  # kilometers
 def get_bounding_box(
     lat: float, lon: float, radius: float
 ) -> tuple[float, float, float, float]:
+    """
+    Quick rectangular filter before expensive haversine calculations.
+    Returns (lat_min, lat_max, lon_min, lon_max).
+    """
     origin = (lat, lon)
     north = geodesic(kilometers=radius).destination(origin, 0)
     south = geodesic(kilometers=radius).destination(origin, 180)
