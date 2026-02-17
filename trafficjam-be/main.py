@@ -2,14 +2,13 @@ from io import StringIO
 
 from fastapi import FastAPI
 
-from models import PlanCreationRequest, PlanCreationResponse
+from models import PlanCreationRequest
 from plans import generate_plan_for_agent, MATSimXMLWriter
 from agents.agent_creation import create_agents_from_network
 
 app = FastAPI()
 
-MATSIM_WRAPPER_URL = "http://localhost:8080"
-MAX_AGENTS = 100
+MAX_AGENTS = 1000
 
 
 @app.get("/")
@@ -46,7 +45,7 @@ async def plan_creation(request: PlanCreationRequest):
     writer.write_to_stream(stream)
     xml_content = stream.getvalue()
 
-    # make it write to postgre
+    # TODO: make it write to postgre
     with open("output/test.xml", "w", encoding="utf-8") as f:
         f.write(xml_content)
     return
