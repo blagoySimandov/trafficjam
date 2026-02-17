@@ -1,4 +1,4 @@
-import type { MapLayerMouseEvent } from "react-map-gl";
+import type { MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficLink, TransportRoute, Building } from "../types";
 import { NETWORK_LAYER_ID, TRANSPORT_LAYER_PREFIX, BUILDING_LAYER_ID } from "../constants";
 
@@ -9,7 +9,7 @@ interface DetectedFeatures {
 }
 
 export function detectFeaturesAtPoint(
-  event: MapLayerMouseEvent,
+  event: MapMouseEvent,
   network: Network | null
 ): DetectedFeatures {
   if (!network) {
