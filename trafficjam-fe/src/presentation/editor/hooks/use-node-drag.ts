@@ -16,6 +16,60 @@ interface UseNodeDragParams {
 
 const DRAG_THRESHOLD = 5;
 
+function updateNodeAndLinks(
+  network: Network,
+  nodeId: string,
+  newPosition: LngLatTuple,
+  oldPosition?: LngLatTuple
+): { updatedNodes: Map<string, TrafficNode>; updatedLinks: Map<string, any> } {
+  const updatedNodes = new Map(network.nodes);
+  const node = updatedNodes.get(nodeId);
+  if (!node) {
+    return { updatedNodes: network.nodes, updatedLinks: network.links };
+  }
+
+  const updatedNode: TrafficNode = {
+    ...node,
+    position: newPosition,
+  };
+  updatedNodes.set(nodeId, updatedNode);
+
+  const updatedLinks = new Map(network.links);
+  for (const [linkId, link] of network.links.entries()) {
+    let shouldUpdate = false;
+    const geometry = [...link.geometry];
+
+    if (link.from === nodeId) {
+      geometry[0] = newPosition;
+      shouldUpdate = true;
+    }
+    if (link.to === nodeId) {
+      geometry[geometry.length - 1] = newPosition;
+      shouldUpdate = true;
+    }
+
+    if (!shouldUpdate && oldPosition) {
+      for (let i = 0; i < geometry.length; i++) {
+        const [lat, lng] = geometry[i];
+        const isOldNodePosition =
+          Math.abs(lat - oldPosition[0]) < 0.000001 &&
+          Math.abs(lng - oldPosition[1]) < 0.000001;
+
+        if (isOldNodePosition) {
+          geometry[i] = newPosition;
+          shouldUpdate = true;
+        }
+      }
+    }
+
+    if (shouldUpdate) {
+      updatedLinks.set(linkId, { ...link, geometry });
+    }
+  }
+
+  return { updatedNodes, updatedLinks };
+}
+
 export function useNodeDrag({
   network,
   mapRef,
@@ -41,50 +95,12 @@ export function useNodeDrag({
   const displayNetwork = 
     isDragging && draggedNodeId && tempDragPosition && network
       ? (() => {
-          const updatedNodes = new Map(network.nodes);
-          const node = updatedNodes.get(draggedNodeId);
-          if (!node) return network;
-
-          const updatedNode: TrafficNode = {
-            ...node,
-            position: tempDragPosition,
-          };
-          updatedNodes.set(draggedNodeId, updatedNode);
-
-          const updatedLinks = new Map(network.links);
-          for (const [linkId, link] of network.links.entries()) {
-            let shouldUpdate = false;
-            const geometry = [...link.geometry];
-
-            if (link.from === draggedNodeId) {
-              geometry[0] = tempDragPosition;
-              shouldUpdate = true;
-            }
-            if (link.to === draggedNodeId) {
-              geometry[geometry.length - 1] = tempDragPosition;
-              shouldUpdate = true;
-            }
-
-            if (!shouldUpdate && originalNodePosition) {
-              const oldPosition = originalNodePosition;
-
-              for (let i = 0; i < geometry.length; i++) {
-                const [lat, lng] = geometry[i];
-                const isOldNodePosition =
-                  Math.abs(lat - oldPosition[0]) < 0.000001 &&
-                  Math.abs(lng - oldPosition[1]) < 0.000001;
-
-                if (isOldNodePosition) {
-                  geometry[i] = tempDragPosition;
-                  shouldUpdate = true;
-                }
-              }
-            }
-
-            if (shouldUpdate) {
-              updatedLinks.set(linkId, { ...link, geometry });
-            }
-          }
+          const { updatedNodes, updatedLinks } = updateNodeAndLinks(
+            network,
+            draggedNodeId,
+            tempDragPosition,
+            originalNodePosition || undefined
+          );
 
           return {
             ...network,
@@ -180,47 +196,12 @@ export function useNodeDrag({
         if (onBeforeChange) {
           onBeforeChange(network);
         }
-        const updatedNodes = new Map(network.nodes);
-        const updatedNode: TrafficNode = {
-          ...node,
-          position: tempDragPosition,
-        };
-        updatedNodes.set(draggedNodeId, updatedNode);
-
-        const updatedLinks = new Map(network.links);
-        for (const [linkId, link] of network.links.entries()) {
-          let shouldUpdate = false;
-          const geometry = [...link.geometry];
-
-          if (link.from === draggedNodeId) {
-            geometry[0] = tempDragPosition;
-            shouldUpdate = true;
-          }
-          if (link.to === draggedNodeId) {
-            geometry[geometry.length - 1] = tempDragPosition;
-            shouldUpdate = true;
-          }
-
-          if (!shouldUpdate && originalNodePosition) {
-            const oldPosition = originalNodePosition;
-
-            for (let i = 0; i < geometry.length; i++) {
-              const [lat, lng] = geometry[i];
-              const isOldNodePosition =
-                Math.abs(lat - oldPosition[0]) < 0.000001 &&
-                Math.abs(lng - oldPosition[1]) < 0.000001;
-
-              if (isOldNodePosition) {
-                geometry[i] = tempDragPosition;
-                shouldUpdate = true;
-              }
-            }
-          }
-
-          if (shouldUpdate) {
-            updatedLinks.set(linkId, { ...link, geometry });
-          }
-        }
+        const { updatedNodes, updatedLinks } = updateNodeAndLinks(
+          network,
+          draggedNodeId,
+          tempDragPosition,
+          originalNodePosition || undefined
+        );
 
         onNetworkChange({
           ...network,
