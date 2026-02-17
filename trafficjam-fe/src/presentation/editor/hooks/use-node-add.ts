@@ -90,7 +90,9 @@ export function useNodeAdd({
     isAddingRef.current = true;
 
     map.getMap().getCanvas().style.cursor = "crosshair";
-    map.dragPan.disable();
+    if (map.dragPan) {
+      map.dragPan.disable();
+    }
 
     return true; // Event consumed
   }, [editorMode, network, mapRef, minZoom]);
@@ -168,7 +170,9 @@ export function useNodeAdd({
     setTempLinkEndPosition(null);
 
     map.getMap().getCanvas().style.cursor = "";
-    map.dragPan.enable();
+    if (map.dragPan) {
+      map.dragPan.enable();
+    }
     
     return true; // Event consumed
   }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef]);
