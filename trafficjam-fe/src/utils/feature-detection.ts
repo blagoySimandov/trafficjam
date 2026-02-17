@@ -10,7 +10,7 @@ interface DetectedFeatures {
 
 export function safeQueryRenderedFeatures(
   map: MapRef | null,
-  point: any,
+  point: mapboxgl.PointLike,
   layers: string[]
 ) {
   if (!map) return [];
