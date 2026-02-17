@@ -75,13 +75,12 @@ export function EditorMapView({
     onLinkClick,
   });
 
-  const { hoverInfo, handleClick, handleMouseMove, handleMouseLeave } =
-    useMapInteractions({
-      network,
-      mapRef,
-      onLinkClick: handleLinkClickLocal,
-      editorMode,
-    });
+  const { hoverInfo, onClick, onMouseMove, onMouseLeave } = useMapInteractions({
+    network,
+    mapRef,
+    onLinkClick: handleLinkClickLocal,
+    editorMode,
+  });
 
   const {
     isDragging,
@@ -159,9 +158,9 @@ export function EditorMapView({
 
   const handleMapClick = useCallback(
     (event: MapMouseEvent) => {
-      handleClick(event);
+      if (onClick(event)) return;
     },
-    [handleClick],
+    [onClick],
   );
 
   const handleMapMouseDown = useCallback(
@@ -184,9 +183,9 @@ export function EditorMapView({
     (event: MapMouseEvent) => {
       if (nodeDragMouseMove(event)) return;
       if (nodeAddMouseMove(event)) return;
-      handleMouseMove(event);
+      onMouseMove(event);
     },
-    [nodeDragMouseMove, nodeAddMouseMove, handleMouseMove],
+    [nodeDragMouseMove, nodeAddMouseMove, onMouseMove],
   );
 
   return (
@@ -206,7 +205,7 @@ export function EditorMapView({
       onMouseDown={handleMapMouseDown}
       onMouseUp={handleMapMouseUp}
       onMouseMove={handleMapMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onMouseLeave={onMouseLeave}
     >
       <EditorControls
         onImport={importData}

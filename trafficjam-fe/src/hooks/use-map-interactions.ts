@@ -52,12 +52,12 @@ export function useMapInteractions({
   );
 
   const handleClick = useCallback(
-    (event: MapMouseEvent) => {
-      if (!network) return;
+    (event: MapMouseEvent): boolean => {
+      if (!network) return false;
       const map = mapRef.current;
       const canEditAtZoom = !!(editorMode && map && map.getZoom() >= MIN_NODE_ZOOM);
 
-      if (editorMode && !canEditAtZoom) return;
+      if (editorMode && !canEditAtZoom) return false;
 
       const detected = detectFeaturesAtPoint(event, network);
       const link = detected.link || (editorMode ? findNearbyLink(event) : undefined);
@@ -69,28 +69,31 @@ export function useMapInteractions({
           longitude: event.lngLat.lng,
           latitude: event.lngLat.lat,
         });
+        return true;
       } else if (link && onLinkClick) {
         onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat });
+        return true;
       }
+      
+      return false;
     },
     [network, mapRef, onLinkClick, editorMode, findNearbyLink]
   );
 
   const handleMouseMove = useCallback(
-    (event: MapMouseEvent) => {
+    (event: MapMouseEvent): boolean => {
       const map = mapRef.current;
       const features = event.features || [];
       const canEditAtZoom = !!(editorMode && map && map.getZoom() >= MIN_NODE_ZOOM);
 
       if (features.length === 0 && !editorMode) {
         if (map) map.getCanvas().style.cursor = "";
-        return;
+        return false;
       }
 
       const detected = detectFeaturesAtPoint(event, network);
       const link = detected.link || (canEditAtZoom ? findNearbyLink(event) : undefined);
 
-      // Check if hovering over a node
       const isHoveringNode = map?.queryRenderedFeatures(event.point, {
         layers: [NODE_LAYER_ID],
       }).length ?? 0 > 0;
@@ -112,8 +115,10 @@ export function useMapInteractions({
           longitude: event.lngLat.lng,
           latitude: event.lngLat.lat,
         });
+        return true;
       } else {
         setHoverInfo(null);
+        return false;
       }
     },
     [network, mapRef, editorMode, findNearbyLink]
@@ -127,8 +132,8 @@ export function useMapInteractions({
 
   return {
     hoverInfo,
-    handleClick,
-    handleMouseMove,
-    handleMouseLeave,
+    onClick: handleClick,
+    onMouseMove: handleMouseMove,
+    onMouseLeave: handleMouseLeave,
   };
 }
