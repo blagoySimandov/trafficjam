@@ -46,7 +46,7 @@ public class SimulationController {
             @Parameter(description = "The MatSim network.xml file", required = true) @RequestParam("networkFile") MultipartFile networkFile,
             // @RequestParam("plansFile") MultipartFile plansFile, // TODO: Add for
             // agent-based simulation
-            @Parameter(description = "Number of simulation iterations") @RequestParam(value = "iterations", required = false, defaultValue = "10") Integer iterations,
+            @Parameter(description = "Number of simulation iterations") @RequestParam(value = "iterations", required = false, defaultValue = "1") Integer iterations,
             @Parameter(description = "Random seed for the simulation") @RequestParam(value = "randomSeed", required = false) Long randomSeed) {
 
         // Use a random seed if not provided
@@ -84,7 +84,8 @@ public class SimulationController {
         SimulationStatusResponse response = new SimulationStatusResponse(
                 status.simulationId,
                 status.status,
-                status.error);
+                status.error,
+                status.iteration);
 
         return ResponseEntity.ok(response);
     }
