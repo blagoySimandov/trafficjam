@@ -9,15 +9,17 @@ public class SimulationStatusResponse {
     private String simulationId;
     private String status;
     private String error;
+    private Integer iteration;
 
     // Constructors
     public SimulationStatusResponse() {
     }
 
-    public SimulationStatusResponse(String simulationId, String status, String error) {
+    public SimulationStatusResponse(String simulationId, String status, String error, Integer iteration) {
         this.simulationId = simulationId;
         this.status = status;
         this.error = error;
+        this.iteration = iteration;
     }
 
     // Getters and Setters
@@ -43,5 +45,13 @@ public class SimulationStatusResponse {
 
     public void setError(String error) {
         this.error = error;
+    }
+
+    public Integer getIteration() {
+        return iteration;
+    }
+
+    public void setIteration(Integer iteration) {
+        this.iteration = iteration;
     }
 }

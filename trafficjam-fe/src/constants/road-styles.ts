@@ -1,5 +1,29 @@
 import { COLORS } from "./colors";
 
+export const HIGHWAY_TYPES = [
+  "motorway",
+  "motorway_link",
+  "trunk",
+  "trunk_link",
+  "primary",
+  "primary_link",
+  "secondary",
+  "secondary_link",
+  "tertiary",
+  "tertiary_link",
+  "residential",
+  "service",
+  "unclassified",
+  "living_street",
+  "pedestrian",
+  "track",
+  "cycleway",
+  "footway",
+  "path",
+] as const;
+
+export type HighwayType = (typeof HIGHWAY_TYPES)[number];
+
 export const ROAD_STYLES: Record<
   string,
   {
