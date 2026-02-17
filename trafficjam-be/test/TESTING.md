@@ -6,6 +6,21 @@
 - Maven 3.6+
 - A network.xml file for testing (or use the sample from the repo)
 
+### Environment Setup
+
+Database credentials are stored in a `.env` file (not committed to git). Copy the example file and fill in the values:
+
+```bash
+cp .env.example .env
+```
+
+Then set the following variables in `.env`:
+```
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=trafficjam
+```
+
 ## Quick Start
 
 ### 1. Build and Test
