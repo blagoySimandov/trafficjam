@@ -16,8 +16,9 @@ jobs:
         run: uv python install 3.13
       - name: Lint with ruff
         run: uvx ruff check trafficjam-be investigations
-  lint-typescript:
-    name: Lint TypeScript
+
+  lint-and-test-typescript:
+    name: Lint & Test TypeScript
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +33,10 @@ jobs:
       - name: Type check trafficjam-fe
         working-directory: trafficjam-fe
         run: bunx tsc --noEmit
+      - name: Test trafficjam-fe
+        working-directory: trafficjam-fe
+        run: bun run test
+
   lint-java:
     name: Lint Java
     runs-on: ubuntu-latest
@@ -40,8 +45,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
       - name: Lint with Checkstyle
         working-directory: trafficjam-be/java
         run: mvn checkstyle:check
