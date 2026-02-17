@@ -1,8 +1,10 @@
 import type { Event } from "../../types/matsim-events";
 
 function getReader(response: Response) {
-  const stream = response.body!
-    .pipeThrough(new TextDecoderStream())
+  if (!response.body) {
+    throw new Error("Response body is null");
+  }
+  const stream = response.body.pipeThrough(new TextDecoderStream());
   return stream.getReader();
 }
 
