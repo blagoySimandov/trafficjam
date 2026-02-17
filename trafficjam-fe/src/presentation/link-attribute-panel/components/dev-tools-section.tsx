@@ -28,10 +28,6 @@ export function DevToolsSection({ link }: DevToolsSectionProps) {
             <AttributeValue value={link.id} />
           </AttributeField>
 
-          <AttributeField label="OSM ID">
-            <AttributeValue value={link.osmId} />
-          </AttributeField>
-
           <AttributeField label="From Node">
             <AttributeValue value={link.from} />
           </AttributeField>
