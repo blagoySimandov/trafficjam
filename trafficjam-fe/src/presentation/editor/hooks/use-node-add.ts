@@ -3,6 +3,7 @@ import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
 import { findSnapPoint } from "../../../utils/snap-to-network";
+import { safeQueryRenderedFeatures } from "../../../utils/feature-detection";
 
 interface UseNodeAddParams {
   network: Network | null;
@@ -79,9 +80,7 @@ export function useNodeAdd({
     if (zoom < minZoom) return false;
 
     // Check if clicking on an existing node - if so, don't add a new one
-    const features = map.queryRenderedFeatures(e.point, {
-      layers: [NODE_LAYER_ID],
-    });
+    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID]);
     if (features && features.length > 0) return false;
 
     const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];

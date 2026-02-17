@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
-import { detectFeaturesAtPoint } from "../utils/feature-detection";
+import { detectFeaturesAtPoint, safeQueryRenderedFeatures } from "../utils/feature-detection";
 import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
 
 interface UseMapInteractionsParams {
@@ -94,9 +94,7 @@ export function useMapInteractions({
       const detected = detectFeaturesAtPoint(event, network);
       const link = detected.link || (canEditAtZoom ? findNearbyLink(event) : undefined);
 
-      const isHoveringNode = map?.queryRenderedFeatures(event.point, {
-        layers: [NODE_LAYER_ID],
-      }).length ?? 0 > 0;
+      const isHoveringNode = safeQueryRenderedFeatures(map, event.point, [NODE_LAYER_ID]).length > 0;
 
       if (map) {
         if (link && canEditAtZoom && !isHoveringNode) {
