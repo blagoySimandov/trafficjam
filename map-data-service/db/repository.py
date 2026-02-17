@@ -15,7 +15,7 @@ from models import (
     TransportRoute,
     NetworkResponse,
 )
-from constants import VALID_BUILDING_TYPES
+from constants import VALID_BUILDING_TYPES, LINK_TAG_MAPPING, BUILDING_TAG_MAPPING, ROUTE_TAG_MAPPING
 
 def _parse_geometry(raw) -> list[tuple[float, float]]:
     if isinstance(raw, str):
@@ -27,36 +27,6 @@ def _parse_geometry(raw) -> list[tuple[float, float]]:
 
 def _pick_tags(row, mapping: dict[str, str]) -> dict[str, str]:
     return {key: getattr(row, attr) for attr, key in mapping.items() if getattr(row, attr)}
-
-
-LINK_TAG_MAPPING = {
-    "highway": "highway",
-    "lanes": "lanes",
-    "maxspeed": "maxspeed",
-    "oneway": "oneway",
-    "name": "name",
-    "ref": "ref",
-    "surface": "surface",
-}
-
-BUILDING_TAG_MAPPING = {
-    "building": "building",
-    "name": "name",
-    "shop": "shop",
-    "addr_street": "addr:street",
-    "building_levels": "building:levels",
-}
-
-ROUTE_TAG_MAPPING = {
-    "route": "route",
-    "ref": "ref",
-    "name": "name",
-    "operator": "operator",
-    "network": "network",
-    "from_": "from",
-    "to": "to",
-    "colour": "colour",
-}
 
 
 class MapDataRepository:
