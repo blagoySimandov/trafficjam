@@ -1,6 +1,6 @@
 .DS_Store
 .venv
-.claude
+.claude/settings*
 meditor/.env
 trafficjam-be/utils
 trafficjam-be/public_transport
