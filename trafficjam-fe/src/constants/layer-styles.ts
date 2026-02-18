@@ -6,9 +6,9 @@ export const glowLayer: LayerProps = {
   filter: ["==", ["get", "hasGlow"], true],
   paint: {
     "line-color": ["get", "color"],
-    "line-width": ["+", ["get", "weight"], 12],
-    "line-opacity": 0.15,
-    "line-blur": 4,
+    "line-width": ["+", ["get", "weight"], 16],
+    "line-opacity": 0.3,
+    "line-blur": 8,
   },
   layout: {
     "line-cap": "round",
