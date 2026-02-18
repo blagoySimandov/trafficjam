@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import type { MapLayerMouseEvent } from "react-map-gl";
+import type { MapMouseEvent } from "react-map-gl";
 import type { MapRef } from "react-map-gl";
 import type { Network, TrafficLink } from "../types";
 
@@ -28,20 +28,22 @@ export function useNetworkInteraction(
   }, [network]);
 
   const handleClick = useCallback(
-    (event: MapLayerMouseEvent) => {
+    (event: MapMouseEvent): boolean => {
       const feature = event.features?.[0];
       if (feature && feature.properties) {
         const link = linksById.get(feature.properties.id);
         if (link) {
           onLinkClick(link);
+          return true;
         }
       }
+      return false;
     },
     [linksById, onLinkClick]
   );
 
   const handleMouseMove = useCallback(
-    (event: MapLayerMouseEvent) => {
+    (event: MapMouseEvent): boolean => {
       const map = mapRef.current;
       if (map) {
         map.getCanvas().style.cursor = "pointer";
@@ -55,8 +57,10 @@ export function useNetworkInteraction(
             longitude: event.lngLat.lng,
             latitude: event.lngLat.lat,
           });
+          return true;
         }
       }
+      return false;
     },
     [linksById, mapRef]
   );
@@ -71,8 +75,8 @@ export function useNetworkInteraction(
 
   return {
     hoverInfo,
-    handleClick,
-    handleMouseMove,
-    handleMouseLeave,
+    onClick: handleClick,
+    onMouseMove: handleMouseMove,
+    onMouseLeave: handleMouseLeave,
   };
 }
