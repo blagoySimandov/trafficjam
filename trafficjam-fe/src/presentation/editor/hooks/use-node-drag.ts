@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
@@ -92,23 +92,26 @@ export function useNodeDrag({
   });
 
   // Create a temporary network with the dragged node at its temporary position
-  const displayNetwork = 
-    isDragging && draggedNodeId && tempDragPosition && network
-      ? (() => {
-          const { updatedNodes, updatedLinks } = updateNodeAndLinks(
-            network,
-            draggedNodeId,
-            tempDragPosition,
-            originalNodePosition || undefined
-          );
+  const displayNetwork = useMemo(
+  () => {
+    if (isDragging && draggedNodeId && tempDragPosition && network) {
+      const { updatedNodes, updatedLinks } = updateNodeAndLinks(
+        network,
+        draggedNodeId,
+        tempDragPosition,
+        originalNodePosition || undefined
+      );
 
-          return {
-            ...network,
-            nodes: updatedNodes,
-            links: updatedLinks,
-          };
-        })()
-      : network;
+      return {
+        ...network,
+        nodes: updatedNodes,
+        links: updatedLinks,
+      };
+    }
+    return network;
+  },
+  [isDragging, draggedNodeId, tempDragPosition, network, originalNodePosition]
+);
 
   const handleMouseDown = useCallback((e: MapMouseEvent): boolean => {
     if (!editorMode || !network) return false;
