@@ -3,7 +3,7 @@ import random
 import uuid
 
 from models import Building, Child, Adult, Agent, TransportMode
-from utils.geo import calculate_area_wgs84
+from geo import calculate_area_wgs84
 from population import estimate_population
 from agents.work_assignment import assign_work_location
 from agents.school_assignment import assign_school_to_child, get_schools_from_buildings
