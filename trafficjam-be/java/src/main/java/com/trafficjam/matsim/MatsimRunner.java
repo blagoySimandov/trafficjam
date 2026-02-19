@@ -78,8 +78,13 @@ public class MatsimRunner {
                 logger.info("Starting simulation {} with config: {}", simulationId, configPath);
 
                 // Update status to running
-                SimulationInfo info = new SimulationInfo(Thread.currentThread(), controler, "RUNNING");
+                SimulationInfo info = new SimulationInfo(Thread.currentThread(), "RUNNING");
                 activeSimulations.put(simulationId, info);
+
+                // Add listener to track iterations
+                controler.addControlerListener((org.matsim.core.controler.listener.IterationStartsListener) event -> {
+                    info.currentIteration = event.getIteration();
+                });
 
                 logger.info("Simulation {} status set to RUNNING, executing controler.run()", simulationId);
 
@@ -92,17 +97,30 @@ public class MatsimRunner {
                 info.status = "COMPLETED";
 
             } catch (Exception e) {
-                logger.error("Simulation {} FAILED with exception: {}", simulationId, e.getMessage(), e);
-                logger.error("Exception type: {}", e.getClass().getName());
-                logger.error("Stack trace:", e);
+                // Check if this was an intentional interruption (stop command)
+                if (e instanceof InterruptedException
+                        || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
+                    logger.info("Simulation {} was stopped by user request.", simulationId);
 
-                // Update status to failed
-                SimulationInfo info = activeSimulations.get(simulationId);
-                if (info != null) {
-                    info.status = "FAILED";
-                    info.error = e.getMessage();
+                    // Ensure status is marked as STOPPED if not already
+                    SimulationInfo info = activeSimulations.get(simulationId);
+                    if (info != null && !"STOPPED".equals(info.status)) {
+                        info.status = "STOPPED";
+                    }
+                } else {
+                    // unexpected error
+                    logger.error("Simulation {} FAILED with exception: {}", simulationId, e.getMessage(), e);
+                    logger.error("Exception type: {}", e.getClass().getName());
+                    logger.error("Stack trace:", e);
+
+                    // Update status to failed
+                    SimulationInfo info = activeSimulations.get(simulationId);
+                    if (info != null) {
+                        info.status = "FAILED";
+                        info.error = e.getMessage();
+                    }
+                    throw new RuntimeException("Simulation " + simulationId + " failed", e);
                 }
-                throw new RuntimeException("Simulation " + simulationId + " failed", e);
             }
         });
 
@@ -179,15 +197,14 @@ public class MatsimRunner {
      */
     private static class SimulationInfo {
         final Thread thread;
-        @SuppressWarnings("unused")
-        final Controler controler;
         String status; // "RUNNING", "COMPLETED", "FAILED"
         String error; // Error message if failed
+        Integer currentIteration; // Current iteration number
 
-        SimulationInfo(Thread thread, Controler controler, String status) {
+        SimulationInfo(Thread thread, String status) {
             this.thread = thread;
-            this.controler = controler;
             this.status = status;
+            this.currentIteration = 0;
         }
     }
 
@@ -223,7 +240,7 @@ public class MatsimRunner {
             return null; // Simulation not found
         }
 
-        return new SimulationStatus(simulationId, info.status, info.error);
+        return new SimulationStatus(simulationId, info.status, info.error, info.currentIteration);
     }
 
     /**
@@ -233,11 +250,13 @@ public class MatsimRunner {
         public final String simulationId;
         public final String status; // "RUNNING", "COMPLETED", "FAILED", "STOPPED"
         public final String error; // Error message if failed, null otherwise
+        public final Integer iteration;
 
-        public SimulationStatus(String simulationId, String status, String error) {
+        public SimulationStatus(String simulationId, String status, String error, Integer iteration) {
             this.simulationId = simulationId;
             this.status = status;
             this.error = error;
+            this.iteration = iteration;
         }
     }
 }

@@ -1,4 +1,4 @@
-import type { MapLayerMouseEvent } from "react-map-gl";
+import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, TransportRoute, Building } from "../types";
 import { NETWORK_LAYER_ID, TRANSPORT_LAYER_PREFIX, BUILDING_LAYER_ID } from "../constants";
 
@@ -8,8 +8,23 @@ interface DetectedFeatures {
   building?: Building;
 }
 
+export function safeQueryRenderedFeatures(
+  map: MapRef | null,
+  point: mapboxgl.PointLike,
+  layers: string[]
+) {
+  if (!map) return [];
+  
+  const mapInstance = map.getMap();
+  const allLayersExist = layers.every(layerId => mapInstance.getLayer(layerId));
+  
+  if (!allLayersExist) return [];
+  
+  return mapInstance.queryRenderedFeatures(point, { layers });
+}
+
 export function detectFeaturesAtPoint(
-  event: MapLayerMouseEvent,
+  event: MapMouseEvent,
   network: Network | null
 ): DetectedFeatures {
   if (!network) {
