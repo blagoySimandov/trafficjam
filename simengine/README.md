@@ -5,9 +5,8 @@ Java components for running MatSim simulations.
 ## Structure
 
 ```
-java/
-├── pom.xml                    # Maven dependencies
-└── src/main/java/com/trafficjam/matsim/
+── pom.xml                    # Maven dependencies
+── src/main/java/com/trafficjam/matsim/
     ├── MatsimRunner.java      # Main simulation runner
     ├── EventHandler.java      # Event capture
     └── ConfigGenerator.java   # Config file generation
