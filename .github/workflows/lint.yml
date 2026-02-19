@@ -51,5 +51,5 @@ jobs:
         working-directory: simengine
         run: mvn checkstyle:check
       - name: Lint with SpotBugs
-        working-directory: trafficjam-be/java
+        working-directory: simengine
         run: mvn spotbugs:check
