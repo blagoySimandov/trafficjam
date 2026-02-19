@@ -8,6 +8,8 @@ trafficjam-be/plans
 package-lock.json
 map-data-service/.env
 map-data-service/*.json
+#simengine temp files
+temp
 
 # Logs
 logs
@@ -45,3 +47,4 @@ trafficjam-be/java/target
 trafficjam-be/server-output.log
 trafficjam-be/java/temp
 target
+simengine
