@@ -1,0 +1,41 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "trips.csv"
+  },
+  "width": "container",
+  "height": 400,
+  "transform": [
+    {
+      "calculate": "datum.duration / 60",
+      "as": "duration_minutes"
+    }
+  ],
+  "mark": {
+    "type": "boxplot",
+    "extent": "min-max"
+  },
+  "encoding": {
+    "x": {
+      "field": "mode",
+      "type": "nominal",
+      "title": "Transport Mode"
+    },
+    "y": {
+      "field": "duration_minutes",
+      "type": "quantitative",
+      "title": "Trip Duration (minutes)",
+      "scale": {
+        "zero": false
+      }
+    },
+    "color": {
+      "field": "mode",
+      "type": "nominal",
+      "legend": null
+    },
+    "tooltip": [
+      {"field": "mode", "type": "nominal", "title": "Mode"}
+    ]
+  }
+}

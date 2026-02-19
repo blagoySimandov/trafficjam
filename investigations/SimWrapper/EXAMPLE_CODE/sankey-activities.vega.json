@@ -1,0 +1,40 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "trips.csv"
+  },
+  "width": "container",
+  "height": 400,
+  "transform": [
+    {
+      "filter": "datum.start_act != datum.end_act"
+    },
+    {
+      "calculate": "datum.start_act + ' → ' + datum.end_act",
+      "as": "flow"
+    }
+  ],
+  "mark": "bar",
+  "encoding": {
+    "y": {
+      "field": "flow",
+      "type": "nominal",
+      "title": "Activity Flow (Origin → Destination)",
+      "sort": "-x"
+    },
+    "x": {
+      "aggregate": "count",
+      "type": "quantitative",
+      "title": "Number of Trips"
+    },
+    "color": {
+      "field": "start_act",
+      "type": "nominal",
+      "title": "Origin Activity"
+    },
+    "tooltip": [
+      {"field": "flow", "type": "nominal", "title": "Flow"},
+      {"aggregate": "count", "type": "quantitative", "title": "Trips"}
+    ]
+  }
+}
