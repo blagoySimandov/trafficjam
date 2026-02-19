@@ -1,0 +1,61 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "aggregated-flows.csv"
+  },
+  "width": 800,
+  "height": 600,
+  "transform": [
+    {
+      "filter": "datum.count > 10"
+    }
+  ],
+  "layer": [
+    {
+      "mark": {
+        "type": "rule",
+        "strokeWidth": 2,
+        "opacity": 0.6
+      },
+      "encoding": {
+        "x": {
+          "field": "start_x",
+          "type": "quantitative",
+          "scale": {"zero": false},
+          "title": "Longitude"
+        },
+        "y": {
+          "field": "start_y",
+          "type": "quantitative",
+          "scale": {"zero": false},
+          "title": "Latitude"
+        },
+        "x2": {"field": "end_x"},
+        "y2": {"field": "end_y"},
+        "color": {
+          "field": "count",
+          "type": "quantitative",
+          "scale": {
+            "scheme": "reds"
+          },
+          "title": "Trip Count"
+        },
+        "strokeWidth": {
+          "field": "count",
+          "type": "quantitative",
+          "scale": {
+            "range": [1, 8]
+          },
+          "legend": null
+        },
+        "tooltip": [
+          {"field": "start_x", "type": "quantitative", "title": "Origin X", "format": ".0f"},
+          {"field": "start_y", "type": "quantitative", "title": "Origin Y", "format": ".0f"},
+          {"field": "end_x", "type": "quantitative", "title": "Dest X", "format": ".0f"},
+          {"field": "end_y", "type": "quantitative", "title": "Dest Y", "format": ".0f"},
+          {"field": "count", "type": "quantitative", "title": "Trips"}
+        ]
+      }
+    }
+  ]
+}
