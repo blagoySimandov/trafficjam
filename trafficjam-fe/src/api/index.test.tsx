@@ -5,6 +5,8 @@ import { createElement, type ReactNode } from "react";
 import { decodeEventStream } from "./simengine/decoder";
 import { simulationApi } from "./simengine/client";
 import { useSimulation } from "./index";
+import { mapNetworkResponse } from "./map-data-service/decoder";
+import { mapDataApi } from "./map-data-service/client";
 
 const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
@@ -185,6 +187,156 @@ describe("simulationApi.stop", () => {
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
     await expect(simulationApi.stop("abc")).rejects.toThrow("500");
+  });
+});
+
+describe("mapNetworkResponse", () => {
+  it("maps nodes with string id, swapped coords, and camelCase count", () => {
+    const api = {
+      nodes: [{ id: 1, position: [10.5, 52.3] as [number, number], connection_count: 3 }],
+      links: [],
+      buildings: [],
+      transport_routes: [],
+    };
+    const network = mapNetworkResponse(api);
+    expect(network.nodes.get("1")).toEqual({ id: "1", position: [52.3, 10.5], connectionCount: 3 });
+  });
+
+  it("maps links with string ids, swapped geometry, and parsed tags", () => {
+    const api = {
+      nodes: [],
+      links: [
+        {
+          id: 2,
+          from_node: 1,
+          to_node: 3,
+          geometry: [[10.5, 52.3]] as [number, number][],
+          tags: { highway: "primary", lanes: "2", maxspeed: "50", oneway: "yes" },
+        },
+      ],
+      buildings: [],
+      transport_routes: [],
+    };
+    const network = mapNetworkResponse(api);
+    expect(network.links.get("2")).toEqual({
+      id: "2",
+      from: "1",
+      to: "3",
+      geometry: [[52.3, 10.5]],
+      tags: { highway: "primary", lanes: 2, maxspeed: 50, oneway: true, name: undefined },
+    });
+  });
+
+  it("skips buildings with a null type", () => {
+    const api = {
+      nodes: [],
+      links: [],
+      buildings: [{ id: 5, position: [10.5, 52.3] as [number, number], geometry: [], type: null, tags: {} }],
+      transport_routes: [],
+    };
+    const network = mapNetworkResponse(api);
+    expect(network.buildings?.size ?? 0).toBe(0);
+  });
+
+  it("maps buildings with a type and swapped coords", () => {
+    const api = {
+      nodes: [],
+      links: [],
+      buildings: [
+        {
+          id: 6,
+          position: [10.5, 52.3] as [number, number],
+          geometry: [[10.6, 52.4]] as [number, number][],
+          type: "residential",
+          tags: { name: "Block A", building: "yes", shop: undefined as unknown as string, amenity: undefined as unknown as string },
+        },
+      ],
+      transport_routes: [],
+    };
+    const network = mapNetworkResponse(api);
+    const building = network.buildings?.get("6");
+    expect(building).toBeDefined();
+    expect(building?.position).toEqual([52.3, 10.5]);
+    expect(building?.geometry).toEqual([[52.4, 10.6]]);
+    expect(building?.type).toBe("residential");
+  });
+
+  it("maps transport routes with nested swapped geometry", () => {
+    const api = {
+      nodes: [],
+      links: [],
+      buildings: [],
+      transport_routes: [
+        {
+          id: 7,
+          geometry: [[[10.5, 52.3], [10.6, 52.4]]] as [number, number][][],
+          tags: { route: "bus", ref: "42", name: "City Loop", network: "VVS", operator: "SSB", colour: "#ff0000" },
+        },
+      ],
+    };
+    const network = mapNetworkResponse(api);
+    expect(network.transportRoutes?.get("7")).toEqual({
+      id: "7",
+      geometry: [[[52.3, 10.5], [52.4, 10.6]]],
+      tags: { route: "bus", ref: "42", name: "City Loop", network: "VVS", operator: "SSB", colour: "#ff0000" },
+    });
+  });
+});
+
+describe("mapDataApi.fetchNetworkData", () => {
+  it("calls fetch with the correct URL and query params", async () => {
+    const apiData = { nodes: [], links: [], buildings: [], transport_routes: [] };
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(apiData), { status: 200 }));
+
+    const bounds = {
+      getSouth: () => 48.1,
+      getNorth: () => 48.2,
+      getWest: () => 11.5,
+      getEast: () => 11.6,
+    } as unknown as Parameters<typeof mapDataApi.fetchNetworkData>[0];
+
+    await mapDataApi.fetchNetworkData(bounds);
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+    const url = mockFetch.mock.calls[0][0] as string;
+    expect(url).toContain("/network?");
+    expect(url).toContain("min_lat=48.1");
+    expect(url).toContain("max_lat=48.2");
+    expect(url).toContain("min_lng=11.5");
+    expect(url).toContain("max_lng=11.6");
+  });
+
+  it("throws on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 503 }));
+
+    const bounds = {
+      getSouth: () => 0,
+      getNorth: () => 1,
+      getWest: () => 0,
+      getEast: () => 1,
+    } as unknown as Parameters<typeof mapDataApi.fetchNetworkData>[0];
+
+    await expect(mapDataApi.fetchNetworkData(bounds)).rejects.toThrow("503");
+  });
+
+  it("returns the decoded network", async () => {
+    const apiData = {
+      nodes: [{ id: 1, position: [10.5, 52.3], connection_count: 2 }],
+      links: [],
+      buildings: [],
+      transport_routes: [],
+    };
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(apiData), { status: 200 }));
+
+    const bounds = {
+      getSouth: () => 0,
+      getNorth: () => 1,
+      getWest: () => 0,
+      getEast: () => 1,
+    } as unknown as Parameters<typeof mapDataApi.fetchNetworkData>[0];
+
+    const network = await mapDataApi.fetchNetworkData(bounds);
+    expect(network.nodes.get("1")).toEqual({ id: "1", position: [52.3, 10.5], connectionCount: 2 });
   });
 });
 
