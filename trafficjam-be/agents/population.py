@@ -1,25 +1,12 @@
 import logging
 
+from .config import config, POPULATION_DENSITY
+
 logger = logging.getLogger(__name__)
-
-POPULATION_DENSITY = {
-    "IRL": 70,
-    "GBR": 275,
-    "USA": 36,
-    "DEU": 240,
-    "FRA": 119,
-    "NLD": 508,
-    "BEL": 383,
-    "ESP": 94,
-    "PRT": 111,
-    "ITA": 200,
-}
-
-DEFAULT_DENSITY = 100
 
 
 def get_population_density(country_code: str) -> int:
-    return POPULATION_DENSITY.get(country_code, DEFAULT_DENSITY)
+    return POPULATION_DENSITY.get(country_code, config.default_population_density)
 
 
 def estimate_population(area_km2: float, country_code: str) -> int:
