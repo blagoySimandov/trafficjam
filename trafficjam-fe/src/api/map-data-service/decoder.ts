@@ -1,4 +1,3 @@
-//TODO: refactor into the decoder/client pattern used int the simengine
 import type {
   Network,
   TrafficNode,
@@ -7,46 +6,14 @@ import type {
   Building,
   BuildingType,
   LngLatTuple,
-  LngLatBounds,
-} from "../types";
-
-const BASE_URL =
-  import.meta.env.VITE_MAP_DATA_SERVICE_URL || "http://localhost:8000";
-
-interface ApiTrafficNode {
-  id: number;
-  position: [number, number];
-  connection_count: number;
-}
-
-interface ApiTrafficLink {
-  id: number;
-  from_node: number;
-  to_node: number;
-  geometry: [number, number][];
-  tags: Record<string, string>;
-}
-
-interface ApiBuilding {
-  id: number;
-  position: [number, number];
-  geometry: [number, number][];
-  type: string | null;
-  tags: Record<string, string>;
-}
-
-interface ApiTransportRoute {
-  id: number;
-  geometry: [number, number][][];
-  tags: Record<string, string>;
-}
-
-interface ApiNetworkResponse {
-  nodes: ApiTrafficNode[];
-  links: ApiTrafficLink[];
-  buildings: ApiBuilding[];
-  transport_routes: ApiTransportRoute[];
-}
+} from "../../types";
+import type {
+  ApiTrafficNode,
+  ApiTrafficLink,
+  ApiBuilding,
+  ApiTransportRoute,
+  ApiNetworkResponse,
+} from "./types";
 
 function swapCoord([lon, lat]: [number, number]): LngLatTuple {
   return [lat, lon];
@@ -111,7 +78,7 @@ function mapTransportRoute(api: ApiTransportRoute): TransportRoute {
   };
 }
 
-function mapNetworkResponse(api: ApiNetworkResponse): Network {
+export function mapNetworkResponse(api: ApiNetworkResponse): Network {
   const nodes = new Map<string, TrafficNode>();
   for (const n of api.nodes) {
     const mapped = mapNode(n);
@@ -137,26 +104,4 @@ function mapNetworkResponse(api: ApiNetworkResponse): Network {
   }
 
   return { nodes, links, buildings, transportRoutes };
-}
-
-function buildQueryParams(bounds: LngLatBounds): string {
-  const params = new URLSearchParams({
-    min_lat: bounds.getSouth().toString(),
-    min_lng: bounds.getWest().toString(),
-    max_lat: bounds.getNorth().toString(),
-    max_lng: bounds.getEast().toString(),
-  });
-  return params.toString();
-}
-
-export async function fetchNetworkData(bounds: LngLatBounds): Promise<Network> {
-  const query = buildQueryParams(bounds);
-  const response = await fetch(`${BASE_URL}/network?${query}`);
-
-  if (!response.ok) {
-    throw new Error(`Map data service error: ${response.status}`);
-  }
-
-  const data: ApiNetworkResponse = await response.json();
-  return mapNetworkResponse(data);
 }
