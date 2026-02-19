@@ -1,6 +1,6 @@
 import random
 
-from models import Building, Child
+from .models import Building, Child
 
 
 def assign_school_to_child(
