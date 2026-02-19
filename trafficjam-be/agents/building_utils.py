@@ -2,7 +2,7 @@ import random
 import logging
 
 
-from models import Building
+from .models import Building
 
 
 logger = logging.getLogger(__name__)

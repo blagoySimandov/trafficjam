@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 from typing import TextIO
 from pathlib import Path
-from models import DailyPlan
+from ..models import DailyPlan
 
 
 def _format_coordinate(value: float, precision: int = 4) -> str:
