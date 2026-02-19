@@ -1,6 +1,6 @@
 import random
 
-from models import Agent, Adult, TransportMode
+from .models import Agent, Adult, TransportMode
 
 
 def get_transport_mode(agent: Agent, activity_type: str) -> TransportMode:

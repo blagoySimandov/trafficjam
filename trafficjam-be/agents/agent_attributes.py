@@ -2,7 +2,7 @@ import random
 
 from geopy.distance import geodesic
 from haversine import haversine, Unit
-from models import Building
+from .models import Building
 
 
 DEFAULT_AMENITY_RADIUS = 2  # kilometers

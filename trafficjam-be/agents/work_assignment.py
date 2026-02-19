@@ -1,6 +1,6 @@
 import random
 
-from models import Adult, Building
+from .models import Adult, Building
 
 SUPERMARKET_TAGS = ["supermarket", "convenience"]
 HEALTHCARE_TAGS = ["hospital", "clinic", "pharmacy", "doctors", "dentist"]
