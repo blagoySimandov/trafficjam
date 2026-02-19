@@ -21,7 +21,7 @@ conn: ## print the connection string
 	@echo "postgresql://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)"
 
 run: ## run the database
-	docker run -d 
+	docker run -d \
 		--name $(CONTAINER_NAME) \
 		-e POSTGRES_DB=$(DB_NAME) \
 		-e POSTGRES_USER=$(DB_USER) \
