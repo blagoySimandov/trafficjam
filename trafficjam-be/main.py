@@ -3,9 +3,13 @@ from typing import List
 from fastapi import FastAPI, Depends, HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
-
 from database import init_db, get_session
 from db_models import Job, Event
+from io import StringIO
+from fastapi import FastAPI
+from models import PlanCreationRequest
+from agents.plans import generate_plan_for_agent, MATSimXMLWriter
+from agents.agent_creation import create_agents_from_network
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,13 +18,6 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-from io import StringIO
-
-from fastapi import FastAPI
-
-from models import PlanCreationRequest
-from agents.plans import generate_plan_for_agent, MATSimXMLWriter
-from agents.agent_creation import create_agents_from_network
 
 app = FastAPI()
 
