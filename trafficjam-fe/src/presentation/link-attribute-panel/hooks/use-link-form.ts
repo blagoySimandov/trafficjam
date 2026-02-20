@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import type { TrafficLink } from "../../../types";
 import { getCommonValue } from "../helpers";
 import { MIXED_VALUE } from "../constants";
 
 export function useLinkForm(links: TrafficLink[]) {
-  const prevLinkIdsRef = useRef<string>("");
-
   const getInitialValues = () => ({
     name: getCommonValue(links, (l) => l.tags.name),
     highway: getCommonValue(links, (l) => l.tags.highway),
@@ -14,22 +12,14 @@ export function useLinkForm(links: TrafficLink[]) {
     oneway: getCommonValue(links, (l) => l.tags.oneway),
   });
 
+  const currentLinkIds = links.map((l) => l.id).sort().join(",");
+  const [trackedLinkIds, setTrackedLinkIds] = useState(currentLinkIds);
   const [editedValues, setEditedValues] = useState(getInitialValues);
 
-  const currentLinkIds = links.map((l) => l.id).sort().join(",");
-  
-  useEffect(() => {
-    if (prevLinkIdsRef.current !== currentLinkIds) {
-      prevLinkIdsRef.current = currentLinkIds;
-      setEditedValues({
-        name: getCommonValue(links, (l) => l.tags.name),
-        highway: getCommonValue(links, (l) => l.tags.highway),
-        lanes: getCommonValue(links, (l) => l.tags.lanes),
-        maxspeed: getCommonValue(links, (l) => l.tags.maxspeed),
-        oneway: getCommonValue(links, (l) => l.tags.oneway),
-      });
-    }
-  }, [currentLinkIds, links]);
+  if (trackedLinkIds !== currentLinkIds) {
+    setTrackedLinkIds(currentLinkIds);
+    setEditedValues(getInitialValues());
+  }
 
   const handleHighwayChange = (value: string) => {
     setEditedValues((prev) => ({ ...prev, highway: value }));

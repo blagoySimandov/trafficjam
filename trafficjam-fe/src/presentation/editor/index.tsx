@@ -77,7 +77,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
           : `${count} links`;
       setStatus(`Updated ${linkDesc}`);
     },
-    [updateMultipleLinksInNetwork, network],
+    [updateMultipleLinksInNetwork],
   );
 
   const handleRegisterBulkLinkUpdater = useCallback(
