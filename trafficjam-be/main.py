@@ -6,7 +6,6 @@ from io import StringIO
 
 import nats as nats_lib
 import httpx
-from nats.js.errors import NotFoundError
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form
 from sse_starlette import EventSourceResponse
 
@@ -55,14 +54,14 @@ async def _monitor_all_statuses(js):
                     status = status_msg.status
                     parsed_run_id = uuid.UUID(run_id)
                     repo = RunRepository(async_session_factory)
-                    
+
                     status_map = {
                         "running": RunStatus.RUNNING,
                         "completed": RunStatus.COMPLETED,
                         "failed": RunStatus.FAILED,
                         "stopped": RunStatus.FAILED,
                     }
-                    
+
                     new_status = status_map.get(status.lower())
                     if new_status:
                         await repo.update_status(parsed_run_id, new_status)
@@ -98,7 +97,13 @@ async def start_run(
     run_id = str(run.id)
 
     async with httpx.AsyncClient() as client:
-        files = {"networkFile": (networkFile.filename, await networkFile.read(), networkFile.content_type)}
+        files = {
+            "networkFile": (
+                networkFile.filename,
+                await networkFile.read(),
+                networkFile.content_type,
+            )
+        }
         data = {
             "iterations": iterations,
             "scenarioId": scenario_id,
@@ -118,7 +123,10 @@ async def start_run(
             sim_data = response.json()
         except Exception as e:
             await repo.update_status(run.id, RunStatus.FAILED)
-            raise HTTPException(status_code=500, detail=f"Failed to start simulation in SimEngine: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to start simulation in SimEngine: {str(e)}",
+            )
 
     return {
         "scenario_id": scenario_id,
