@@ -31,24 +31,26 @@ public class SimulationService {
         this.natsClient = natsClient;
     }
 
-    public String startSimulation(MultipartFile networkFile, Integer iterations, Long randomSeed) throws IOException {
+    public record SimulationStartResult(String simulationId, String scenarioId, String runId) {}
+
+    public SimulationStartResult startSimulation(MultipartFile networkFile, Integer iterations, Long randomSeed, String scenarioId, String runId) throws IOException {
         if (!natsClient.isConnected()) {
             throw new IllegalStateException("Cannot start simulation: NATS JetStream is not connected");
         }
 
-        String scenarioId = UUID.randomUUID().toString();
-        String runId = UUID.randomUUID().toString();
+        final String finalScenarioId = (scenarioId == null || scenarioId.isEmpty()) ? UUID.randomUUID().toString() : scenarioId;
+        final String finalRunId = (runId == null || runId.isEmpty()) ? UUID.randomUUID().toString() : runId;
 
-        Path configPath = prepareSimulationFiles(scenarioId, networkFile, iterations, randomSeed);
+        Path configPath = prepareSimulationFiles(finalScenarioId, networkFile, iterations, randomSeed);
 
-        natsClient.publishStatus(scenarioId, runId, "running");
+        natsClient.publishStatus(finalScenarioId, finalRunId, "running");
 
         String actualSimId = matsimRunner.runSimulationAsync(
                 configPath.toString(),
-                event -> handleOutputEvent(scenarioId, runId, event),
-                (simId, status) -> natsClient.publishStatus(scenarioId, runId, status));
+                event -> handleOutputEvent(finalScenarioId, finalRunId, event),
+                (simId, status) -> natsClient.publishStatus(finalScenarioId, finalRunId, status));
 
-        return actualSimId;
+        return new SimulationStartResult(actualSimId, finalScenarioId, finalRunId);
     }
 
     private Path prepareSimulationFiles(String scenarioId, MultipartFile networkFile, Integer iterations, Long randomSeed) throws IOException {

@@ -29,3 +29,11 @@ class RunRepository:
             await session.commit()
             await session.refresh(run)
             return run
+
+    async def create_run(self, scenario_id: str, run_id: uuid.UUID | None = None) -> Run:
+        async with self.session_factory() as session:
+            run = Run(id=run_id or uuid.uuid4(), scenario_id=scenario_id, status=RunStatus.PENDING)
+            session.add(run)
+            await session.commit()
+            await session.refresh(run)
+            return run
