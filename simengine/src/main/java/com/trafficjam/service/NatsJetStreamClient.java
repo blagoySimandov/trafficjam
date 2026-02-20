@@ -7,6 +7,7 @@ import io.nats.client.JetStream;
 import io.nats.client.JetStreamManagement;
 import io.nats.client.Nats;
 import io.nats.client.Options;
+import io.nats.client.api.RetentionPolicy;
 import io.nats.client.api.StreamConfiguration;
 import io.nats.client.api.StorageType;
 import jakarta.annotation.PostConstruct;
@@ -17,12 +18,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 @Component
 public class NatsJetStreamClient {
 
     private static final Logger logger = LoggerFactory.getLogger(NatsJetStreamClient.class);
-    private static final String STREAM_NAME = "SIMULATION";
+    private static final String STREAM_NAME = "SIMULATIONS";
+    private static final Duration MAX_AGE = Duration.of(30, ChronoUnit.DAYS);
     private static final int MAX_RECONNECTS = -1;
     private static final Duration RECONNECT_WAIT = Duration.ofSeconds(2);
 
@@ -72,7 +75,9 @@ public class NatsJetStreamClient {
         StreamConfiguration config = StreamConfiguration.builder()
                 .name(STREAM_NAME)
                 .subjects("sim.>")
-                .storageType(StorageType.Memory)
+                .retentionPolicy(RetentionPolicy.Limits)
+                .storageType(StorageType.File)
+                .maxAge(MAX_AGE)
                 .build();
         try {
             jsm.addStream(config);
