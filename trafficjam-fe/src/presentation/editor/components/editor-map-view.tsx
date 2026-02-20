@@ -31,7 +31,7 @@ const NativeMap = globalThis.Map;
 interface EditorMapViewProps {
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink) => void;
-  onRegisterLinkUpdater: (updater: (link: TrafficLink) => void) => void;
+  onRegisterBulkLinkUpdater: (updater: (links: TrafficLink[]) => void) => void;
   selectedLinkIds: string[];
   onNetworkChange?: (network: Network | null) => void;
 }
@@ -39,7 +39,7 @@ interface EditorMapViewProps {
 export function EditorMapView({
   onStatusChange,
   onLinkClick,
-  onRegisterLinkUpdater,
+  onRegisterBulkLinkUpdater,
   selectedLinkIds,
   onNetworkChange,
 }: EditorMapViewProps) {
@@ -61,12 +61,14 @@ export function EditorMapView({
     onNetworkChange: setNetwork,
   });
 
-  const updateLinkInNetwork = useCallback(
-    (updatedLink: TrafficLink) => {
-      if (!network) return;
+  const updateMultipleLinksInNetwork = useCallback(
+    (updatedLinksList: TrafficLink[]) => {
+      if (!network || updatedLinksList.length === 0) return;
 
       const updatedLinks = new NativeMap(network.links);
-      updatedLinks.set(updatedLink.id, updatedLink);
+      updatedLinksList.forEach((updatedLink) => {
+        updatedLinks.set(updatedLink.id, updatedLink);
+      });
 
       const updatedNetwork = {
         ...network,
@@ -75,16 +77,22 @@ export function EditorMapView({
 
       pushToUndoStack(network);
       setNetwork(updatedNetwork);
-      onStatusChange(
-        `Updated link: ${updatedLink.tags.name || updatedLink.tags.highway}`,
-      );
+
+      const count = updatedLinksList.length;
+      if (count === 1) {
+        onStatusChange(
+          `Updated link: ${updatedLinksList[0].tags.name || updatedLinksList[0].tags.highway}`,
+        );
+      } else {
+        onStatusChange(`Updated ${count} links`);
+      }
     },
     [network, pushToUndoStack, onStatusChange],
   );
 
   useEffect(() => {
-    onRegisterLinkUpdater(updateLinkInNetwork);
-  }, [updateLinkInNetwork, onRegisterLinkUpdater]);
+    onRegisterBulkLinkUpdater(updateMultipleLinksInNetwork);
+  }, [updateMultipleLinksInNetwork, onRegisterBulkLinkUpdater]);
 
   const handleClear = useCallback(() => {
     clear();

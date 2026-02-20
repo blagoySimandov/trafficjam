@@ -16,9 +16,8 @@ export function Editor({ onRunSimulation }: EditorProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [network, setNetwork] = useState<Network | null>(null);
 
-  const [updateLinkInNetwork, setUpdateLinkInNetwork] = useState<
-    ((link: TrafficLink) => void) | null
-  >(null);
+  const [updateMultipleLinksInNetwork, setUpdateMultipleLinksInNetwork] =
+    useState<((links: TrafficLink[]) => void) | null>(null);
 
   const handleLinkClick = useCallback((link: TrafficLink) => {
     setSelectedLinks([link]);
@@ -51,10 +50,8 @@ export function Editor({ onRunSimulation }: EditorProps) {
 
   const handleLinkSave = useCallback(
     (updatedLinks: TrafficLink[]) => {
-      if (updateLinkInNetwork) {
-        updatedLinks.forEach((updatedLink) => {
-          updateLinkInNetwork(updatedLink);
-        });
+      if (updateMultipleLinksInNetwork) {
+        updateMultipleLinksInNetwork(updatedLinks);
       }
       setSelectedLinks(updatedLinks);
       const count = updatedLinks.length;
@@ -64,12 +61,12 @@ export function Editor({ onRunSimulation }: EditorProps) {
           : `${count} links`;
       setStatus(`Updated ${linkDesc}`);
     },
-    [updateLinkInNetwork],
+    [updateMultipleLinksInNetwork],
   );
 
-  const handleRegisterLinkUpdater = useCallback(
-    (updater: (link: TrafficLink) => void) => {
-      setUpdateLinkInNetwork(() => updater);
+  const handleRegisterBulkLinkUpdater = useCallback(
+    (updater: (links: TrafficLink[]) => void) => {
+      setUpdateMultipleLinksInNetwork(() => updater);
     },
     [],
   );
@@ -88,7 +85,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       <EditorMapView
         onStatusChange={setStatus}
         onLinkClick={handleLinkClick}
-        onRegisterLinkUpdater={handleRegisterLinkUpdater}
+        onRegisterBulkLinkUpdater={handleRegisterBulkLinkUpdater}
         selectedLinkIds={selectedLinks.map((link) => link.id)}
         onNetworkChange={setNetwork}
       />
