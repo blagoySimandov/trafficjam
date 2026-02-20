@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, ChevronDown, ChevronRight } from "lucide-react";
+import { X, ChevronDown, ChevronRight, Layers } from "lucide-react";
 import type { TrafficLink } from "../../../types";
 
 interface LinkAttributePanelProps {
-  link: TrafficLink;
+  links: TrafficLink[];
   onClose: () => void;
-  onSave: (updatedLink: TrafficLink) => void;
+  onSave: (updatedLinks: TrafficLink[]) => void;
+  onSelectByName: (name: string) => void;
 }
 
 const HIGHWAY_TYPES = [
@@ -53,81 +54,119 @@ const ONEWAY_OPTIONS = [
   { value: "true", label: "Yes" },
 ];
 
+const MIXED_VALUE = "__MIXED__";
+
+// Helper to determine if all links have the same value for a given attribute
+function getCommonValue<T>(
+  links: TrafficLink[],
+  getter: (link: TrafficLink) => T | undefined,
+): T | typeof MIXED_VALUE | undefined {
+  if (links.length === 0) return undefined;
+  const firstValue = getter(links[0]);
+  const allSame = links.every((link) => getter(link) === firstValue);
+  return allSame ? firstValue : MIXED_VALUE;
+}
+
 export function LinkAttributePanel({
-  link,
+  links,
   onClose,
   onSave,
+  onSelectByName,
 }: LinkAttributePanelProps) {
-  const [editedLink, setEditedLink] = useState<TrafficLink>(link);
+  const [editedValues, setEditedValues] = useState({
+    name: getCommonValue(links, (l) => l.tags.name),
+    highway: getCommonValue(links, (l) => l.tags.highway),
+    lanes: getCommonValue(links, (l) => l.tags.lanes),
+    maxspeed: getCommonValue(links, (l) => l.tags.maxspeed),
+    oneway: getCommonValue(links, (l) => l.tags.oneway),
+  });
   const [devToolsOpen, setDevToolsOpen] = useState(false);
 
-  // Update local state when the link prop changes
+  // Update local state when the links prop changes
   useEffect(() => {
-    setEditedLink(link);
-  }, [link]);
+    setEditedValues({
+      name: getCommonValue(links, (l) => l.tags.name),
+      highway: getCommonValue(links, (l) => l.tags.highway),
+      lanes: getCommonValue(links, (l) => l.tags.lanes),
+      maxspeed: getCommonValue(links, (l) => l.tags.maxspeed),
+      oneway: getCommonValue(links, (l) => l.tags.oneway),
+    });
+  }, [links]);
 
   const handleHighwayChange = (value: string) => {
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        highway: value,
-      },
-    });
+    setEditedValues((prev) => ({ ...prev, highway: value }));
   };
 
   const handleLanesChange = (value: string) => {
     const lanes = value === "" ? undefined : parseInt(value, 10);
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        lanes,
-      },
-    });
+    setEditedValues((prev) => ({ ...prev, lanes }));
   };
 
   const handleMaxspeedChange = (value: string) => {
     const maxspeed = value === "" ? undefined : parseInt(value, 10);
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        maxspeed,
-      },
-    });
+    setEditedValues((prev) => ({ ...prev, maxspeed }));
   };
 
   const handleOnewayChange = (value: string) => {
     const oneway = value === "true";
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        oneway,
-      },
-    });
+    setEditedValues((prev) => ({ ...prev, oneway }));
   };
 
   const handleNameChange = (value: string) => {
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        name: value === "" ? undefined : value,
-      },
-    });
+    setEditedValues((prev) => ({
+      ...prev,
+      name: value === "" ? undefined : value,
+    }));
+  };
+
+  const handleSelectByNameClick = () => {
+    const nameValue = editedValues.name;
+    if (nameValue && nameValue !== MIXED_VALUE) {
+      onSelectByName(nameValue);
+    }
   };
 
   const handleSave = () => {
-    onSave(editedLink);
+    // Apply edited values to all selected links
+    const updatedLinks = links.map((link) => ({
+      ...link,
+      tags: {
+        ...link.tags,
+        name:
+          editedValues.name === MIXED_VALUE
+            ? link.tags.name
+            : editedValues.name,
+        highway:
+          editedValues.highway === MIXED_VALUE
+            ? link.tags.highway
+            : (editedValues.highway as string),
+        lanes:
+          editedValues.lanes === MIXED_VALUE
+            ? link.tags.lanes
+            : editedValues.lanes,
+        maxspeed:
+          editedValues.maxspeed === MIXED_VALUE
+            ? link.tags.maxspeed
+            : editedValues.maxspeed,
+        oneway:
+          editedValues.oneway === MIXED_VALUE
+            ? link.tags.oneway
+            : editedValues.oneway,
+      },
+    }));
+
+    onSave(updatedLinks);
     onClose();
   };
 
   return (
     <div className="link-attribute-panel">
       <div className="panel-header">
-        <h3>Link Attributes</h3>
+        <h3>
+          {links.length === 1
+            ? "Link Attributes"
+            : `Link Attributes (${links.length} selected)`}
+        </h3>
         <button className="close-button" onClick={onClose} title="Close panel">
           <X size={18} />
         </button>
@@ -136,22 +175,46 @@ export function LinkAttributePanel({
       <div className="panel-content">
         <div className="attribute-section">
           <label className="attribute-label">Name</label>
-          <input
-            type="text"
-            className="attribute-input"
-            value={editedLink.tags.name || ""}
-            onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Not specified"
-          />
+          <div className="name-input-container">
+            <input
+              type="text"
+              className="attribute-input"
+              value={
+                editedValues.name === MIXED_VALUE ? "" : editedValues.name || ""
+              }
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder={
+                editedValues.name === MIXED_VALUE ? "Mixed" : "Not specified"
+              }
+            />
+            {editedValues.name &&
+              editedValues.name !== MIXED_VALUE &&
+              links.length === 1 && (
+                <button
+                  className="select-by-name-button"
+                  onClick={handleSelectByNameClick}
+                  title="Select all links with this name"
+                >
+                  <Layers size={16} />
+                </button>
+              )}
+          </div>
         </div>
 
         <div className="attribute-section">
           <label className="attribute-label">Highway Type</label>
           <select
             className="attribute-select"
-            value={editedLink.tags.highway}
+            value={
+              editedValues.highway === MIXED_VALUE
+                ? ""
+                : (editedValues.highway as string) || ""
+            }
             onChange={(e) => handleHighwayChange(e.target.value)}
           >
+            {editedValues.highway === MIXED_VALUE && (
+              <option value="">Mixed</option>
+            )}
             {HIGHWAY_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}
@@ -164,10 +227,18 @@ export function LinkAttributePanel({
           <label className="attribute-label">Lanes</label>
           <select
             className="attribute-select"
-            value={editedLink.tags.lanes?.toString() || ""}
+            value={
+              editedValues.lanes === MIXED_VALUE
+                ? ""
+                : editedValues.lanes?.toString() || ""
+            }
             onChange={(e) => handleLanesChange(e.target.value)}
           >
-            <option value="">Not specified</option>
+            {editedValues.lanes === MIXED_VALUE ? (
+              <option value="">Mixed</option>
+            ) : (
+              <option value="">Not specified</option>
+            )}
             {LANE_OPTIONS.map((lanes) => (
               <option key={lanes} value={lanes.toString()}>
                 {lanes}
@@ -180,14 +251,25 @@ export function LinkAttributePanel({
           <label className="attribute-label">Max Speed</label>
           <select
             className="attribute-select"
-            value={editedLink.tags.maxspeed?.toString() || ""}
+            value={
+              editedValues.maxspeed === MIXED_VALUE
+                ? ""
+                : editedValues.maxspeed?.toString() || ""
+            }
             onChange={(e) => handleMaxspeedChange(e.target.value)}
           >
-            {MAXSPEED_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            {editedValues.maxspeed === MIXED_VALUE ? (
+              <option value="">Mixed</option>
+            ) : (
+              <option value="">Not specified</option>
+            )}
+            {MAXSPEED_OPTIONS.filter((opt) => opt.value !== "").map(
+              (option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ),
+            )}
           </select>
         </div>
 
@@ -195,9 +277,18 @@ export function LinkAttributePanel({
           <label className="attribute-label">One-way</label>
           <select
             className="attribute-select"
-            value={editedLink.tags.oneway ? "true" : "false"}
+            value={
+              editedValues.oneway === MIXED_VALUE
+                ? ""
+                : editedValues.oneway
+                  ? "true"
+                  : "false"
+            }
             onChange={(e) => handleOnewayChange(e.target.value)}
           >
+            {editedValues.oneway === MIXED_VALUE && (
+              <option value="">Mixed</option>
+            )}
             {ONEWAY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -221,25 +312,52 @@ export function LinkAttributePanel({
 
           {devToolsOpen && (
             <div className="dev-tools-content">
-              <div className="attribute-section">
-                <label className="attribute-label">Link ID</label>
-                <div className="attribute-value readonly">{link.id}</div>
-              </div>
+              {links.length === 1 ? (
+                <>
+                  <div className="attribute-section">
+                    <label className="attribute-label">Link ID</label>
+                    <div className="attribute-value readonly">
+                      {links[0].id}
+                    </div>
+                  </div>
 
-              <div className="attribute-section">
-                <label className="attribute-label">OSM ID</label>
-                <div className="attribute-value readonly">{link.osmId}</div>
-              </div>
+                  <div className="attribute-section">
+                    <label className="attribute-label">OSM ID</label>
+                    <div className="attribute-value readonly">
+                      {links[0].osmId}
+                    </div>
+                  </div>
 
-              <div className="attribute-section">
-                <label className="attribute-label">From Node</label>
-                <div className="attribute-value readonly">{link.from}</div>
-              </div>
+                  <div className="attribute-section">
+                    <label className="attribute-label">From Node</label>
+                    <div className="attribute-value readonly">
+                      {links[0].from}
+                    </div>
+                  </div>
 
-              <div className="attribute-section">
-                <label className="attribute-label">To Node</label>
-                <div className="attribute-value readonly">{link.to}</div>
-              </div>
+                  <div className="attribute-section">
+                    <label className="attribute-label">To Node</label>
+                    <div className="attribute-value readonly">
+                      {links[0].to}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="attribute-section">
+                  <label className="attribute-label">Selected Links</label>
+                  <div
+                    className="attribute-value readonly"
+                    style={{ maxHeight: "200px", overflow: "auto" }}
+                  >
+                    {links.map((link, idx) => (
+                      <div key={link.id}>
+                        {idx + 1}. {link.tags.name || link.tags.highway} (ID:{" "}
+                        {link.id})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

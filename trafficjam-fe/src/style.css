@@ -198,6 +198,41 @@ html {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.link-attribute-panel .name-input-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.link-attribute-panel .name-input-container .attribute-input {
+  flex: 1;
+}
+
+.link-attribute-panel .select-by-name-button {
+  flex-shrink: 0;
+  padding: 8px;
+  background: #f0f0f0;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.link-attribute-panel .select-by-name-button:hover {
+  background: #e0e0e0;
+  border-color: #b0b0b0;
+  color: #333;
+}
+
+.link-attribute-panel .select-by-name-button:active {
+  background: #d0d0d0;
+  transform: scale(0.95);
+}
+
 .link-attribute-panel .dev-tools-section {
   margin-top: 24px;
   padding-top: 20px;

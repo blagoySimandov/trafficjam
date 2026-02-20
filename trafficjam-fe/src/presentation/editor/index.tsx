@@ -4,7 +4,7 @@ import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
 import { LinkAttributePanel } from "./components/link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
-import type { TrafficLink } from "../../types";
+import type { TrafficLink, Network } from "../../types";
 
 interface EditorProps {
   onRunSimulation: () => void;
@@ -12,26 +12,57 @@ interface EditorProps {
 
 export function Editor({ onRunSimulation }: EditorProps) {
   const [status, setStatus] = useState("");
-  const [selectedLink, setSelectedLink] = useState<TrafficLink | null>(null);
+  const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [network, setNetwork] = useState<Network | null>(null);
 
   const [updateLinkInNetwork, setUpdateLinkInNetwork] = useState<
     ((link: TrafficLink) => void) | null
   >(null);
 
   const handleLinkClick = useCallback((link: TrafficLink) => {
-    setSelectedLink(link);
+    setSelectedLinks([link]);
   }, []);
 
-  const handleLinkSave = useCallback(
-    (updatedLink: TrafficLink) => {
-      if (updateLinkInNetwork) {
-        updateLinkInNetwork(updatedLink);
+  const handleSelectByName = useCallback(
+    (name: string) => {
+      if (!network || !name) {
+        setStatus("Cannot select by name: no network or name provided");
+        return;
       }
-      setSelectedLink(updatedLink);
-      setStatus(
-        `Updated link: ${updatedLink.tags.name || updatedLink.tags.highway}`,
-      );
+
+      const linksWithSameName: TrafficLink[] = [];
+      for (const link of network.links.values()) {
+        if (link.tags.name === name) {
+          linksWithSameName.push(link);
+        }
+      }
+
+      if (linksWithSameName.length === 0) {
+        setStatus(`No links found with name "${name}"`);
+        return;
+      }
+
+      setSelectedLinks(linksWithSameName);
+      setStatus(`Selected ${linksWithSameName.length} links named "${name}"`);
+    },
+    [network],
+  );
+
+  const handleLinkSave = useCallback(
+    (updatedLinks: TrafficLink[]) => {
+      if (updateLinkInNetwork) {
+        updatedLinks.forEach((updatedLink) => {
+          updateLinkInNetwork(updatedLink);
+        });
+      }
+      setSelectedLinks(updatedLinks);
+      const count = updatedLinks.length;
+      const linkDesc =
+        count === 1
+          ? updatedLinks[0].tags.name || updatedLinks[0].tags.highway
+          : `${count} links`;
+      setStatus(`Updated ${linkDesc}`);
     },
     [updateLinkInNetwork],
   );
@@ -44,7 +75,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
   );
 
   const handleClosePanel = useCallback(() => {
-    setSelectedLink(null);
+    setSelectedLinks([]);
   }, []);
 
   const handleLaunch = useCallback(() => {
@@ -58,13 +89,15 @@ export function Editor({ onRunSimulation }: EditorProps) {
         onStatusChange={setStatus}
         onLinkClick={handleLinkClick}
         onRegisterLinkUpdater={handleRegisterLinkUpdater}
-        selectedLinkId={selectedLink?.id || null}
+        selectedLinkIds={selectedLinks.map((link) => link.id)}
+        onNetworkChange={setNetwork}
       />
-      {selectedLink && (
+      {selectedLinks.length > 0 && (
         <LinkAttributePanel
-          link={selectedLink}
+          links={selectedLinks}
           onClose={handleClosePanel}
           onSave={handleLinkSave}
+          onSelectByName={handleSelectByName}
         />
       )}
       {status && <StatusBar message={status} />}
