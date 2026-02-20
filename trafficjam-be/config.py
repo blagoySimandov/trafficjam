@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     debug: bool = False
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/trafficjam"
     nats_url: str = "nats://localhost:4222"
+    simengine_url: str = "http://localhost:8080"
 
     class Config:
         env_file = ".env"

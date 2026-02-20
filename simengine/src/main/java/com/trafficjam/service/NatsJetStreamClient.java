@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 @Component
 public class NatsJetStreamClient {
@@ -111,7 +112,8 @@ public class NatsJetStreamClient {
             return;
         }
         try {
-            byte[] payload = objectMapper.writeValueAsBytes(status);
+            Map<String, String> statusMap = Map.of("status", status);
+            byte[] payload = objectMapper.writeValueAsBytes(statusMap);
             jetStream.publish(buildSubject(scenarioId, runId, "status"), payload);
         } catch (Exception e) {
             logger.error("Failed to publish status: {}", e.getMessage());
