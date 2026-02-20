@@ -21,9 +21,15 @@ export function useLinkForm(links: TrafficLink[]) {
   useEffect(() => {
     if (prevLinkIdsRef.current !== currentLinkIds) {
       prevLinkIdsRef.current = currentLinkIds;
-      setEditedValues(getInitialValues());
+      setEditedValues({
+        name: getCommonValue(links, (l) => l.tags.name),
+        highway: getCommonValue(links, (l) => l.tags.highway),
+        lanes: getCommonValue(links, (l) => l.tags.lanes),
+        maxspeed: getCommonValue(links, (l) => l.tags.maxspeed),
+        oneway: getCommonValue(links, (l) => l.tags.oneway),
+      });
     }
-  });
+  }, [currentLinkIds, links]);
 
   const handleHighwayChange = (value: string) => {
     setEditedValues((prev) => ({ ...prev, highway: value }));

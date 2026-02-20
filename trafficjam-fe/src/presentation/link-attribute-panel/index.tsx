@@ -36,7 +36,6 @@ export function LinkAttributePanel({
 
   const handleSave = () => {
     onSave(applyEditsToLinks());
-    onClose();
   };
 
   return (

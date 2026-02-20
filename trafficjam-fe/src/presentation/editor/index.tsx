@@ -68,18 +68,8 @@ export function Editor({ onRunSimulation }: EditorProps) {
     (updatedLinks: TrafficLink[]) => {
       if (updateMultipleLinksInNetwork) {
         updateMultipleLinksInNetwork(updatedLinks);
-        // Refresh selected links from the updated network after state update
-        setTimeout(() => {
-          if (network) {
-            const refreshedLinks = updatedLinks
-              .map((link) => network.links.get(link.id))
-              .filter((link): link is TrafficLink => link !== undefined);
-            setSelectedLinks(refreshedLinks);
-          }
-        }, 0);
-      } else {
-        setSelectedLinks(updatedLinks);
       }
+      setSelectedLinks([]);
       const count = updatedLinks.length;
       const linkDesc =
         count === 1
