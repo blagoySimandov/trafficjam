@@ -1,10 +1,10 @@
-.PHONY: help build run stop restart logs shell clean
+.PHONY: help build run stop restart logs shell clean \
+	nats-build nats-run nats-stop nats-restart nats-logs nats-clean
 
 ############################
 ##@ Database
 ############################
 
-#env variables passed to the db container
 IMAGE_NAME = trafficjam-db
 DOCKERFILE_PATH = docker/Dockerfile.db
 CONTAINER_NAME = trafficjam-db
@@ -14,7 +14,7 @@ DB_PASS = admin
 DB_PORT = 5432
 
 
-build: ## build the image database
+build: ## build the database image
 	docker build -t $(IMAGE_NAME) -f $(DOCKERFILE_PATH) .
 
 conn: ## print the connection string
@@ -49,6 +49,40 @@ shell: ## start the database + get access to the psql shell
 
 clean: stop ## nukes the database volume (deletes all data)
 	docker volume rm trafficjam_db_data || true
+
+############################
+##@ NATS JetStream
+############################
+
+NATS_IMAGE = trafficjam-nats
+NATS_DOCKERFILE = docker/Dockerfile.nats
+NATS_CONTAINER = trafficjam-nats
+NATS_PORT = 4222
+NATS_MONITOR_PORT = 8222
+
+
+nats-build: ## build the NATS JetStream image
+	docker build -t $(NATS_IMAGE) -f $(NATS_DOCKERFILE) .
+
+nats-run: ## run NATS JetStream
+	docker run -d \
+		--name $(NATS_CONTAINER) \
+		-p $(NATS_PORT):4222 \
+		-p $(NATS_MONITOR_PORT):8222 \
+		-v trafficjam_nats_data:/data/jetstream \
+		$(NATS_IMAGE)
+
+nats-stop: ## stop NATS JetStream
+	docker stop $(NATS_CONTAINER) || true
+	docker rm $(NATS_CONTAINER) || true
+
+nats-restart: nats-stop nats-run ## restart NATS JetStream
+
+nats-logs: ## view NATS logs
+	docker logs -f $(NATS_CONTAINER)
+
+nats-clean: nats-stop ## nukes the NATS data volume
+	docker volume rm trafficjam_nats_data || true
 
 
 help: ## Display this help message
