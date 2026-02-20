@@ -45,7 +45,8 @@ public class SimulationService {
 
         String actualSimId = matsimRunner.runSimulationAsync(
                 configPath.toString(),
-                event -> handleOutputEvent(scenarioId, runId, event));
+                event -> handleOutputEvent(scenarioId, runId, event),
+                (simId, status) -> natsClient.publishStatus(scenarioId, runId, status));
 
         return actualSimId;
     }

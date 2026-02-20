@@ -54,7 +54,7 @@ public class MatsimRunner {
      * Returns immediately with a simulation ID that can be used to query status or
      * stop the simulation.
      */
-    public String runSimulationAsync(String configPath, EventCallback eventCallback) {
+    public String runSimulationAsync(String configPath, EventCallback eventCallback, StatusCallback statusCallback) {
         String simulationId = UUID.randomUUID().toString();
 
         Scenario scenario = loadScenario(configPath);
@@ -65,49 +65,56 @@ public class MatsimRunner {
 
         executor.submit(() -> {
             try {
-                logger.info("Starting simulation {} with config: {}", simulationId, configPath);
-
-                SimulationInfo info = new SimulationInfo(Thread.currentThread(), "RUNNING");
-                activeSimulations.put(simulationId, info);
-
-                controler.addControlerListener((org.matsim.core.controler.listener.IterationStartsListener) event -> {
-                    info.currentIteration = event.getIteration();
-                });
-
-                logger.info("Simulation {} status set to RUNNING, executing controler.run()", simulationId);
-
-                controler.run();
-
-                logger.info("Simulation {} completed successfully", simulationId);
-
-                info.status = "COMPLETED";
-
+                runSimulation(simulationId, configPath, controler);
             } catch (Exception e) {
-                // Check if this was an intentional interruption (stop command)
-                if (e instanceof InterruptedException
-                        || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
-                    logger.info("Simulation {} was stopped by user request.", simulationId);
-
-                    SimulationInfo info = activeSimulations.get(simulationId);
-                    if (info != null && !"STOPPED".equals(info.status)) {
-                        info.status = "STOPPED";
-                    }
-                } else {
-                    logger.error("Simulation {} FAILED with exception: {}", simulationId, e.getMessage(), e);
-                    logger.error("Exception type: {}", e.getClass().getName());
-                    logger.error("Stack trace:", e);
-
-                    SimulationInfo info = activeSimulations.get(simulationId);
-                    if (info != null) {
-                        info.status = "FAILED";
-                        info.error = e.getMessage();
-                    }
-                    throw new RuntimeException("Simulation " + simulationId + " failed", e);
-                }
+                handleSimulationFailure(simulationId, e, statusCallback);
+                return;
             }
+            statusCallback.onStatusChange(simulationId, "COMPLETED");
         });
 
         return simulationId;
+    }
+
+    private void runSimulation(String simulationId, String configPath, Controler controler) {
+        logger.info("Starting simulation {} with config: {}", simulationId, configPath);
+
+        SimulationInfo info = new SimulationInfo(Thread.currentThread(), "RUNNING");
+        activeSimulations.put(simulationId, info);
+
+        controler.addControlerListener((org.matsim.core.controler.listener.IterationStartsListener) event -> {
+            info.currentIteration = event.getIteration();
+        });
+
+        logger.info("Simulation {} status set to RUNNING, executing controler.run()", simulationId);
+        controler.run();
+        logger.info("Simulation {} completed successfully", simulationId);
+        info.status = "COMPLETED";
+    }
+
+    private void handleSimulationFailure(String simulationId, Exception e, StatusCallback statusCallback) {
+        if (isInterruption(e)) {
+            logger.info("Simulation {} was stopped by user request.", simulationId);
+            SimulationInfo info = activeSimulations.get(simulationId);
+            if (info != null && !"STOPPED".equals(info.status)) {
+                info.status = "STOPPED";
+            }
+            statusCallback.onStatusChange(simulationId, "STOPPED");
+            return;
+        }
+
+        logger.error("Simulation {} FAILED: {}", simulationId, e.getMessage(), e);
+        SimulationInfo info = activeSimulations.get(simulationId);
+        if (info != null) {
+            info.status = "FAILED";
+            info.error = e.getMessage();
+        }
+        statusCallback.onStatusChange(simulationId, "FAILED");
+    }
+
+    private boolean isInterruption(Exception e) {
+        return e instanceof InterruptedException
+                || (e.getCause() != null && e.getCause() instanceof InterruptedException);
     }
 
     /**
@@ -165,6 +172,10 @@ public class MatsimRunner {
      */
     public interface EventCallback {
         void onEvent(EventHandler.TransformedEvent event);
+    }
+
+    public interface StatusCallback {
+        void onStatusChange(String simulationId, String status);
     }
 
     /**
