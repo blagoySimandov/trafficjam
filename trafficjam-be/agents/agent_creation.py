@@ -2,12 +2,12 @@ import logging
 import random
 import uuid
 
-from models import Building, Child, Adult, Agent, TransportMode
-from geo import calculate_area_wgs84
-from population import estimate_population
-from agents.work_assignment import assign_work_location
-from agents.school_assignment import assign_school_to_child, get_schools_from_buildings
-from agents.agent_attributes import (
+from .models import Building, Child, Adult, Agent, TransportMode
+from .geo import calculate_area_wgs84
+from .population import estimate_population
+from .work_assignment import assign_work_location
+from .school_assignment import assign_school_to_child, get_schools_from_buildings
+from .agent_attributes import (
     generate_child_age,
     generate_adult_age,
     determine_employment_status,

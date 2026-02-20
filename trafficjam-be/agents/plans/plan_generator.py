@@ -3,7 +3,7 @@ from datetime import time
 
 from haversine import haversine
 
-from models import (
+from ..models import (
     Agent,
     Adult,
     Child,
