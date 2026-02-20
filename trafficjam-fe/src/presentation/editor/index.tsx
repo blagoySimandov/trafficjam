@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { EditorMapView } from "./components/editor-map-view";
 import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
@@ -19,11 +19,25 @@ export function Editor({ onRunSimulation }: EditorProps) {
   const [updateMultipleLinksInNetwork, setUpdateMultipleLinksInNetwork] =
     useState<((links: TrafficLink[]) => void) | null>(null);
 
-  const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
-
-  const handleLinkClick = useCallback((link: TrafficLink) => {
-    setSelectedLinks([link]);
-  }, []);
+  const handleLinkClick = useCallback(
+    (link: TrafficLink, shiftKey: boolean = false) => {
+      if (shiftKey) {
+        // Shift-click: toggle selection
+        setSelectedLinks((prev) => {
+          const isAlreadySelected = prev.some((l) => l.id === link.id);
+          if (isAlreadySelected) {
+            return prev.filter((l) => l.id !== link.id);
+          } else {
+            return [...prev, link];
+          }
+        });
+      } else {
+        // Normal click: single selection
+        setSelectedLinks([link]);
+      }
+    },
+    [],
+  );
 
   const handleSelectByName = useCallback(
     (name: string) => {
@@ -54,8 +68,18 @@ export function Editor({ onRunSimulation }: EditorProps) {
     (updatedLinks: TrafficLink[]) => {
       if (updateMultipleLinksInNetwork) {
         updateMultipleLinksInNetwork(updatedLinks);
+        // Refresh selected links from the updated network after state update
+        setTimeout(() => {
+          if (network) {
+            const refreshedLinks = updatedLinks
+              .map((link) => network.links.get(link.id))
+              .filter((link): link is TrafficLink => link !== undefined);
+            setSelectedLinks(refreshedLinks);
+          }
+        }, 0);
+      } else {
+        setSelectedLinks(updatedLinks);
       }
-      setSelectedLinks(updatedLinks);
       const count = updatedLinks.length;
       const linkDesc =
         count === 1
@@ -63,7 +87,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
           : `${count} links`;
       setStatus(`Updated ${linkDesc}`);
     },
-    [updateMultipleLinksInNetwork],
+    [updateMultipleLinksInNetwork, network],
   );
 
   const handleRegisterBulkLinkUpdater = useCallback(
@@ -82,13 +106,18 @@ export function Editor({ onRunSimulation }: EditorProps) {
     onRunSimulation();
   }, [onRunSimulation]);
 
+  const selectedLinkIds = useMemo(
+    () => selectedLinks.map((link) => link.id),
+    [selectedLinks],
+  );
+
   return (
     <>
       <EditorMapView
         onStatusChange={setStatus}
         onLinkClick={handleLinkClick}
         onRegisterBulkLinkUpdater={handleRegisterBulkLinkUpdater}
-        selectedLinkIds={selectedLinks.map((link) => link.id)}
+        selectedLinkIds={selectedLinkIds}
         onNetworkChange={setNetwork}
       />
       {selectedLinks.length > 0 && (

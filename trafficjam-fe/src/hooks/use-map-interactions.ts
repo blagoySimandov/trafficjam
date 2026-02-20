@@ -7,7 +7,7 @@ import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
 interface UseMapInteractionsParams {
   network: Network | null;
   mapRef: React.RefObject<MapRef | null>;
-  onLinkClick?: (link: TrafficLink) => void;
+  onLinkClick?: (link: TrafficLink, shiftKey: boolean) => void;
   editorMode?: boolean;
 }
 
@@ -71,7 +71,7 @@ export function useMapInteractions({
         });
         return true;
       } else if (link && onLinkClick) {
-        onLinkClick(link);
+        onLinkClick(link, event.originalEvent.shiftKey);
       }
       
       return false;

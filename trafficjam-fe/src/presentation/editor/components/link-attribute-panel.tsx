@@ -322,13 +322,6 @@ export function LinkAttributePanel({
                   </div>
 
                   <div className="attribute-section">
-                    <label className="attribute-label">OSM ID</label>
-                    <div className="attribute-value readonly">
-                      {links[0].osmId}
-                    </div>
-                  </div>
-
-                  <div className="attribute-section">
                     <label className="attribute-label">From Node</label>
                     <div className="attribute-value readonly">
                       {links[0].from}
