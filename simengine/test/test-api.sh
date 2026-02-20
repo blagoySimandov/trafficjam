@@ -3,7 +3,7 @@
 
 BASE_URL="http://localhost:8080/api/simulations"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NETWORK_FILE="$SCRIPT_DIR/../java/src/main/resources/cork_network.xml"
+NETWORK_FILE="$SCRIPT_DIR/../src/main/resources/cork_network.xml"
 
 echo -e "\033[36m=== MatSim API Test Script ===\033[0m"
 echo ""
@@ -12,9 +12,9 @@ echo ""
 echo -e "\033[33mTest 1: Starting a simulation...\033[0m"
 
 RESPONSE=$(curl -s -X POST "$BASE_URL" \
-  -F "networkFile=@$NETWORK_FILE" \
-  -F "iterations=5" \
-  -F "randomSeed=4711")
+    -F "networkFile=@$NETWORK_FILE" \
+    -F "iterations=5" \
+    -F "randomSeed=4711")
 
 if [ $? -eq 0 ]; then
     echo -e "\033[32m[OK] Simulation started successfully!\033[0m"
@@ -62,8 +62,8 @@ echo ""
 echo -e "\033[33mTest 5: Checking CORS headers...\033[0m"
 
 CORS_RESPONSE=$(curl -s -i -X OPTIONS "$BASE_URL" \
-  -H "Origin: http://localhost:3000" \
-  -H "Access-Control-Request-Method: POST")
+    -H "Origin: http://localhost:3000" \
+    -H "Access-Control-Request-Method: POST")
 
 ALLOW_ORIGIN=$(echo "$CORS_RESPONSE" | grep -i "Access-Control-Allow-Origin" | cut -d' ' -f2 | tr -d '\r')
 ALLOW_METHODS=$(echo "$CORS_RESPONSE" | grep -i "Access-Control-Allow-Methods" | cut -d' ' -f2 | tr -d '\r')
@@ -75,10 +75,10 @@ echo -e "\033[36m  Allow-Methods: $ALLOW_METHODS\033[0m"
 echo -e "\033[36m  Allow-Credentials: $ALLOW_CREDENTIALS\033[0m"
 
 # Verify required methods
-if echo "$ALLOW_METHODS" | grep -q "GET" && \
-   echo "$ALLOW_METHODS" | grep -q "POST" && \
-   echo "$ALLOW_METHODS" | grep -q "PUT" && \
-   echo "$ALLOW_METHODS" | grep -q "DELETE"; then
+if echo "$ALLOW_METHODS" | grep -q "GET" &&
+    echo "$ALLOW_METHODS" | grep -q "POST" &&
+    echo "$ALLOW_METHODS" | grep -q "PUT" &&
+    echo "$ALLOW_METHODS" | grep -q "DELETE"; then
     echo -e "\033[32m[OK] All required methods are allowed!\033[0m"
 else
     echo -e "\033[33m[WARN] Warning: Some methods may be missing\033[0m"
@@ -92,11 +92,11 @@ HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/$SIMULAT
 
 if [ "$HTTP_CODE" = "204" ]; then
     echo -e "\033[32m[OK] Simulation stopped successfully (204 No Content)!\033[0m"
-    
+
     # Verify status changed
     sleep 1
     STOPPED_STATUS=$(curl -s "$BASE_URL/$SIMULATION_ID/status" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
-    
+
     if [ "$STOPPED_STATUS" = "STOPPED" ]; then
         echo -e "\033[32m[OK] Status confirmed as STOPPED!\033[0m"
     else
