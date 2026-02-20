@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { EditorMapView } from "./components/editor-map-view";
 import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
-import { LinkAttributePanel } from "./components/link-attribute-panel";
+import { LinkAttributePanel } from "../link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
 import type { TrafficLink, Network } from "../../types";
 

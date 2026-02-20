@@ -1,96 +1,52 @@
-import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import type { Network, TrafficLink } from "../../types";
-import { HIGHWAY_TYPES } from "../../constants";
-import { AttributeField } from "./components/attribute-field";
+import type { TrafficLink } from "../../types";
 import { DevToolsSection } from "./components/dev-tools-section";
-import { useUpdateLink } from "./hooks/use-update-link";
-import { LANE_OPTIONS, MAXSPEED_OPTIONS, ONEWAY_OPTIONS } from "./constants";
+import {
+  NameField,
+  HighwayField,
+  LanesField,
+  MaxspeedField,
+  OnewayField,
+} from "./components/form-fields";
+import { useLinkForm } from "./hooks/use-link-form";
+import { MIXED_VALUE } from "./constants";
 import styles from "./link-attribute-panel.module.css";
 
 interface LinkAttributePanelProps {
-  link: TrafficLink;
-  network: Network | null;
+  links: TrafficLink[];
   onClose: () => void;
-  onSave: (updatedNetwork: Network, message: string) => void;
+  onSave: (updatedLinks: TrafficLink[]) => void;
+  onSelectByName: (name: string) => void;
 }
 
 export function LinkAttributePanel({
-  link,
-  network,
+  links,
   onClose,
   onSave,
+  onSelectByName,
 }: LinkAttributePanelProps) {
-  const [editedLink, setEditedLink] = useState<TrafficLink>(link);
-  const { updateLink } = useUpdateLink(network, onSave);
+  const { editedValues, handlers, applyEditsToLinks } = useLinkForm(links);
 
-  // Update local state when the link prop changes
-  useEffect(() => {
-    setEditedLink(link);
-  }, [link]);
-
-  const handleHighwayChange = (value: string) => {
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        highway: value,
-      },
-    });
-  };
-
-  const handleLanesChange = (value: string) => {
-    const lanes = value === "" ? undefined : parseInt(value, 10);
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        lanes,
-      },
-    });
-  };
-
-  const handleMaxspeedChange = (value: string) => {
-    const maxspeed = value === "" ? undefined : parseInt(value, 10);
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        maxspeed,
-      },
-    });
-  };
-
-  const handleOnewayChange = (value: string) => {
-    const oneway = value === "true";
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        oneway,
-      },
-    });
-  };
-
-  const handleNameChange = (value: string) => {
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        name: value === "" ? undefined : value,
-      },
-    });
+  const handleSelectByNameClick = () => {
+    const nameValue = editedValues.name;
+    if (nameValue && nameValue !== MIXED_VALUE) {
+      onSelectByName(nameValue);
+    }
   };
 
   const handleSave = () => {
-    updateLink(editedLink);
+    onSave(applyEditsToLinks());
     onClose();
   };
 
   return (
     <div className={styles.linkAttributePanel}>
       <div className={styles.panelHeader}>
-        <h3>Link Attributes</h3>
+        <h3>
+          {links.length === 1
+            ? "Link Attributes"
+            : `Link Attributes (${links.length} selected)`}
+        </h3>
         <button
           className={styles.closeButton}
           onClick={onClose}
@@ -101,74 +57,34 @@ export function LinkAttributePanel({
       </div>
 
       <div className={styles.panelContent}>
-        <AttributeField label="Name">
-          <input
-            type="text"
-            className={styles.attributeInput}
-            value={editedLink.tags.name || ""}
-            onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Not specified"
-          />
-        </AttributeField>
+        <NameField
+          value={editedValues.name}
+          onChange={handlers.handleNameChange}
+          onSelectByName={handleSelectByNameClick}
+          showSelectButton={links.length === 1}
+        />
 
-        <AttributeField label="Highway Type">
-          <select
-            className={styles.attributeSelect}
-            value={editedLink.tags.highway}
-            onChange={(e) => handleHighwayChange(e.target.value)}
-          >
-            {HIGHWAY_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </AttributeField>
+        <HighwayField
+          value={editedValues.highway}
+          onChange={handlers.handleHighwayChange}
+        />
 
-        <AttributeField label="Lanes">
-          <select
-            className={styles.attributeSelect}
-            value={editedLink.tags.lanes?.toString() || ""}
-            onChange={(e) => handleLanesChange(e.target.value)}
-          >
-            <option value="">Not specified</option>
-            {LANE_OPTIONS.map((lanes) => (
-              <option key={lanes} value={lanes.toString()}>
-                {lanes}
-              </option>
-            ))}
-          </select>
-        </AttributeField>
+        <LanesField
+          value={editedValues.lanes}
+          onChange={handlers.handleLanesChange}
+        />
 
-        <AttributeField label="Max Speed">
-          <select
-            className={styles.attributeSelect}
-            value={editedLink.tags.maxspeed?.toString() || ""}
-            onChange={(e) => handleMaxspeedChange(e.target.value)}
-          >
-            {Object.entries(MAXSPEED_OPTIONS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </AttributeField>
+        <MaxspeedField
+          value={editedValues.maxspeed}
+          onChange={handlers.handleMaxspeedChange}
+        />
 
-        <AttributeField label="One-way">
-          <select
-            className={styles.attributeSelect}
-            value={editedLink.tags.oneway ? "true" : "false"}
-            onChange={(e) => handleOnewayChange(e.target.value)}
-          >
-            {Object.entries(ONEWAY_OPTIONS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </AttributeField>
+        <OnewayField
+          value={editedValues.oneway}
+          onChange={handlers.handleOnewayChange}
+        />
 
-        <DevToolsSection link={link} />
+        <DevToolsSection links={links} />
       </div>
 
       <div className={styles.panelFooter}>

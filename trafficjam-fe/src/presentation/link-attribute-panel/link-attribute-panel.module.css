@@ -101,6 +101,34 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.nameInputContainer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nameInputContainer .attributeInput {
+  flex: 1;
+}
+
+.selectByNameButton {
+  flex-shrink: 0;
+  padding: 8px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.selectByNameButton:hover {
+  background: #2563eb;
+}
+
 .devToolsSection {
   margin-top: 24px;
   padding-top: 20px;

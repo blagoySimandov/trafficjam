@@ -5,10 +5,10 @@ import { AttributeField, AttributeValue } from "./attribute-field";
 import styles from "../link-attribute-panel.module.css";
 
 interface DevToolsSectionProps {
-  link: TrafficLink;
+  links: TrafficLink[];
 }
 
-export function DevToolsSection({ link }: DevToolsSectionProps) {
+export function DevToolsSection({ links }: DevToolsSectionProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -24,17 +24,32 @@ export function DevToolsSection({ link }: DevToolsSectionProps) {
 
       {isOpen && (
         <div className={styles.devToolsContent}>
-          <AttributeField label="Link ID">
-            <AttributeValue value={link.id} />
-          </AttributeField>
+          {links.length === 1 ? (
+            <>
+              <AttributeField label="Link ID">
+                <AttributeValue value={links[0].id} />
+              </AttributeField>
 
-          <AttributeField label="From Node">
-            <AttributeValue value={link.from} />
-          </AttributeField>
+              <AttributeField label="From Node">
+                <AttributeValue value={links[0].from} />
+              </AttributeField>
 
-          <AttributeField label="To Node">
-            <AttributeValue value={link.to} />
-          </AttributeField>
+              <AttributeField label="To Node">
+                <AttributeValue value={links[0].to} />
+              </AttributeField>
+            </>
+          ) : (
+            <AttributeField label="Selected Links">
+              <div style={{ maxHeight: "200px", overflow: "auto" }}>
+                {links.map((link, idx) => (
+                  <div key={link.id}>
+                    {idx + 1}. {link.tags.name || link.tags.highway} (ID:{" "}
+                    {link.id})
+                  </div>
+                ))}
+              </div>
+            </AttributeField>
+          )}
         </div>
       )}
     </div>
