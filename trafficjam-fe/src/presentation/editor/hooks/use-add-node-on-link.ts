@@ -29,8 +29,7 @@ function createNodeAtMidpoint(
 
   newLinks.delete(link.id);
   const left = geom.slice(0, midIdx + 1);
-  left.push(mid);
-  const right = [mid, ...geom.slice(midIdx + 1)];
+  const right = geom.slice(midIdx);
 
   const linkAId = `edge-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
   const linkBId = `edge-${baseNow + 1}-${Math.random().toString(36).slice(2, 7)}`;

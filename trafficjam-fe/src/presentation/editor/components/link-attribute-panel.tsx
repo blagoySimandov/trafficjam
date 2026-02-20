@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, ChevronDown, ChevronRight, Layers } from "lucide-react";
 import type { TrafficLink } from "../../../types";
 
@@ -73,25 +73,31 @@ export function LinkAttributePanel({
   onSave,
   onSelectByName,
 }: LinkAttributePanelProps) {
-  const [editedValues, setEditedValues] = useState({
+  const prevLinkIdsRef = useRef<string>("");
+
+  // Get initial values based on current links
+  const getInitialValues = () => ({
     name: getCommonValue(links, (l) => l.tags.name),
     highway: getCommonValue(links, (l) => l.tags.highway),
     lanes: getCommonValue(links, (l) => l.tags.lanes),
     maxspeed: getCommonValue(links, (l) => l.tags.maxspeed),
     oneway: getCommonValue(links, (l) => l.tags.oneway),
   });
+
+  const [editedValues, setEditedValues] = useState(getInitialValues);
   const [devToolsOpen, setDevToolsOpen] = useState(false);
 
-  // Update local state when the links prop changes
+  // Reset edited values when link selection changes
+  const currentLinkIds = links
+    .map((l) => l.id)
+    .sort()
+    .join(",");
   useEffect(() => {
-    setEditedValues({
-      name: getCommonValue(links, (l) => l.tags.name),
-      highway: getCommonValue(links, (l) => l.tags.highway),
-      lanes: getCommonValue(links, (l) => l.tags.lanes),
-      maxspeed: getCommonValue(links, (l) => l.tags.maxspeed),
-      oneway: getCommonValue(links, (l) => l.tags.oneway),
-    });
-  }, [links]);
+    if (prevLinkIdsRef.current !== currentLinkIds) {
+      prevLinkIdsRef.current = currentLinkIds;
+      setEditedValues(getInitialValues());
+    }
+  });
 
   const handleHighwayChange = (value: string) => {
     setEditedValues((prev) => ({ ...prev, highway: value }));
