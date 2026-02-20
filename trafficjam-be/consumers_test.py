@@ -72,5 +72,5 @@ async def test_listen_status_completed(consumer):
 
     result = await consumer.listen_status()
 
-    assert result == "completed"
+    assert result == {"status": "completed"}
     sub.unsubscribe.assert_awaited_once()
