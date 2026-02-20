@@ -1,8 +1,8 @@
 import random
-import math
 
+from geopy.distance import geodesic
 from haversine import haversine, Unit
-from models import Building
+from .models import Building
 
 
 DEFAULT_AMENITY_RADIUS = 2  # kilometers
@@ -11,11 +11,16 @@ DEFAULT_AMENITY_RADIUS = 2  # kilometers
 def get_bounding_box(
     lat: float, lon: float, radius: float
 ) -> tuple[float, float, float, float]:
-    """Get lat/lon bounding box for a radius in kilometers around a point."""
-    delta_lat = radius / 111.32
-    delta_lon = radius / (111.32 * math.cos(math.radians(lat)))
-
-    return (lat - delta_lat, lat + delta_lat, lon - delta_lon, lon + delta_lon)
+    """
+    Quick rectangular filter before expensive haversine calculations.
+    Returns (lat_min, lat_max, lon_min, lon_max).
+    """
+    origin = (lat, lon)
+    north = geodesic(kilometers=radius).destination(origin, 0)
+    south = geodesic(kilometers=radius).destination(origin, 180)
+    east = geodesic(kilometers=radius).destination(origin, 90)
+    west = geodesic(kilometers=radius).destination(origin, 270)
+    return (south.latitude, north.latitude, west.longitude, east.longitude)
 
 
 def find_nearby_or_closest(
@@ -61,7 +66,6 @@ def generate_adult_age() -> int:
 
 
 def determine_employment_status(age: int) -> tuple[bool, bool]:
-    """Returns (employed, is_student) based on age."""
     if 18 <= age < 65:
         employed = random.random() > 0.1
         is_student = 18 <= age <= 25 and random.random() > 0.3
@@ -72,7 +76,6 @@ def determine_employment_status(age: int) -> tuple[bool, bool]:
 def determine_transport_preferences(
     age: int, employed: bool, has_transport: bool, needs_to_dropoff: bool
 ) -> tuple[bool, bool]:
-    """Returns (uses_public_transport, has_car) based on demographics."""
     if 16 <= age <= 25:
         uses_public_transport = has_transport and random.random() > 0.4
     elif age >= 65:

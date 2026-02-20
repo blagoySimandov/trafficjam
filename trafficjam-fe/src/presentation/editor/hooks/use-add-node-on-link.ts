@@ -22,7 +22,6 @@ function createNodeAtMidpoint(
   const newNodeId = `node-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
   const newNode = {
     id: newNodeId,
-    osmId: -baseNow,
     position: mid,
     connectionCount: 2,
   };
@@ -39,7 +38,6 @@ function createNodeAtMidpoint(
   const newLinkA: TrafficLink = {
     ...link,
     id: linkAId,
-    osmId: -baseNow,
     from: link.from,
     to: newNodeId,
     geometry: left,
@@ -47,7 +45,6 @@ function createNodeAtMidpoint(
   const newLinkB: TrafficLink = {
     ...link,
     id: linkBId,
-    osmId: -baseNow - 1,
     from: newNodeId,
     to: link.to,
     geometry: right,
@@ -79,7 +76,79 @@ export function useAddNodeOnLink({
         const newNodes = new Map(network.nodes);
         const baseNow = Date.now();
 
-        createNodeAtMidpoint(link, baseNow, newNodes, newLinks);
+        if (coords) {
+          try {
+            const coordsArr = link.geometry.map(([lat, lng]) => [lng, lat]);
+            const line = lineString(coordsArr);
+            const pt = point([coords.lng, coords.lat]);
+            const snapped = nearestPointOnLine(line, pt) as Feature<Point>;
+            const split = lineSplit(line, snapped) as FeatureCollection<LineString>;
+
+            if (split && split.features && split.features.length >= 2) {
+              const leftCoords = split.features[0].geometry.coordinates.map(
+                (coord) => [coord[1], coord[0]] as [number, number],
+              );
+              const rightCoords = split.features[1].geometry.coordinates.map(
+                (coord) => [coord[1], coord[0]] as [number, number],
+              );
+
+              const snappedCoord = snapped.geometry.coordinates as [number, number];
+              const newNodeId = `node-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
+
+              const newNode = {
+                id: newNodeId,
+                position: [snappedCoord[1], snappedCoord[0]] as [number, number],
+                connectionCount: 2,
+              };
+
+              newNodes.set(newNodeId, newNode);
+
+              newLinks.delete(link.id);
+
+              const linkAId = `edge-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
+              const linkBId = `edge-${baseNow + 1}-${Math.random().toString(36).slice(2, 7)}`;
+
+              const newLinkA: TrafficLink = {
+                ...link,
+                id: linkAId,
+                from: link.from,
+                to: newNodeId,
+                geometry: leftCoords,
+              };
+
+              const newLinkB: TrafficLink = {
+                ...link,
+                id: linkBId,
+                from: newNodeId,
+                to: link.to,
+                geometry: rightCoords,
+              };
+
+              newLinks.set(linkAId, newLinkA);
+              newLinks.set(linkBId, newLinkB);
+
+              // update endpoint connection counts
+              const fromNode = newNodes.get(link.from);
+              if (fromNode) {
+                newNodes.set(link.from, {
+                  ...fromNode,
+                  connectionCount: (fromNode.connectionCount || 0) + 1,
+                });
+              }
+              const toNode = newNodes.get(link.to);
+              if (toNode) {
+                newNodes.set(link.to, {
+                  ...toNode,
+                  connectionCount: (toNode.connectionCount || 0) + 1,
+                });
+              }
+            }
+          } catch (err) {
+            console.error("Turf split failed", err);
+          }
+        } else {
+          createNodeAtMidpoint(link, baseNow, newNodes, newLinks);
+        }
 
         setNetwork({
           nodes: newNodes,

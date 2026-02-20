@@ -1,12 +1,9 @@
 import random
 
-from models import Agent, Adult, TransportMode
+from .models import Agent, Adult, TransportMode
 
 
 def get_transport_mode(agent: Agent, activity_type: str) -> TransportMode:
-    """
-    Determine transport mode based on agent characteristics and activity.
-    """
     if agent.uses_public_transport:
         if random.random() > 0.8:
             return TransportMode.PUBLIC_TRANSPORT

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "trip-flows.csv"
+  },
+  "width": 800,
+  "height": 600,
+  "mark": {
+    "type": "circle",
+    "opacity": 0.3,
+    "size": 10
+  },
+  "encoding": {
+    "x": {
+      "field": "start_x",
+      "type": "quantitative",
+      "scale": {"zero": false},
+      "title": "Longitude"
+    },
+    "y": {
+      "field": "start_y",
+      "type": "quantitative",
+      "scale": {"zero": false},
+      "title": "Latitude"
+    },
+    "color": {
+      "field": "mode",
+      "type": "nominal",
+      "title": "Transport Mode",
+      "scale": {
+        "scheme": "category10"
+      }
+    },
+    "tooltip": [
+      {"field": "start_x", "type": "quantitative", "title": "X", "format": ".0f"},
+      {"field": "start_y", "type": "quantitative", "title": "Y", "format": ".0f"},
+      {"field": "mode", "type": "nominal", "title": "Mode"},
+      {"field": "start_act", "type": "nominal", "title": "Activity"}
+    ]
+  }
+}

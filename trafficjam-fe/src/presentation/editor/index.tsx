@@ -19,6 +19,8 @@ export function Editor({ onRunSimulation }: EditorProps) {
   const [updateMultipleLinksInNetwork, setUpdateMultipleLinksInNetwork] =
     useState<((links: TrafficLink[]) => void) | null>(null);
 
+  const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
+
   const handleLinkClick = useCallback((link: TrafficLink) => {
     setSelectedLinks([link]);
   }, []);

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "data": {
+    "url": "trips.csv"
+  },
+  "width": "container",
+  "height": 400,
+  "mark": {
+    "type": "arc",
+    "innerRadius": 50
+  },
+  "encoding": {
+    "theta": {
+      "aggregate": "count",
+      "type": "quantitative"
+    },
+    "color": {
+      "field": "mode",
+      "type": "nominal",
+      "title": "Transport Mode",
+      "scale": {
+        "scheme": "category10"
+      }
+    },
+    "tooltip": [
+      {"field": "mode", "type": "nominal", "title": "Mode"},
+      {"aggregate": "count", "type": "quantitative", "title": "Trips"}
+    ]
+  }
+}

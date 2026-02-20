@@ -2,12 +2,12 @@ import logging
 import random
 import uuid
 
-from models import Building, Child, Adult, Agent, TransportMode
-from utils.geo import calculate_area_wgs84, calculate_area_projected
-from utils.population import estimate_population
-from agents.work_assignment import assign_work_location
-from agents.school_assignment import assign_school_to_child, get_schools_from_buildings
-from agents.agent_attributes import (
+from .models import Building, Child, Adult, Agent, TransportMode
+from .geo import calculate_area_wgs84
+from .population import estimate_population
+from .work_assignment import assign_work_location
+from .school_assignment import assign_school_to_child, get_schools_from_buildings
+from .agent_attributes import (
     generate_child_age,
     generate_adult_age,
     determine_employment_status,
@@ -18,14 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_population_from_bounds(
-    bounds: dict[str, float], crs: str, country_code: str
+    bounds: dict[str, float], country_code: str
 ) -> int:
-    if crs != "EPSG:4326":
-        area_km2 = calculate_area_projected(bounds)
-    else:
-        logger.warning("Using WGS84 coordinates, falling back to Haversine")
-        area_km2 = calculate_area_wgs84(bounds)
-
+    area_km2 = calculate_area_wgs84(bounds)
     return estimate_population(area_km2, country_code)
 
 
@@ -34,7 +29,6 @@ def create_child(
     schools: list[Building],
     kindergartens: list[Building],
 ) -> Child:
-    """Create a child agent with school assignment."""
     age = generate_child_age()
 
     child = Child(
@@ -123,19 +117,10 @@ def create_agents_from_network(
     bounds: dict[str, float],
     buildings: list[Building],
     transport_routes: list,
-    crs: str = "EPSG:4326",
-    country_code: str = "UNK",
-    country_name: str = "UNK",
+    country_code: str = "IRL",
 ) -> list[Agent]:
-    """
-    Creates realistic MATSim agents with:
-    - Households where children are created first
-    - Parent transport preferences influenced by school dropoff needs
-    - Diverse work locations
-    - Age-based demographics and behaviors
-    """
-    total_population = calculate_population_from_bounds(bounds, crs, country_code)
-    logger.info(f"Creating ~{total_population} agents for {country_name}")
+    total_population = calculate_population_from_bounds(bounds, country_code)
+    logger.info(f"Creating ~{total_population} agents for {country_code}")
 
     residential_buildings = [
         b for b in buildings if b.type in [None, "residential", "apartments", "house"]
