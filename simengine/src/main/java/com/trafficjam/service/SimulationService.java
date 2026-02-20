@@ -1,6 +1,7 @@
 package com.trafficjam.service;
 
 import com.trafficjam.matsim.ConfigGenerator;
+import com.trafficjam.matsim.EventHandler;
 import com.trafficjam.matsim.MatsimRunner;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,14 +14,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-/**
- * Service layer for managing MatSim simulations.
- * Handles file uploads, config generation, and simulation lifecycle.
- */
 @Service
 public class SimulationService {
 
     private final MatsimRunner matsimRunner;
+    private final NatsJetStreamClient natsClient;
 
     @Value("${matsim.temp.directory}")
     private String tempDirectory;
@@ -28,57 +26,59 @@ public class SimulationService {
     @Value("${matsim.output.directory}")
     private String outputDirectory;
 
-    public SimulationService() {
+    public SimulationService(NatsJetStreamClient natsClient) {
         this.matsimRunner = new MatsimRunner();
+        this.natsClient = natsClient;
     }
 
-    /**
-     * Starts a new simulation with uploaded network file.
-     * Plans file support is commented out for MVP - will be added later.
-     */
-    public String startSimulation(MultipartFile networkFile,
-            // MultipartFile plansFile, // TODO: Add plans file support for full simulation
-            Integer iterations, Long randomSeed) throws IOException {
-        // Create unique simulation directory
-        String simulationId = UUID.randomUUID().toString();
-        Path simDir = Paths.get(tempDirectory, simulationId);
+    public String startSimulation(MultipartFile networkFile, Integer iterations, Long randomSeed) throws IOException {
+        if (!natsClient.isConnected()) {
+            throw new IllegalStateException("Cannot start simulation: NATS JetStream is not connected");
+        }
+
+        String scenarioId = UUID.randomUUID().toString();
+        String runId = UUID.randomUUID().toString();
+
+        Path configPath = prepareSimulationFiles(scenarioId, networkFile, iterations, randomSeed);
+
+        natsClient.publishStatus(scenarioId, runId, "running");
+
+        String actualSimId = matsimRunner.runSimulationAsync(
+                configPath.toString(),
+                event -> handleOutputEvent(scenarioId, runId, event));
+
+        return actualSimId;
+    }
+
+    private Path prepareSimulationFiles(String scenarioId, MultipartFile networkFile, Integer iterations, Long randomSeed) throws IOException {
+        Path simDir = Paths.get(tempDirectory, scenarioId);
         Files.createDirectories(simDir);
 
-        // Save uploaded network file
         Path networkPath = simDir.resolve("network.xml");
         networkFile.transferTo(networkPath.toFile());
 
-        // TODO: Plans file handling for future implementation
-        // Path plansPath = simDir.resolve("plans.xml");
-        // plansFile.transferTo(plansPath.toFile());
-
-        // Use default empty plans file for MVP (no agents)
         String defaultPlansPath = getClass().getClassLoader()
                 .getResource("default-plans.xml").getPath();
 
-        // Generate config.xml
-        Path outputPath = Paths.get(outputDirectory, simulationId);
+        Path outputPath = Paths.get(outputDirectory, scenarioId);
         Files.createDirectories(outputPath);
 
         Path configPath = simDir.resolve("config.xml");
         ConfigGenerator generator = new ConfigGenerator();
         String configContent = generator.generateConfig(
                 networkPath.toString(),
-                defaultPlansPath, // Use default empty plans for MVP
-                "EPSG:4326", // Projected coordinate system
+                defaultPlansPath,
+                "EPSG:4326",
                 outputPath.toString(),
                 iterations,
                 randomSeed.intValue());
 
-        // Write config to file
-        Files.writeString(configPath, configContent); // Start simulation asynchronously
-        String actualSimId = matsimRunner.runSimulationAsync(
-                configPath.toString(),
-                event -> {
-                    // Event callback - will be used for SSE streaming
-                });
+        Files.writeString(configPath, configContent);
+        return configPath;
+    }
 
-        return actualSimId;
+    private void handleOutputEvent(String scenarioId, String runId, EventHandler.TransformedEvent event) {
+        natsClient.publishEvent(scenarioId, runId, event);
     }
 
     /**
