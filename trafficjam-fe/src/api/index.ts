@@ -1,8 +1,10 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { simulationApi } from "./trafficjam-be";
 import type { StartRunParams } from "./trafficjam-be";
 
-export function useSimulation(scenarioId: string | undefined) {
+//_scenarioId is not used yet but will be in the future when we implement the concept of scenarios
+// eslint-disable-next-line
+export function useSimulation(_scenarioId: string | undefined) {
   const start = useMutation({
     mutationFn: (params: StartRunParams) => simulationApi.startRun(params),
   });
