@@ -47,7 +47,9 @@ public class SimulationController {
             // @RequestParam("plansFile") MultipartFile plansFile, // TODO: Add for
             // agent-based simulation
             @Parameter(description = "Number of simulation iterations") @RequestParam(value = "iterations", required = false, defaultValue = "1") Integer iterations,
-            @Parameter(description = "Random seed for the simulation") @RequestParam(value = "randomSeed", required = false) Long randomSeed) {
+            @Parameter(description = "Random seed for the simulation") @RequestParam(value = "randomSeed", required = false) Long randomSeed,
+            @Parameter(description = "Optional scenario ID") @RequestParam(value = "scenarioId", required = false) String scenarioId,
+            @Parameter(description = "Optional run ID") @RequestParam(value = "runId", required = false) String runId) {
 
         // Use a random seed if not provided
         if (randomSeed == null) {
@@ -55,10 +57,14 @@ public class SimulationController {
         }
 
         try {
-            String simulationId = simulationService.startSimulation(
-                    networkFile, iterations, randomSeed);
+            SimulationService.SimulationStartResult result = simulationService.startSimulation(
+                    networkFile, iterations, randomSeed, scenarioId, runId);
 
-            SimulationResponse response = new SimulationResponse(simulationId, "RUNNING");
+            SimulationResponse response = new SimulationResponse(
+                    result.simulationId(),
+                    "RUNNING",
+                    result.scenarioId(),
+                    result.runId());
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
