@@ -54,96 +54,81 @@ public class MatsimRunner {
      * Returns immediately with a simulation ID that can be used to query status or
      * stop the simulation.
      */
-    public String runSimulationAsync(String configPath, EventCallback eventCallback) {
-        // TODO: When Python DB is implemented, the simulation ID will be passed as a
-        // parameter
-        // instead of being generated here. Python will create the ID and save it to the
-        // DB first.
-        // Method signature will become: runSimulationAsync(String simulationId, String
-        // configPath, EventCallback callback)
+    public String runSimulationAsync(String configPath, EventCallback eventCallback, StatusCallback statusCallback) {
         String simulationId = UUID.randomUUID().toString();
 
-        // Load the scenario (network, population, config)
         Scenario scenario = loadScenario(configPath);
 
-        // Create the Controler
         Controler controler = new Controler(scenario);
 
-        // Register event handlers for streaming
         registerEventHandlers(controler, eventCallback);
 
-        // Submit simulation to run in background thread
         executor.submit(() -> {
             try {
-                logger.info("Starting simulation {} with config: {}", simulationId, configPath);
-
-                // Update status to running
-                SimulationInfo info = new SimulationInfo(Thread.currentThread(), "RUNNING");
-                activeSimulations.put(simulationId, info);
-
-                // Add listener to track iterations
-                controler.addControlerListener((org.matsim.core.controler.listener.IterationStartsListener) event -> {
-                    info.currentIteration = event.getIteration();
-                });
-
-                logger.info("Simulation {} status set to RUNNING, executing controler.run()", simulationId);
-
-                // Run the simulation (blocks this background thread)
-                controler.run();
-
-                logger.info("Simulation {} completed successfully", simulationId);
-
-                // Update status to completed
-                info.status = "COMPLETED";
-
+                runSimulation(simulationId, configPath, controler);
             } catch (Exception e) {
-                // Check if this was an intentional interruption (stop command)
-                if (e instanceof InterruptedException
-                        || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
-                    logger.info("Simulation {} was stopped by user request.", simulationId);
-
-                    // Ensure status is marked as STOPPED if not already
-                    SimulationInfo info = activeSimulations.get(simulationId);
-                    if (info != null && !"STOPPED".equals(info.status)) {
-                        info.status = "STOPPED";
-                    }
-                } else {
-                    // unexpected error
-                    logger.error("Simulation {} FAILED with exception: {}", simulationId, e.getMessage(), e);
-                    logger.error("Exception type: {}", e.getClass().getName());
-                    logger.error("Stack trace:", e);
-
-                    // Update status to failed
-                    SimulationInfo info = activeSimulations.get(simulationId);
-                    if (info != null) {
-                        info.status = "FAILED";
-                        info.error = e.getMessage();
-                    }
-                    throw new RuntimeException("Simulation " + simulationId + " failed", e);
-                }
+                handleSimulationFailure(simulationId, e, statusCallback);
+                return;
             }
+            statusCallback.onStatusChange(simulationId, "COMPLETED");
         });
 
         return simulationId;
+    }
+
+    private void runSimulation(String simulationId, String configPath, Controler controler) {
+        logger.info("Starting simulation {} with config: {}", simulationId, configPath);
+
+        SimulationInfo info = new SimulationInfo(Thread.currentThread(), "RUNNING");
+        activeSimulations.put(simulationId, info);
+
+        controler.addControlerListener((org.matsim.core.controler.listener.IterationStartsListener) event -> {
+            info.currentIteration = event.getIteration();
+        });
+
+        logger.info("Simulation {} status set to RUNNING, executing controler.run()", simulationId);
+        controler.run();
+        logger.info("Simulation {} completed successfully", simulationId);
+        info.status = "COMPLETED";
+    }
+
+    private void handleSimulationFailure(String simulationId, Exception e, StatusCallback statusCallback) {
+        if (isInterruption(e)) {
+            logger.info("Simulation {} was stopped by user request.", simulationId);
+            SimulationInfo info = activeSimulations.get(simulationId);
+            if (info != null && !"STOPPED".equals(info.status)) {
+                info.status = "STOPPED";
+            }
+            statusCallback.onStatusChange(simulationId, "STOPPED");
+            return;
+        }
+
+        logger.error("Simulation {} FAILED: {}", simulationId, e.getMessage(), e);
+        SimulationInfo info = activeSimulations.get(simulationId);
+        if (info != null) {
+            info.status = "FAILED";
+            info.error = e.getMessage();
+        }
+        statusCallback.onStatusChange(simulationId, "FAILED");
+    }
+
+    private boolean isInterruption(Exception e) {
+        return e instanceof InterruptedException
+                || (e.getCause() != null && e.getCause() instanceof InterruptedException);
     }
 
     /**
      * Loads and validates a MatSim scenario from the config file.
      */
     private Scenario loadScenario(String configPath) {
-        // Disable strict DTD validation to allow modern network files with additional
-        // attributes
         // This allows network files with attributes like "allowedModes" that aren't in
         // the v2 DTD
         System.setProperty("matsim.preferLocalDtds", "true");
 
-        // Load the MatSim configuration from the XML file
         Config config = ConfigUtils.loadConfig(configPath);
 
-        // Create and load the scenario (includes network and population)
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-        // Validate that network and population were loaded successfully
         if (scenario.getNetwork().getNodes().isEmpty()) {
             throw new RuntimeException("Network is empty - check network file path in config");
         }
@@ -158,13 +143,10 @@ public class MatsimRunner {
      * Registers custom event handlers to capture and stream simulation events.
      */
     private void registerEventHandlers(Controler controler, EventCallback eventCallback) {
-        // Add event handlers to capture simulation events
         controler.addOverridingModule(new org.matsim.core.controler.AbstractModule() {
             @Override
             public void install() {
-                // Register our custom event handler if callback is provided
                 if (eventCallback != null) {
-                    // Use EventHandler to filter, transform, and buffer events
                     EventHandler eventHandler = new EventHandler(eventCallback, 100); // Buffer size of 100
                     this.addEventHandlerBinding().toInstance(new org.matsim.core.events.handler.BasicEventHandler() {
                         @Override
@@ -190,6 +172,10 @@ public class MatsimRunner {
      */
     public interface EventCallback {
         void onEvent(EventHandler.TransformedEvent event);
+    }
+
+    public interface StatusCallback {
+        void onStatusChange(String simulationId, String status);
     }
 
     /**
