@@ -12,13 +12,13 @@ import { networkToGeoJSON } from "../../utils";
 interface NetworkLayerProps {
   network: Network;
   hoverInfo: CombinedHoverInfo | null;
-  selectedLinkId?: string | null;
+  selectedLinkIds?: string[];
 }
 
-export function NetworkLayer({ network, selectedLinkId }: NetworkLayerProps) {
+export function NetworkLayer({ network, selectedLinkIds }: NetworkLayerProps) {
   const geojson = useMemo(
-    () => networkToGeoJSON(network, selectedLinkId),
-    [network, selectedLinkId],
+    () => networkToGeoJSON(network, selectedLinkIds),
+    [network, selectedLinkIds],
   );
 
   return (

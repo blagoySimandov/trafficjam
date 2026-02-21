@@ -93,3 +93,207 @@ html {
   color: #666;
   margin-top: 2px;
 }
+
+/* Link Attribute Panel Styles */
+.link-attribute-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 350px;
+  max-height: calc(100vh - 40px);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.link-attribute-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.link-attribute-panel .panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.link-attribute-panel .close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.link-attribute-panel .close-button:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.link-attribute-panel .panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.link-attribute-panel .attribute-section {
+  margin-bottom: 20px;
+}
+
+.link-attribute-panel .attribute-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.link-attribute-panel .attribute-value {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+}
+
+.link-attribute-panel .attribute-value.readonly {
+  background: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.link-attribute-panel .attribute-input,
+.link-attribute-panel .attribute-select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.link-attribute-panel .attribute-input:focus,
+.link-attribute-panel .attribute-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.link-attribute-panel .name-input-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.link-attribute-panel .name-input-container .attribute-input {
+  flex: 1;
+}
+
+.link-attribute-panel .select-by-name-button {
+  flex-shrink: 0;
+  padding: 8px;
+  background: #f0f0f0;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.link-attribute-panel .select-by-name-button:hover {
+  background: #e0e0e0;
+  border-color: #b0b0b0;
+  color: #333;
+}
+
+.link-attribute-panel .select-by-name-button:active {
+  background: #d0d0d0;
+  transform: scale(0.95);
+}
+
+.link-attribute-panel .dev-tools-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.link-attribute-panel .dev-tools-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.link-attribute-panel .dev-tools-toggle:hover {
+  color: #333;
+}
+
+.link-attribute-panel .dev-tools-toggle svg {
+  flex-shrink: 0;
+}
+
+.link-attribute-panel .dev-tools-content {
+  margin-top: 12px;
+}
+
+.link-attribute-panel .dev-tools-content .attribute-section {
+  margin-bottom: 16px;
+}
+
+.link-attribute-panel .dev-tools-content .attribute-section:last-child {
+  margin-bottom: 0;
+}
+
+.link-attribute-panel .panel-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.link-attribute-panel .save-button {
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #3b82f6;
+  color: white;
+}
+
+.link-attribute-panel .save-button:hover {
+  background: #2563eb;
+}

@@ -1,22 +1,46 @@
 export const LANE_OPTIONS = [1, 2, 3, 4, 5, 6];
 
-export const MAXSPEED_OPTIONS: Record<string, string> = {
-  "": "Not specified",
-  "20": "20 km/h",
-  "30": "30 km/h",
-  "40": "40 km/h",
-  "50": "50 km/h",
-  "60": "60 km/h",
-  "70": "70 km/h",
-  "80": "80 km/h",
-  "90": "90 km/h",
-  "100": "100 km/h",
-  "110": "110 km/h",
-  "120": "120 km/h",
-  "130": "130 km/h",
-};
+export const MAXSPEED_OPTIONS = [
+  { value: "", label: "Not specified" },
+  { value: "20", label: "20 km/h" },
+  { value: "30", label: "30 km/h" },
+  { value: "40", label: "40 km/h" },
+  { value: "50", label: "50 km/h" },
+  { value: "60", label: "60 km/h" },
+  { value: "70", label: "70 km/h" },
+  { value: "80", label: "80 km/h" },
+  { value: "90", label: "90 km/h" },
+  { value: "100", label: "100 km/h" },
+  { value: "110", label: "110 km/h" },
+  { value: "120", label: "120 km/h" },
+  { value: "130", label: "130 km/h" },
+];
 
-export const ONEWAY_OPTIONS: Record<string, string> = {
-  "false": "No",
-  "true": "Yes",
-};
+export const ONEWAY_OPTIONS = [
+  { value: "false", label: "No" },
+  { value: "true", label: "Yes" },
+];
+
+export const HIGHWAY_TYPES = [
+  "motorway",
+  "motorway_link",
+  "trunk",
+  "trunk_link",
+  "primary",
+  "primary_link",
+  "secondary",
+  "secondary_link",
+  "tertiary",
+  "tertiary_link",
+  "residential",
+  "service",
+  "unclassified",
+  "living_street",
+  "pedestrian",
+  "track",
+  "cycleway",
+  "footway",
+  "path",
+];
+
+export const MIXED_VALUE = "__MIXED__";
