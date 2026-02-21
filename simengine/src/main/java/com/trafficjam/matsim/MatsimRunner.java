@@ -147,7 +147,7 @@ public class MatsimRunner {
             controler.addOverridingModule(new org.matsim.core.controler.AbstractModule() {
                 @Override
                 public void install() {
-                    EventHandler eventHandler = new EventHandler(eventCallback, 1); // Buffer size of 1 for real-time
+                    EventHandler eventHandler = new EventHandler(eventCallback, 1);
                     this.addEventHandlerBinding().toInstance(eventHandler);
                 }
             });
