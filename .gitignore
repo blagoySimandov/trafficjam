@@ -47,4 +47,11 @@ trafficjam-be/java/target
 trafficjam-be/server-output.log
 trafficjam-be/java/temp
 target
-simengine
+simengine/target
+simengine/output
+simengine/temp
+simengine/.settings
+simengine/eclipse-formatter.xml
+simengine/.classpath
+simengine/.factorypath
+simengine/.project
