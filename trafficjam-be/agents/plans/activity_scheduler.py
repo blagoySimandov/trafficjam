@@ -1,7 +1,7 @@
 import random
 from datetime import time
 
-from .config import (
+from ..config import (
     config,
     ADULT_DEPARTURE_CUMULATIVE_PROBS,
     ELDERLY_DEPARTURE_HOURS,

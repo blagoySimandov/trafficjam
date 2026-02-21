@@ -22,7 +22,7 @@ from .activity_scheduler import (
     generate_errand_duration,
     should_go_shopping,
 )
-from .config import config
+from ..config import config
 from constants import SHOP_TYPES
 
 
