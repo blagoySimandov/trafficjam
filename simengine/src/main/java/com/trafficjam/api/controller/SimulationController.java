@@ -35,17 +35,12 @@ public class SimulationController {
         this.simulationService = simulationService;
     }
 
-    /**
-     * Starts a new MatSim simulation with uploaded network file.
-     * Plans file support will be added in future for full agent-based simulation.
-     */
     @Operation(summary = "Start a new simulation", description = "Uploads a network file and starts a new MatSim simulation.")
     @ApiResponse(responseCode = "200", description = "Simulation started successfully", content = @Content(schema = @Schema(implementation = SimulationResponse.class)))
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SimulationResponse> startSimulation(
             @Parameter(description = "The MatSim network.xml file", required = true) @RequestParam("networkFile") MultipartFile networkFile,
-            // @RequestParam("plansFile") MultipartFile plansFile, // TODO: Add for
-            // agent-based simulation
+            @Parameter(description = "The MatSim plans.xml file", required = true) @RequestParam("plansFile") MultipartFile plansFile,
             @Parameter(description = "Number of simulation iterations") @RequestParam(value = "iterations", required = false, defaultValue = "1") Integer iterations,
             @Parameter(description = "Random seed for the simulation") @RequestParam(value = "randomSeed", required = false) Long randomSeed) {
 
@@ -56,7 +51,7 @@ public class SimulationController {
 
         try {
             String simulationId = simulationService.startSimulation(
-                    networkFile, iterations, randomSeed);
+                    networkFile, plansFile, iterations, randomSeed);
 
             SimulationResponse response = new SimulationResponse(simulationId, "RUNNING");
             return ResponseEntity.ok(response);
