@@ -4,15 +4,31 @@
 BASE_URL="http://localhost:8080/api/simulations"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NETWORK_FILE="$SCRIPT_DIR/../src/main/resources/cork_network.xml"
+PLANS_FILE="$SCRIPT_DIR/test-plans.xml"
 
 echo -e "\033[36m=== MatSim API Test Script ===\033[0m"
 echo ""
 
-# Test 1: Start simulation
-echo -e "\033[33mTest 1: Starting a simulation...\033[0m"
+# Test 1: Missing plans file returns 400
+echo -e "\033[33mTest 1: POST without plansFile should return 400...\033[0m"
+
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL" \
+    -F "networkFile=@$NETWORK_FILE" \
+    -F "iterations=1")
+
+if [ "$HTTP_CODE" = "400" ]; then
+    echo -e "\033[32m[OK] Correctly returned 400 when plansFile is missing!\033[0m"
+else
+    echo -e "\033[31m[ERROR] Expected 400 but got $HTTP_CODE\033[0m"
+fi
+echo ""
+
+# Test 2: Start simulation
+echo -e "\033[33mTest 2: Starting a simulation...\033[0m"
 
 RESPONSE=$(curl -s -X POST "$BASE_URL" \
     -F "networkFile=@$NETWORK_FILE" \
+    -F "plansFile=@$PLANS_FILE" \
     -F "iterations=5" \
     -F "randomSeed=4711")
 
@@ -28,8 +44,8 @@ else
     exit 1
 fi
 
-# Test 2: Check status
-echo -e "\033[33mTest 2: Checking simulation status...\033[0m"
+# Test 3: Check status
+echo -e "\033[33mTest 3: Checking simulation status...\033[0m"
 sleep 2
 
 STATUS_RESPONSE=$(curl -s "$BASE_URL/$SIMULATION_ID/status")
@@ -38,8 +54,8 @@ STATUS=$(echo "$STATUS_RESPONSE" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
 echo -e "\033[36mStatus: $STATUS\033[0m"
 echo ""
 
-# Test 3: SSE endpoint info
-echo -e "\033[33mTest 3: Streaming events (will show first few events)...\033[0m"
+# Test 4: SSE endpoint info
+echo -e "\033[33mTest 4: Streaming events (will show first few events)...\033[0m"
 echo -e "\033[90mPress Ctrl+C to stop streaming\033[0m"
 echo ""
 
@@ -47,8 +63,8 @@ echo -e "\033[33mTo stream events, use this command in a separate terminal:\033[
 echo -e "\033[37mcurl -N $BASE_URL/$SIMULATION_ID/events\033[0m"
 echo ""
 
-# Test 4: Error handling
-echo -e "\033[33mTest 4: Testing error handling with invalid simulation ID...\033[0m"
+# Test 5: Error handling
+echo -e "\033[33mTest 5: Testing error handling with invalid simulation ID...\033[0m"
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/invalid-id-12345/status")
 
 if [ "$HTTP_CODE" = "404" ]; then
@@ -58,8 +74,8 @@ else
 fi
 echo ""
 
-# Test 5: CORS headers
-echo -e "\033[33mTest 5: Checking CORS headers...\033[0m"
+# Test 6: CORS headers
+echo -e "\033[33mTest 6: Checking CORS headers...\033[0m"
 
 CORS_RESPONSE=$(curl -s -i -X OPTIONS "$BASE_URL" \
     -H "Origin: http://localhost:3000" \
@@ -85,8 +101,8 @@ else
 fi
 echo ""
 
-# Test 6: Stop simulation
-echo -e "\033[33mTest 6: Stopping the simulation...\033[0m"
+# Test 7: Stop simulation
+echo -e "\033[33mTest 7: Stopping the simulation...\033[0m"
 
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/$SIMULATION_ID")
 
