@@ -31,7 +31,7 @@ public class SimulationService {
         this.natsClient = natsClient;
     }
 
-    public String startSimulation(MultipartFile networkFile, Integer iterations, Long randomSeed) throws IOException {
+    public String startSimulation(MultipartFile networkFile, MultipartFile plansFile, Integer iterations, Long randomSeed) throws IOException {
         if (!natsClient.isConnected()) {
             throw new IllegalStateException("Cannot start simulation: NATS JetStream is not connected");
         }
@@ -39,7 +39,7 @@ public class SimulationService {
         String scenarioId = UUID.randomUUID().toString();
         String runId = UUID.randomUUID().toString();
 
-        Path configPath = prepareSimulationFiles(scenarioId, networkFile, iterations, randomSeed);
+        Path configPath = prepareSimulationFiles(scenarioId, networkFile, plansFile, iterations, randomSeed);
 
         natsClient.publishStatus(scenarioId, runId, "running");
 
@@ -51,15 +51,15 @@ public class SimulationService {
         return actualSimId;
     }
 
-    private Path prepareSimulationFiles(String scenarioId, MultipartFile networkFile, Integer iterations, Long randomSeed) throws IOException {
+    private Path prepareSimulationFiles(String scenarioId, MultipartFile networkFile, MultipartFile plansFile, Integer iterations, Long randomSeed) throws IOException {
         Path simDir = Paths.get(tempDirectory, scenarioId);
         Files.createDirectories(simDir);
 
         Path networkPath = simDir.resolve("network.xml");
         networkFile.transferTo(networkPath.toFile());
 
-        String defaultPlansPath = getClass().getClassLoader()
-                .getResource("default-plans.xml").getPath();
+        Path plansPath = simDir.resolve("plans.xml");
+        plansFile.transferTo(plansPath.toFile());
 
         Path outputPath = Paths.get(outputDirectory, scenarioId);
         Files.createDirectories(outputPath);
@@ -68,7 +68,7 @@ public class SimulationService {
         ConfigGenerator generator = new ConfigGenerator();
         String configContent = generator.generateConfig(
                 networkPath.toString(),
-                defaultPlansPath,
+                plansPath.toString(),
                 "EPSG:4326",
                 outputPath.toString(),
                 iterations,
