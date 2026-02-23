@@ -5,8 +5,8 @@ on:
   pull_request:
     branches: [main]
 jobs:
-  lint-python:
-    name: Lint Python
+  lint-and-test-python:
+    name: Lint & Test Python
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,6 +16,12 @@ jobs:
         run: uv python install 3.13
       - name: Lint with ruff
         run: uvx ruff check trafficjam-be investigations
+      - name: Install dependencies
+        working-directory: trafficjam-be
+        run: uv venv && uv pip install -r requirements.txt
+      - name: Run tests
+        working-directory: trafficjam-be
+        run: uv run python -m pytest -v
 
   lint-and-test-typescript:
     name: Lint & Test TypeScript
