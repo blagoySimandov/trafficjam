@@ -2,37 +2,38 @@ import { useState, useCallback } from "react";
 import type { TrafficLink, Network } from "../../../types";
 
 export function useLinkSelection() {
-  const [selectedLink, setSelectedLink] = useState<TrafficLink | null>(null);
+  const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
 
   const selectLink = useCallback((link: TrafficLink | null) => {
-    setSelectedLink(link);
+    setSelectedLinks(link ? [link] : []);
+  }, []);
+
+  const selectLinks = useCallback((links: TrafficLink[]) => {
+    setSelectedLinks(links);
   }, []);
 
   const clearSelection = useCallback(() => {
-    setSelectedLink(null);
+    setSelectedLinks([]);
   }, []);
 
-  const updateSelectedLink = useCallback(
+  const updateSelectedLinks = useCallback(
     (network: Network | null) => {
-      if (!selectedLink || !network) {
+      if (selectedLinks.length === 0 || !network) {
         return;
       }
-      // Update the selected link reference if it still exists in the network
-      const updatedLink = network.links.get(selectedLink.id);
-      if (updatedLink) {
-        setSelectedLink(updatedLink);
-      } else {
-        // Link was deleted, clear selection
-        setSelectedLink(null);
-      }
+      const updatedLinks = selectedLinks
+        .map((link) => network.links.get(link.id))
+        .filter((link): link is TrafficLink => link !== undefined);
+      setSelectedLinks(updatedLinks);
     },
-    [selectedLink]
+    [selectedLinks]
   );
 
   return {
-    selectedLink,
+    selectedLinks,
     selectLink,
+    selectLinks,
     clearSelection,
-    updateSelectedLink,
+    updateSelectedLinks,
   };
 }

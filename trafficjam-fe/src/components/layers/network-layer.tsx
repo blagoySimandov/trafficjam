@@ -12,7 +12,7 @@ import { networkToGeoJSON } from "../../utils";
 interface NetworkLayerProps {
   network: Network;
   hoverInfo: CombinedHoverInfo | null;
-  selectedLinkId?: string | null;
+  selectedLinkId?: string[] | string | null;
 }
 
 export function NetworkLayer({ network, selectedLinkId }: NetworkLayerProps) {
