@@ -70,6 +70,7 @@ export function LinkAttributePanel({
   };
 
   const handleHighwayChange = (value: string) => {
+    if (value === "") return;
     setEditedValues({ ...editedValues, highway: value });
   };
 
@@ -84,6 +85,7 @@ export function LinkAttributePanel({
   };
 
   const handleOnewayChange = (value: string) => {
+    if (value === "") return;
     const oneway = value === "true";
     setEditedValues({ ...editedValues, oneway });
   };
