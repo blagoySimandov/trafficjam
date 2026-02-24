@@ -124,6 +124,12 @@
   transition: border-color 0.2s;
 }
 
+.attributeInput::placeholder,
+.attributeSelect option[value=""]:first-child {
+  color: #999;
+  font-style: italic;
+}
+
 .attributeInput:focus,
 .attributeSelect:focus {
   outline: none;

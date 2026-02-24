@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import type { Network, TrafficLink } from "../../types";
 import { HIGHWAY_TYPES } from "../../constants";
@@ -7,6 +7,8 @@ import { DevToolsSection } from "./components/dev-tools-section";
 import { useUpdateLink } from "./hooks/use-update-link";
 import { LANE_OPTIONS, MAXSPEED_OPTIONS, ONEWAY_OPTIONS } from "./constants";
 import styles from "./link-attribute-panel.module.css";
+
+const MIXED_VALUE = "__MIXED__";
 
 interface LinkAttributePanelProps {
   links: TrafficLink[];
@@ -23,78 +25,90 @@ export function LinkAttributePanel({
   onSave,
   onSelectAllWithSameName,
 }: LinkAttributePanelProps) {
-  const [editedLink, setEditedLink] = useState<TrafficLink>(links[0]);
+  const [editedValues, setEditedValues] = useState<Partial<TrafficLink["tags"]>>({});
   const { updateLinks } = useUpdateLink(network, onSave);
   const isSingleLink = links.length === 1;
   const link = links[0];
   const streetName = link.tags.name;
 
-  // Update local state when the link prop changes
+  const mixedState = useMemo(() => {
+    if (isSingleLink) return {};
+
+    const allNames = links.map((l) => l.tags.name);
+    const allHighways = links.map((l) => l.tags.highway);
+    const allLanes = links.map((l) => l.tags.lanes);
+    const allMaxspeeds = links.map((l) => l.tags.maxspeed);
+    const allOneways = links.map((l) => l.tags.oneway);
+
+    const hasUniqueName = new Set(allNames).size === 1;
+    const hasUniqueHighway = new Set(allHighways).size === 1;
+    const hasUniqueLanes = new Set(allLanes).size === 1;
+    const hasUniqueMaxspeed = new Set(allMaxspeeds).size === 1;
+    const hasUniqueOneway = new Set(allOneways).size === 1;
+
+    return {
+      name: !hasUniqueName,
+      highway: !hasUniqueHighway,
+      lanes: !hasUniqueLanes,
+      maxspeed: !hasUniqueMaxspeed,
+      oneway: !hasUniqueOneway,
+    };
+  }, [links, isSingleLink]);
+
   useEffect(() => {
-    setEditedLink(links[0]);
+    setEditedValues({});
   }, [links]);
 
+  const getDisplayValue = (field: keyof TrafficLink["tags"]) => {
+    if (field in editedValues) {
+      return editedValues[field];
+    }
+    if (mixedState[field]) {
+      return MIXED_VALUE;
+    }
+    return link.tags[field];
+  };
+
   const handleHighwayChange = (value: string) => {
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        highway: value,
-      },
-    });
+    setEditedValues({ ...editedValues, highway: value });
   };
 
   const handleLanesChange = (value: string) => {
     const lanes = value === "" ? undefined : parseInt(value, 10);
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        lanes,
-      },
-    });
+    setEditedValues({ ...editedValues, lanes });
   };
 
   const handleMaxspeedChange = (value: string) => {
     const maxspeed = value === "" ? undefined : parseInt(value, 10);
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        maxspeed,
-      },
-    });
+    setEditedValues({ ...editedValues, maxspeed });
   };
 
   const handleOnewayChange = (value: string) => {
     const oneway = value === "true";
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        oneway,
-      },
-    });
+    setEditedValues({ ...editedValues, oneway });
   };
 
   const handleNameChange = (value: string) => {
-    setEditedLink({
-      ...editedLink,
-      tags: {
-        ...editedLink.tags,
-        name: value === "" ? undefined : value,
-      },
-    });
+    const name = value === "" ? undefined : value;
+    setEditedValues({ ...editedValues, name });
   };
 
   const handleSave = () => {
     const updatedLinks = isSingleLink
-      ? [editedLink]
-      : links.map((link) => ({
-          ...link,
+      ? [
+          {
+            ...link,
+            tags: {
+              ...link.tags,
+              ...editedValues,
+            },
+          },
+        ]
+      : links.map((l) => ({
+          ...l,
           tags: {
-            ...link.tags,
-            ...editedLink.tags,
+            ...l.tags,
+            ...editedValues,
           },
         }));
     updateLinks(updatedLinks);
@@ -133,18 +147,19 @@ export function LinkAttributePanel({
           <input
             type="text"
             className={styles.attributeInput}
-            value={editedLink.tags.name || ""}
+            value={getDisplayValue("name") === MIXED_VALUE ? "" : (getDisplayValue("name") as string) || ""}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Not specified"
+            placeholder={mixedState.name ? "Mixed values" : "Not specified"}
           />
         </AttributeField>
 
         <AttributeField label="Highway Type">
           <select
             className={styles.attributeSelect}
-            value={editedLink.tags.highway}
+            value={getDisplayValue("highway") === MIXED_VALUE ? "" : (getDisplayValue("highway") as string)}
             onChange={(e) => handleHighwayChange(e.target.value)}
           >
+            {mixedState.highway && <option value="">Mixed values</option>}
             {HIGHWAY_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}
@@ -156,10 +171,18 @@ export function LinkAttributePanel({
         <AttributeField label="Lanes">
           <select
             className={styles.attributeSelect}
-            value={editedLink.tags.lanes?.toString() || ""}
+            value={
+              getDisplayValue("lanes") === MIXED_VALUE
+                ? ""
+                : getDisplayValue("lanes")?.toString() || ""
+            }
             onChange={(e) => handleLanesChange(e.target.value)}
           >
-            <option value="">Not specified</option>
+            {mixedState.lanes ? (
+              <option value="">Mixed values</option>
+            ) : (
+              <option value="">Not specified</option>
+            )}
             {LANE_OPTIONS.map((lanes) => (
               <option key={lanes} value={lanes.toString()}>
                 {lanes}
@@ -171,9 +194,14 @@ export function LinkAttributePanel({
         <AttributeField label="Max Speed">
           <select
             className={styles.attributeSelect}
-            value={editedLink.tags.maxspeed?.toString() || ""}
+            value={
+              getDisplayValue("maxspeed") === MIXED_VALUE
+                ? ""
+                : getDisplayValue("maxspeed")?.toString() || ""
+            }
             onChange={(e) => handleMaxspeedChange(e.target.value)}
           >
+            {mixedState.maxspeed && <option value="">Mixed</option>}
             {Object.entries(MAXSPEED_OPTIONS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -185,9 +213,14 @@ export function LinkAttributePanel({
         <AttributeField label="One-way">
           <select
             className={styles.attributeSelect}
-            value={editedLink.tags.oneway ? "true" : "false"}
+            value={
+              getDisplayValue("oneway") === MIXED_VALUE
+                ? ""
+                : getDisplayValue("oneway")?.toString() || "false"
+            }
             onChange={(e) => handleOnewayChange(e.target.value)}
           >
+            {mixedState.oneway && <option value="">Mixed values</option>}
             {Object.entries(ONEWAY_OPTIONS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
