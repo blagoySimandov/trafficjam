@@ -12,6 +12,15 @@ interface EditorProps {
   onRunSimulation: () => void;
 }
 
+function remapSelectedLinks(
+  selectedLinks: TrafficLink[],
+  network: Network,
+): TrafficLink[] {
+  return selectedLinks
+    .map((link) => network.links.get(link.id))
+    .filter((link): link is TrafficLink => link !== undefined);
+}
+
 export function Editor({ onRunSimulation }: EditorProps) {
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
@@ -34,10 +43,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       setStatus(message);
 
       if (selectedLinks.length > 0) {
-        const updatedSelectedLinks = selectedLinks
-          .map((link) => updatedNetwork.links.get(link.id))
-          .filter((link): link is TrafficLink => link !== undefined);
-        setSelectedLinks(updatedSelectedLinks);
+        setSelectedLinks(remapSelectedLinks(selectedLinks, updatedNetwork));
       }
     },
     [network, selectedLinks, pushToUndoStack],
@@ -50,10 +56,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       setStatus("Undid last change");
 
       if (selectedLinks.length > 0) {
-        const updatedSelectedLinks = selectedLinks
-          .map((link) => previousNetwork.links.get(link.id))
-          .filter((link): link is TrafficLink => link !== undefined);
-        setSelectedLinks(updatedSelectedLinks);
+        setSelectedLinks(remapSelectedLinks(selectedLinks, previousNetwork));
       }
     }
   }, [selectedLinks, undo]);
