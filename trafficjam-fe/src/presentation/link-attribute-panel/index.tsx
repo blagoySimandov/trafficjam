@@ -24,7 +24,7 @@ export function LinkAttributePanel({
   onSelectAllWithSameName,
 }: LinkAttributePanelProps) {
   const [editedLink, setEditedLink] = useState<TrafficLink>(links[0]);
-  const { updateLink, updateLinks } = useUpdateLink(network, onSave);
+  const { updateLinks } = useUpdateLink(network, onSave);
   const isSingleLink = links.length === 1;
   const link = links[0];
   const streetName = link.tags.name;
@@ -88,18 +88,16 @@ export function LinkAttributePanel({
   };
 
   const handleSave = () => {
-    if (isSingleLink) {
-      updateLink(editedLink);
-    } else {
-      const updatedLinks = links.map((link) => ({
-        ...link,
-        tags: {
-          ...link.tags,
-          ...editedLink.tags,
-        },
-      }));
-      updateLinks(updatedLinks);
-    }
+    const updatedLinks = isSingleLink
+      ? [editedLink]
+      : links.map((link) => ({
+          ...link,
+          tags: {
+            ...link.tags,
+            ...editedLink.tags,
+          },
+        }));
+    updateLinks(updatedLinks);
     onClose();
   };
 
