@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { X } from "lucide-react";
 import type { Network, TrafficLink } from "../../types";
 import { HIGHWAY_TYPES } from "../../constants";
@@ -25,7 +25,15 @@ export function LinkAttributePanel({
   onSave,
   onSelectAllWithSameName,
 }: LinkAttributePanelProps) {
+  const linksKey = useMemo(() => links.map(l => l.id).join(','), [links]);
+  const [prevLinksKey, setPrevLinksKey] = useState(linksKey);
   const [editedValues, setEditedValues] = useState<Partial<TrafficLink["tags"]>>({});
+  
+  if (linksKey !== prevLinksKey) {
+    setPrevLinksKey(linksKey);
+    setEditedValues({});
+  }
+  
   const { updateLinks } = useUpdateLink(network, onSave);
   const isSingleLink = links.length === 1;
   const link = links[0];
@@ -54,12 +62,6 @@ export function LinkAttributePanel({
       oneway: !hasUniqueOneway,
     };
   }, [links, isSingleLink]);
-
-  useEffect(() => {
-    if (Object.keys(editedValues).length > 0) {
-      setEditedValues({});
-    }
-  }, [links, editedValues]);
 
   const getDisplayValue = (field: keyof TrafficLink["tags"]) => {
     if (field in editedValues) {
