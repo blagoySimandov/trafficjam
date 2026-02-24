@@ -50,9 +50,7 @@ async def get_network(
         return await repository.fetch_network(min_lat, min_lng, max_lat, max_lng)
     except Exception as e:
         logger.exception("Failed to fetch network data")
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch network data"
-        )
+        raise HTTPException(status_code=500, detail="Failed to fetch network data")
 
 
 @app.get("/health")
