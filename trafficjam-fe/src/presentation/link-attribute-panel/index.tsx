@@ -100,17 +100,7 @@ export function LinkAttributePanel({
   };
 
   const handleSave = () => {
-    const updatedLinks = isSingleLink
-      ? [
-          {
-            ...link,
-            tags: {
-              ...link.tags,
-              ...editedValues,
-            },
-          },
-        ]
-      : links.map((l) => ({
+    const updatedLinks = links.map((l) => ({
           ...l,
           tags: {
             ...l.tags,
