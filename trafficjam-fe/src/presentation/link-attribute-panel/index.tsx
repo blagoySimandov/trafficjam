@@ -56,8 +56,10 @@ export function LinkAttributePanel({
   }, [links, isSingleLink]);
 
   useEffect(() => {
-    setEditedValues({});
-  }, [links]);
+    if (Object.keys(editedValues).length > 0) {
+      setEditedValues({});
+    }
+  }, [links, editedValues]);
 
   const getDisplayValue = (field: keyof TrafficLink["tags"]) => {
     if (field in editedValues) {
