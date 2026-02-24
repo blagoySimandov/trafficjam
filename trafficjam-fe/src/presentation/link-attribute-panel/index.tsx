@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X } from "lucide-react";
+import { X, Ban } from "lucide-react";
 import type { Network, TrafficLink } from "../../types";
 import { HIGHWAY_TYPES } from "../../constants";
 import { AttributeField } from "./components/attribute-field";
@@ -35,9 +35,12 @@ export function LinkAttributePanel({
   }
   
   const { updateLinks } = useUpdateLink(network, onSave);
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
   const isSingleLink = links.length === 1;
   const link = links[0];
   const streetName = link.tags.name;
+  const allDisabled = links.every((l) => l.disabled);
+  const someDisabled = links.some((l) => l.disabled);
 
   const mixedState = useMemo(() => {
     if (isSingleLink) return {};
@@ -109,6 +112,13 @@ export function LinkAttributePanel({
         }));
     updateLinks(updatedLinks);
     onClose();
+  };
+
+  const handleDisableToggle = () => {
+    const nowDisabled = !allDisabled;
+    const updatedLinks = links.map((l) => ({ ...l, disabled: nowDisabled }));
+    updateLinks(updatedLinks);
+    setShowDisableConfirm(false);
   };
 
   return (
@@ -226,6 +236,56 @@ export function LinkAttributePanel({
         </AttributeField>
 
         <DevToolsSection links={links} />
+
+        {someDisabled && !allDisabled && (
+          <div className={styles.disabledMixedWarning}>
+            Some selected links are disabled
+          </div>
+        )}
+
+        {allDisabled && (
+          <div className={styles.disabledBadge}>
+            <Ban size={14} />
+            Road disabled — cars will be rerouted
+          </div>
+        )}
+
+        {!showDisableConfirm ? (
+          <button
+            className={allDisabled ? styles.enableButton : styles.disableButton}
+            onClick={() => allDisabled ? handleDisableToggle() : setShowDisableConfirm(true)}
+            type="button"
+          >
+            <Ban size={16} />
+            {allDisabled
+              ? (isSingleLink ? "Re-enable Road" : `Re-enable ${links.length} Roads`)
+              : (isSingleLink ? "Disable Road" : `Disable ${links.length} Roads`)}
+          </button>
+        ) : (
+          <div className={styles.confirmDialog}>
+            <p className={styles.confirmText}>
+              This will close {isSingleLink ? "this road segment" : `these ${links.length} road segments`} to
+              car traffic. Vehicles in the simulation will be forced to find
+              alternative routes, which may increase congestion elsewhere.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.confirmCancel}
+                onClick={() => setShowDisableConfirm(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.confirmDisable}
+                onClick={handleDisableToggle}
+                type="button"
+              >
+                Disable
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className={styles.panelFooter}>
