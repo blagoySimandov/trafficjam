@@ -60,6 +60,5 @@ map-data-service/.env.example
 trafficjam-fe/.env
 trafficjam-fe/.env
 trafficjam-fe/.env
-map-data-service/.env.example
 trafficjam-fe/.env
 trafficjam-be/java/.*
