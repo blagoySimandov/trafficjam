@@ -53,6 +53,36 @@
   padding: 20px;
 }
 
+.selectAllButton {
+  width: 100%;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  color: #3b82f6;
+}
+
+.selectAllButton:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.batchEditWarning {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background: #eff6ff;
+  border: 1px solid #60a5fa;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e40af;
+  font-weight: 500;
+}
+
 .attributeSection {
   margin-bottom: 20px;
 }

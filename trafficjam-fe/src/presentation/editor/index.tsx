@@ -14,13 +14,13 @@ interface EditorProps {
 export function Editor({ onRunSimulation }: EditorProps) {
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
-  const [selectedLink, setSelectedLink] = useState<TrafficLink | null>(null);
+  const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
 
   const handleLinkClick = useCallback((link: TrafficLink) => {
-    setSelectedLink(link);
+    setSelectedLinks([link]);
   }, []);
 
   const handleLinkSave = useCallback(
@@ -31,16 +31,14 @@ export function Editor({ onRunSimulation }: EditorProps) {
       setNetwork(updatedNetwork);
       setStatus(message);
 
-      if (selectedLink) {
-        const updatedLink = updatedNetwork.links.get(selectedLink.id);
-        if (updatedLink) {
-          setSelectedLink(updatedLink);
-        } else {
-          setSelectedLink(null);
-        }
+      if (selectedLinks.length > 0) {
+        const updatedSelectedLinks = selectedLinks
+          .map((link) => updatedNetwork.links.get(link.id))
+          .filter((link): link is TrafficLink => link !== undefined);
+        setSelectedLinks(updatedSelectedLinks);
       }
     },
-    [network, selectedLink, pushToUndoStack],
+    [network, selectedLinks, pushToUndoStack],
   );
 
   const handleUndo = useCallback(() => {
@@ -49,26 +47,36 @@ export function Editor({ onRunSimulation }: EditorProps) {
       setNetwork(previousNetwork);
       setStatus("Undid last change");
 
-      if (selectedLink) {
-        const previousLink = previousNetwork.links.get(selectedLink.id);
-        if (previousLink) {
-          setSelectedLink(previousLink);
-        } else {
-          setSelectedLink(null);
-        }
+      if (selectedLinks.length > 0) {
+        const updatedSelectedLinks = selectedLinks
+          .map((link) => previousNetwork.links.get(link.id))
+          .filter((link): link is TrafficLink => link !== undefined);
+        setSelectedLinks(updatedSelectedLinks);
       }
     }
-  }, [selectedLink, undo]);
+  }, [selectedLinks, undo]);
 
   const handleClear = useCallback(() => {
     setNetwork(null);
-    setSelectedLink(null);
+    setSelectedLinks([]);
     clearUndoStack();
   }, [clearUndoStack]);
 
   const handleClosePanel = useCallback(() => {
-    setSelectedLink(null);
+    setSelectedLinks([]);
   }, []);
+
+  const handleSelectAllWithSameName = useCallback(
+    (streetName: string) => {
+      if (!network) return;
+      const matchingLinks = Array.from(network.links.values()).filter(
+        (link) => link.tags.name === streetName,
+      );
+      setSelectedLinks(matchingLinks);
+      setStatus(`Selected ${matchingLinks.length} links on ${streetName}`);
+    },
+    [network],
+  );
 
   const handleLaunch = useCallback(() => {
     setDialogOpen(false);
@@ -86,14 +94,15 @@ export function Editor({ onRunSimulation }: EditorProps) {
         onUndo={handleUndo}
         onClear={handleClear}
         canUndo={canUndo}
-        selectedLinkId={selectedLink?.id || null}
+        selectedLinkId={selectedLinks.map((link) => link.id)}
       />
-      {selectedLink && (
+      {selectedLinks.length > 0 && (
         <LinkAttributePanel
-          link={selectedLink}
+          links={selectedLinks}
           network={network}
           onClose={handleClosePanel}
           onSave={handleLinkSave}
+          onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
       {status && <StatusBar message={status} />}

@@ -9,25 +9,30 @@ import { LANE_OPTIONS, MAXSPEED_OPTIONS, ONEWAY_OPTIONS } from "./constants";
 import styles from "./link-attribute-panel.module.css";
 
 interface LinkAttributePanelProps {
-  link: TrafficLink;
+  links: TrafficLink[];
   network: Network | null;
   onClose: () => void;
   onSave: (updatedNetwork: Network, message: string) => void;
+  onSelectAllWithSameName: (streetName: string) => void;
 }
 
 export function LinkAttributePanel({
-  link,
+  links,
   network,
   onClose,
   onSave,
+  onSelectAllWithSameName,
 }: LinkAttributePanelProps) {
-  const [editedLink, setEditedLink] = useState<TrafficLink>(link);
-  const { updateLink } = useUpdateLink(network, onSave);
+  const [editedLink, setEditedLink] = useState<TrafficLink>(links[0]);
+  const { updateLink, updateLinks } = useUpdateLink(network, onSave);
+  const isSingleLink = links.length === 1;
+  const link = links[0];
+  const streetName = link.tags.name;
 
   // Update local state when the link prop changes
   useEffect(() => {
-    setEditedLink(link);
-  }, [link]);
+    setEditedLink(links[0]);
+  }, [links]);
 
   const handleHighwayChange = (value: string) => {
     setEditedLink({
@@ -83,14 +88,25 @@ export function LinkAttributePanel({
   };
 
   const handleSave = () => {
-    updateLink(editedLink);
+    if (isSingleLink) {
+      updateLink(editedLink);
+    } else {
+      const updatedLinks = links.map((link) => ({
+        ...link,
+        tags: {
+          ...link.tags,
+          ...editedLink.tags,
+        },
+      }));
+      updateLinks(updatedLinks);
+    }
     onClose();
   };
 
   return (
     <div className={styles.linkAttributePanel}>
       <div className={styles.panelHeader}>
-        <h3>Link Attributes</h3>
+        <h3>{links.length === 1 ? "Link Attributes" : `${links.length} Links Selected`}</h3>
         <button
           className={styles.closeButton}
           onClick={onClose}
@@ -101,6 +117,20 @@ export function LinkAttributePanel({
       </div>
 
       <div className={styles.panelContent}>
+        {isSingleLink && streetName && (
+          <button
+            className={styles.selectAllButton}
+            onClick={() => onSelectAllWithSameName(streetName)}
+            type="button"
+          >
+            Select all links on {streetName}
+          </button>
+        )}
+        {!isSingleLink && (
+          <div className={styles.batchEditWarning}>
+            Editing {links.length} links - changes will apply to all
+          </div>
+        )}
         <AttributeField label="Name">
           <input
             type="text"
@@ -168,12 +198,12 @@ export function LinkAttributePanel({
           </select>
         </AttributeField>
 
-        <DevToolsSection link={link} />
+        <DevToolsSection links={links} />
       </div>
 
       <div className={styles.panelFooter}>
         <button className={styles.saveButton} onClick={handleSave}>
-          Save Changes
+          {isSingleLink ? 'Save Changes' : `Save Changes to ${links.length} Links`}
         </button>
       </div>
     </div>
