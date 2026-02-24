@@ -143,27 +143,15 @@ public class MatsimRunner {
      * Registers custom event handlers to capture and stream simulation events.
      */
     private void registerEventHandlers(Controler controler, EventCallback eventCallback) {
-        controler.addOverridingModule(new org.matsim.core.controler.AbstractModule() {
-            @Override
-            public void install() {
-                if (eventCallback != null) {
-                    EventHandler eventHandler = new EventHandler(eventCallback, 100); // Buffer size of 100
-                    this.addEventHandlerBinding().toInstance(new org.matsim.core.events.handler.BasicEventHandler() {
-                        @Override
-                        public void handleEvent(org.matsim.api.core.v01.events.Event event) {
-                            // EventHandler filters, transforms, buffers, and sends to callback
-                            eventHandler.handleEvent(event);
-                        }
-
-                        @Override
-                        public void reset(int iteration) {
-                            // Flush any remaining events when iteration ends
-                            eventHandler.cleanup();
-                        }
-                    });
+        if (eventCallback != null) {
+            controler.addOverridingModule(new org.matsim.core.controler.AbstractModule() {
+                @Override
+                public void install() {
+                    EventHandler eventHandler = new EventHandler(eventCallback, 1);
+                    this.addEventHandlerBinding().toInstance(eventHandler);
                 }
-            }
-        });
+            });
+        }
     }
 
     /**

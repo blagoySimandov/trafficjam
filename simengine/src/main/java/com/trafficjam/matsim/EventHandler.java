@@ -8,7 +8,7 @@ import java.util.List;
  * Custom event handler to capture and process MatSim events for streaming.
  * Filters, transforms, and buffers events before sending to callback.
  */
-public class EventHandler {
+public class EventHandler implements org.matsim.core.events.handler.BasicEventHandler {
 
     private final List<TransformedEvent> eventBuffer;
     private final int bufferSize;
@@ -21,6 +21,11 @@ public class EventHandler {
         this.callback = callback;
         this.bufferSize = bufferSize;
         this.eventBuffer = new ArrayList<>();
+    }
+
+    @Override
+    public void reset(int iteration) {
+        cleanup();
     }
 
     /**
