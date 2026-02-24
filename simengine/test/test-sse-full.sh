@@ -4,6 +4,7 @@
 BASE_URL="http://localhost:8080/api/simulations"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 NETWORK_FILE="$SCRIPT_DIR/../src/main/resources/cork_network.xml"
+PLANS_FILE="$SCRIPT_DIR/test-plans.xml"
 ITERATIONS=10
 
 echo -e "\033[36m=== SSE Streaming Test (Long Simulation) ===\033[0m"
@@ -13,6 +14,7 @@ echo -e "\033[33mStep 1: Starting simulation with $ITERATIONS iterations...\033[
 
 RESPONSE=$(curl -s -X POST "$BASE_URL" \
     -F "networkFile=@$NETWORK_FILE" \
+    -F "plansFile=@$PLANS_FILE" \
     -F "iterations=$ITERATIONS" \
     -F "randomSeed=4711")
 
