@@ -51,4 +51,5 @@ export function DevToolsSection({ links }: DevToolsSectionProps) {
         </div>
       )}
     </div>
-  )}
+  );
+}
