@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
-import { decodeEventStream } from "./simengine/decoder";
-import { simulationApi } from "./simengine/client";
+import { decodeEventStream } from "./trafficjam-be/decoder";
+import { simulationApi } from "./trafficjam-be/client";
 import { useSimulation } from "./index";
 import { mapNetworkResponse } from "./map-data-service/decoder";
 import { mapDataApi } from "./map-data-service/client";
@@ -109,17 +109,17 @@ describe("decodeEventStream", () => {
   });
 });
 
-describe("simulationApi.start", () => {
+describe("simulationApi.startRun", () => {
   it("sends POST with form data and returns response", async () => {
-    const expected = { simulationId: "abc", status: "running" };
+    const expected = { scenario_id: "s1", run_id: "r1", simulation_id: "sim1", status: "RUNNING" };
     mockFetch.mockResolvedValueOnce(jsonResponse(expected));
 
     const file = new File(["<network/>"], "network.xml", { type: "text/xml" });
-    const result = await simulationApi.start({ networkFile: file, iterations: 10 });
+    const result = await simulationApi.startRun({ scenarioId: "s1", networkFile: file, iterations: 10 });
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toContain("/api/simulations");
+    expect(url).toContain("/scenarios/s1/runs/start");
     expect(init.method).toBe("POST");
     expect(init.body).toBeInstanceOf(FormData);
     expect(result).toEqual(expected);
@@ -128,25 +128,25 @@ describe("simulationApi.start", () => {
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
     const file = new File([""], "network.xml");
-    await expect(simulationApi.start({ networkFile: file })).rejects.toThrow("500");
+    await expect(simulationApi.startRun({ scenarioId: "s1", networkFile: file })).rejects.toThrow("500");
   });
 });
 
-describe("simulationApi.getStatus", () => {
-  it("sends GET and returns status", async () => {
-    const expected = { simulationId: "abc", status: "completed" };
+describe("simulationApi.createRun", () => {
+  it("sends POST and returns run", async () => {
+    const expected = { scenario_id: "s1", run_id: "r1", status: "PENDING" };
     mockFetch.mockResolvedValueOnce(jsonResponse(expected));
 
-    const result = await simulationApi.getStatus("abc");
+    const result = await simulationApi.createRun("s1");
 
     expect(mockFetch).toHaveBeenCalledOnce();
-    expect(mockFetch.mock.calls[0][0]).toContain("/api/simulations/abc/status");
+    expect(mockFetch.mock.calls[0][0]).toContain("/scenarios/s1/runs");
     expect(result).toEqual(expected);
   });
 
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
-    await expect(simulationApi.getStatus("bad")).rejects.toThrow("404");
+    await expect(simulationApi.createRun("bad")).rejects.toThrow("404");
   });
 });
 
@@ -156,37 +156,19 @@ describe("simulationApi.streamEvents", () => {
     mockFetch.mockResolvedValueOnce(createSSEResponse([`data: ${JSON.stringify(event)}`]));
 
     const events = [];
-    for await (const e of simulationApi.streamEvents("abc")) events.push(e);
+    for await (const e of simulationApi.streamEvents("s1", "r1")) events.push(e);
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toContain("/api/simulations/abc/events");
+    expect(url).toContain("/scenarios/s1/runs/r1/events/stream");
     expect(init.headers.Accept).toBe("text/event-stream");
     expect(events).toEqual([event]);
   });
 
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
-    const gen = simulationApi.streamEvents("abc");
+    const gen = simulationApi.streamEvents("s1", "r1");
     await expect(gen.next()).rejects.toThrow("500");
-  });
-});
-
-describe("simulationApi.stop", () => {
-  it("sends DELETE request", async () => {
-    mockFetch.mockResolvedValueOnce(new Response(null, { status: 204 }));
-
-    await simulationApi.stop("abc");
-
-    expect(mockFetch).toHaveBeenCalledOnce();
-    const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toContain("/api/simulations/abc");
-    expect(init.method).toBe("DELETE");
-  });
-
-  it("throws on non-ok response", async () => {
-    mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
-    await expect(simulationApi.stop("abc")).rejects.toThrow("500");
   });
 });
 
@@ -341,50 +323,32 @@ describe("mapDataApi.fetchNetworkData", () => {
 });
 
 describe("useSimulation", () => {
-  it("fetches status when id is provided", async () => {
-    const statusData = { simulationId: "abc", status: "running" };
-    mockFetch.mockResolvedValueOnce(jsonResponse(statusData));
-
-    const { result } = renderHook(() => useSimulation("abc"), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => expect(result.current.status.isSuccess).toBe(true));
-    expect(result.current.status.data).toEqual(statusData);
-  });
-
-  it("does not fetch status when id is undefined", () => {
-    const { result } = renderHook(() => useSimulation(undefined), {
-      wrapper: createWrapper(),
-    });
-
-    expect(result.current.status.isFetching).toBe(false);
-  });
-
-  it("start mutation calls simulationApi.start", async () => {
-    const response = { simulationId: "new", status: "starting" };
+  it("start mutation calls simulationApi.startRun", async () => {
+    const response = { scenario_id: "s1", run_id: "r1", simulation_id: "sim1", status: "RUNNING" };
     mockFetch.mockResolvedValueOnce(jsonResponse(response));
 
-    const { result } = renderHook(() => useSimulation(undefined), {
+    const { result } = renderHook(() => useSimulation("s1"), {
       wrapper: createWrapper(),
     });
 
     const file = new File([""], "network.xml");
-    result.current.start.mutate({ networkFile: file });
+    result.current.start.mutate({ scenarioId: "s1", networkFile: file });
 
     await waitFor(() => expect(result.current.start.isSuccess).toBe(true));
     expect(result.current.start.data).toEqual(response);
   });
 
-  it("stop mutation calls simulationApi.stop", async () => {
-    mockFetch.mockResolvedValueOnce(new Response(null, { status: 204 }));
+  it("createRun mutation calls simulationApi.createRun", async () => {
+    const response = { scenario_id: "s1", run_id: "r1", status: "PENDING" };
+    mockFetch.mockResolvedValueOnce(jsonResponse(response));
 
-    const { result } = renderHook(() => useSimulation(undefined), {
+    const { result } = renderHook(() => useSimulation("s1"), {
       wrapper: createWrapper(),
     });
 
-    result.current.stop.mutate("abc");
+    result.current.createRun.mutate("s1");
 
-    await waitFor(() => expect(result.current.stop.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.createRun.isSuccess).toBe(true));
+    expect(result.current.createRun.data).toEqual(response);
   });
 });
