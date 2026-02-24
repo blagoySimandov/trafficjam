@@ -11,6 +11,7 @@ export interface TrafficLink {
   from: string;
   to: string;
   geometry: LngLatTuple[];
+  disabled?: boolean;
   tags: {
     highway: string;
     lanes?: number;
