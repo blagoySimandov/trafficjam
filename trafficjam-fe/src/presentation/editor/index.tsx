@@ -5,6 +5,7 @@ import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-d
 import { LinkAttributePanel } from "../link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
 import { useUndoStack } from "./hooks/use-undo-stack";
+import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import type { TrafficLink, Network } from "../../types";
 
 interface EditorProps {
@@ -18,10 +19,11 @@ export function Editor({ onRunSimulation }: EditorProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
+  const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
   const handleLinkClick = useCallback((link: TrafficLink) => {
-    setSelectedLinks([link]);
-  }, []);
+    setSelectedLinks(resolveSelection(link));
+  }, [resolveSelection]);
 
   const handleLinkSave = useCallback(
     (updatedNetwork: Network, message: string) => {
