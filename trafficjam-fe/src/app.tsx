@@ -3,6 +3,7 @@ import { Visualizer } from "./presentation/visualizer";
 import { Editor } from "./presentation/editor";
 import { Sidebar } from "./components/sidebar/sidebar";
 import { AgentConfigModal } from "./presentation/editor/components/agent-config-modal/agent-config-modal";
+import { ScenarioDialog } from "./presentation/editor/components/scenario-dialog/scenario-dialog";
 import { useScenarioManager } from "./api/scenarios";
 import type { Run } from "./api/scenarios";
 
@@ -11,6 +12,7 @@ type Mode = "editor" | "visualizer";
 export default function App() {
   const [mode, setMode] = useState<Mode>("editor");
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isNewScenarioOpen, setIsNewScenarioOpen] = useState(false);
   const {
     scenarios,
     activeScenario,
@@ -39,12 +41,10 @@ export default function App() {
     setMode("editor");
   }, []);
 
-  const handleCreateScenario = useCallback(() => {
-    const name = prompt("Enter scenario name:", "New Scenario");
-    if (name) {
-      createScenario(name);
-      setMode("editor");
-    }
+  const handleCreateScenario = useCallback((name: string, _description?: string) => {
+    createScenario(name);
+    setIsNewScenarioOpen(false);
+    setMode("editor");
   }, [createScenario]);
 
   return (
@@ -56,7 +56,7 @@ export default function App() {
           setActiveScenarioId(id);
           setMode("editor");
         }}
-        onCreateScenario={handleCreateScenario}
+        onCreateScenario={() => setIsNewScenarioOpen(true)}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
         runs={runs}
         onSelectRun={handleSelectRun}
@@ -84,6 +84,13 @@ export default function App() {
             updateScenario(activeScenario.id, { agentConfig: config });
             setIsConfigOpen(false);
           }}
+        />
+      )}
+
+      {isNewScenarioOpen && (
+        <ScenarioDialog
+          onClose={() => setIsNewScenarioOpen(false)}
+          onSave={handleCreateScenario}
         />
       )}
     </div>

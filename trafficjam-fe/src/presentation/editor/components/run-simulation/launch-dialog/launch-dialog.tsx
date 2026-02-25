@@ -128,6 +128,12 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
       </div>
 
       {error && <p className={styles.error}>{error}</p>}
+      
+      {!network && (
+        <p className={styles.warning}>
+          No network data found. Please download or edit a network in the map view before running a simulation.
+        </p>
+      )}
     </Dialog>
   );
 }
