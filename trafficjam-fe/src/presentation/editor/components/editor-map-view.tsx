@@ -29,7 +29,7 @@ interface EditorMapViewProps {
   onNetworkChange: (network: Network) => void;
   onNetworkSave: (network: Network, message: string) => void;
   onStatusChange: (status: string) => void;
-  onLinkClick: (link: TrafficLink) => void;
+  onLinkClick: (link: TrafficLink, modKey: boolean) => void;
   onUndo: () => void;
   onClear: () => void;
   canUndo: boolean;
