@@ -1,5 +1,7 @@
 package com.trafficjam.api.dto;
 
+import com.trafficjam.matsim.MatsimRunner;
+
 /**
  * Response DTO for simulation status queries.
  * Contains simulation ID, current status, and error message if failed.
@@ -7,7 +9,7 @@ package com.trafficjam.api.dto;
 public class SimulationStatusResponse {
 
     private String simulationId;
-    private String status;
+    private MatsimRunner.SimulationState status;
     private String error;
     private Integer iteration;
 
@@ -15,7 +17,7 @@ public class SimulationStatusResponse {
     public SimulationStatusResponse() {
     }
 
-    public SimulationStatusResponse(String simulationId, String status, String error, Integer iteration) {
+    public SimulationStatusResponse(String simulationId, MatsimRunner.SimulationState status, String error, Integer iteration) {
         this.simulationId = simulationId;
         this.status = status;
         this.error = error;
@@ -31,11 +33,11 @@ public class SimulationStatusResponse {
         this.simulationId = simulationId;
     }
 
-    public String getStatus() {
+    public MatsimRunner.SimulationState getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(MatsimRunner.SimulationState status) {
         this.status = status;
     }
 
