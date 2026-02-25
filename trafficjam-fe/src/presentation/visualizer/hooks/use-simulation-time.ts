@@ -29,7 +29,6 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
 
   const isPlayingRef = useRef(isPlaying);
   const speedRef = useRef(speed);
-  const initialTimeSetRef = useRef(false);
 
   const play = useCallback(() => {
     isPlayingRef.current = true;
@@ -54,17 +53,11 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
   const seekTo = useCallback((t: number) => setTime(t), []);
 
   useEffect(() => {
-    if (!initialTimeSetRef.current && range[0] !== 0) {
-      setTime(range[0]);
-      initialTimeSetRef.current = true;
-    }
-  }, [range]);
-
-  useEffect(() => {
     let prev = performance.now();
     let id = requestAnimationFrame(function tick(now) {
       if (isPlayingRef.current) {
         setTime((t) => {
+          if (t < range[0]) return range[0];
           const next = t + ((now - prev) / 1000) * speedRef.current;
           return next > range[1] ? range[0] : next;
         });

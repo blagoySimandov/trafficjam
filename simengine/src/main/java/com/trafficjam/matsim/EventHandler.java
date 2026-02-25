@@ -9,21 +9,25 @@ import org.matsim.api.core.v01.network.Network;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * Custom event handler to capture and process MatSim events for streaming.
- * Filters, transforms, and buffers events before sending to callback.
- */
 public class EventHandler implements org.matsim.core.events.handler.BasicEventHandler {
+
+    private static final Set<String> RELEVANT_EVENTS = Set.of(
+            "departure", "arrival", "entered link", "left link",
+            "PersonEntersVehicle", "PersonLeavesVehicle",
+            "vehicle enters traffic", "vehicle leaves traffic",
+            "actstart", "actend"
+    );
+
+    private static final Set<String> FROM_NODE_EVENTS = Set.of("entered link", "departure");
+    private static final Set<String> TO_NODE_EVENTS = Set.of("left link", "arrival");
 
     private final List<TransformedEvent> eventBuffer;
     private final int bufferSize;
     private final MatsimRunner.EventCallback callback;
     private final Network network;
 
-    /**
-     * Constructor for EventHandler.
-     */
     public EventHandler(MatsimRunner.EventCallback callback, int bufferSize, Network network) {
         this.callback = callback;
         this.bufferSize = bufferSize;
@@ -36,158 +40,100 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
         cleanup();
     }
 
-    /**
-     * Main entry point - called by MatSim for every simulation event.
-     * Filters, transforms, buffers, and potentially flushes events.
-     */
     public void handleEvent(Event event) {
-        if (!filterEvent(event)) {
-            return; // Skip this event
-        }
+        if (!RELEVANT_EVENTS.contains(event.getEventType())) return;
 
         TransformedEvent transformed = transformEvent(event);
-        if (transformed == null) {
-            return; // Skip if transformation failed
-        }
+        if (transformed == null) return;
 
-        bufferEvent(transformed);
+        eventBuffer.add(transformed);
 
-        if (shouldFlush()) {
+        if (eventBuffer.size() >= bufferSize) {
             flushBuffer();
         }
     }
 
-    /**
-     * Determines if an event should be processed based on type and relevance.
-     * Returns true for events needed for visualization (movement, activities).
-     */
-    private boolean filterEvent(Event event) {
-        String eventType = event.getEventType();
-
-        // Only process events relevant for visualization
-        // Event type strings come from the XML file, not Java class names
-        return eventType.equals("departure") ||
-                eventType.equals("arrival") ||
-                eventType.equals("entered link") ||
-                eventType.equals("left link") ||
-                eventType.equals("PersonEntersVehicle") ||
-                eventType.equals("PersonLeavesVehicle") ||
-                eventType.equals("vehicle enters traffic") ||
-                eventType.equals("vehicle leaves traffic") ||
-                // Activity events use single letters (h=home, w=work, etc.)
-                eventType.length() == 1; // Captures all activity types (h, w, s, etc.)
-    }
-
-    /**
-     * Converts a MatSim event to a simplified format for streaming.
-     * Extracts only the data needed for visualization.
-     */
     private TransformedEvent transformEvent(Event event) {
-        String eventType = event.getEventType();
-        double time = event.getTime();
         Map<String, String> attrs = event.getAttributes();
+        String eventType = event.getEventType();
 
-        // Extract common attributes
-        String agentId = attrs.get("person");
-        if (agentId == null) {
-            agentId = attrs.get("driver");
-        }
-        if (agentId == null) {
-            agentId = attrs.get("vehicle");
-        }
-        
+        String agentId = extractAgentId(attrs);
         String linkId = attrs.get("link");
-        String activityType = attrs.get("actType");
+        Double[] coords = resolveCoordinates(attrs, linkId, eventType);
 
-        Double x = null;
-        Double y = null;
+        return new TransformedEvent(
+                eventType, event.getTime(), agentId, linkId,
+                attrs.get("actType"), coords[0], coords[1]
+        );
+    }
 
-        // Try to get coordinates from attributes (for activity events)
-        if (attrs.containsKey("x") && attrs.get("x") != null) {
-            try {
-                x = Double.parseDouble(attrs.get("x"));
-                y = Double.parseDouble(attrs.get("y"));
-            } catch (NumberFormatException ignored) {}
+    private String extractAgentId(Map<String, String> attrs) {
+        String id = attrs.get("person");
+        if (id != null) return id;
+        id = attrs.get("driver");
+        if (id != null) return id;
+        return attrs.get("vehicle");
+    }
+
+    private Double[] resolveCoordinates(Map<String, String> attrs, String linkId, String eventType) {
+        Double[] fromAttrs = parseCoordinatesFromAttrs(attrs);
+        if (fromAttrs != null) return fromAttrs;
+
+        Double[] fromNetwork = lookupCoordinatesFromNetwork(linkId, eventType);
+        if (fromNetwork != null) return fromNetwork;
+
+        return new Double[]{null, null};
+    }
+
+    private Double[] parseCoordinatesFromAttrs(Map<String, String> attrs) {
+        String xStr = attrs.get("x");
+        if (xStr == null) return null;
+        try {
+            return new Double[]{Double.parseDouble(xStr), Double.parseDouble(attrs.get("y"))};
+        } catch (NumberFormatException e) {
+            return null;
         }
-
-        // If no coordinates but we have a link, use the link's nodes
-        if (x == null && linkId != null && network != null) {
-            Link link = network.getLinks().get(Id.createLinkId(linkId));
-            if (link != null) {
-                Coord coord;
-                if ("entered link".equals(eventType) || "departure".equals(eventType)) {
-                    coord = link.getFromNode().getCoord();
-                } else if ("left link".equals(eventType) || "arrival".equals(eventType)) {
-                    coord = link.getToNode().getCoord();
-                } else {
-                    coord = link.getCoord(); // Fallback to midpoint
-                }
-                
-                if (coord != null) {
-                    x = coord.getX();
-                    y = coord.getY();
-                }
-            }
-        }
-
-        return new TransformedEvent(eventType, time, agentId, linkId, activityType, x, y);
     }
 
-    /**
-     * Adds a transformed event to the buffer.
-     * Events are batched for efficiency before sending to callback.
-     */
-    private void bufferEvent(TransformedEvent event) {
-        eventBuffer.add(event);
+    private Double[] lookupCoordinatesFromNetwork(String linkId, String eventType) {
+        if (linkId == null || network == null) return null;
+
+        Link link = network.getLinks().get(Id.createLinkId(linkId));
+        if (link == null) return null;
+
+        Coord coord = pickCoordForEvent(link, eventType);
+        if (coord == null) return null;
+
+        return new Double[]{coord.getX(), coord.getY()};
     }
 
-    /**
-     * Determines if the buffer should be flushed.
-     * Flushes when buffer is full or at time intervals.
-     */
-    private boolean shouldFlush() {
-        return eventBuffer.size() >= bufferSize;
+    private Coord pickCoordForEvent(Link link, String eventType) {
+        if (FROM_NODE_EVENTS.contains(eventType)) return link.getFromNode().getCoord();
+        if (TO_NODE_EVENTS.contains(eventType)) return link.getToNode().getCoord();
+        return link.getCoord();
     }
 
-    /**
-     * Sends all buffered events to the callback and clears the buffer.
-     * Called when buffer is full or simulation ends.
-     */
     private void flushBuffer() {
-        if (eventBuffer.isEmpty() || callback == null) {
-            return;
-        }
+        if (eventBuffer.isEmpty() || callback == null) return;
 
-        // Send each event to callback
         for (TransformedEvent event : eventBuffer) {
             callback.onEvent(event);
         }
-
-        // Clear the buffer
         eventBuffer.clear();
     }
 
-    /**
-     * Cleans up resources when simulation completes.
-     * Flushes any remaining events and releases resources.
-     */
     public void cleanup() {
-        // Flush any remaining events in the buffer
         flushBuffer();
     }
 
-    /**
-     * Simplified event format for streaming to visualizer.
-     * Contains only essential data needed for real-time visualization.
-     */
     public static class TransformedEvent {
-        public String type; // Event type (departure, arrival, link_enter, etc.)
-        public double time; // Simulation time in seconds
-        public String agentId; // Agent/person ID
-        public String linkId; // Road link ID (if applicable)
-        public String activityType; // Activity type (if applicable)
-        public Double x; // X coordinate (if applicable)
-        public Double y; // Y coordinate (if applicable)
+        public String type;
+        public double time;
+        public String agentId;
+        public String linkId;
+        public String activityType;
+        public Double x;
+        public Double y;
 
         public TransformedEvent(String type, double time, String agentId, String linkId, String activityType, Double x, Double y) {
             this.type = type;
