@@ -1,12 +1,16 @@
 import asyncio
+import hashlib
+import json
 import uuid
 import logging
 from contextlib import asynccontextmanager
 from io import StringIO
 
 import nats as nats_lib
+import nats.js.errors as nats_errors
 import httpx
-from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form, Response
+
 from sse_starlette import EventSourceResponse
 
 from pydantic import BaseModel
@@ -34,6 +38,12 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     app.state.nc = await nats_lib.connect(settings.nats_url)
     app.state.js = app.state.nc.jetstream()
+    try:
+        app.state.plans_store = await app.state.js.object_store(settings.plans_bucket)
+    except nats_errors.NotFoundError:
+        app.state.plans_store = await app.state.js.create_object_store(
+            settings.plans_bucket
+        )
     app.state.status_worker = asyncio.create_task(_monitor_all_statuses(app.state.js))
     yield
     app.state.status_worker.cancel()
@@ -88,6 +98,7 @@ async def create_run(scenario_id: str, run_id: str | None = None):
 async def start_run(
     scenario_id: str,
     networkFile: UploadFile = File(...),
+    plansFile: UploadFile = File(...),
     iterations: int = Form(1),
     randomSeed: int | None = Form(None),
 ):
@@ -102,7 +113,12 @@ async def start_run(
                 networkFile.filename,
                 await networkFile.read(),
                 networkFile.content_type,
-            )
+            ),
+            "plansFile": (
+                plansFile.filename,
+                await plansFile.read(),
+                plansFile.content_type,
+            ),
         }
         data = {
             "iterations": iterations,
@@ -136,33 +152,45 @@ async def start_run(
     }
 
 
+def _plans_cache_key(bounds: dict, country_code: str) -> str:
+    rounded = {k: round(v, 3) for k, v in sorted(bounds.items())}
+    payload = json.dumps(
+        {"bounds": rounded, "country_code": country_code}, sort_keys=True
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 @app.post("/plan_creation")
-async def plan_creation(request: PlanCreationRequest):
+async def plan_creation(request: Request, body: PlanCreationRequest):
+    cache_key = _plans_cache_key(body.bounds, body.country_code)
+    store = request.app.state.plans_store
+
+    try:
+        entry = await store.get(cache_key)
+        return Response(content=entry.data, media_type="application/xml")
+    except nats_errors.NotFoundError:
+        pass
+
     writer = MATSimXMLWriter()
     writer.create_plans_document()
-
     agents = create_agents_from_network(
-        bounds=request.bounds,
-        buildings=request.buildings,
+        bounds=body.bounds,
+        buildings=body.buildings,
         transport_routes=[],
-        country_code=request.country_code,
+        country_code=body.country_code,
     )
-
     if len(agents) > MAX_AGENTS:
         agents = agents[:MAX_AGENTS]
-
     for agent in agents:
-        plan = generate_plan_for_agent(agent, request.buildings)
+        plan = generate_plan_for_agent(agent, body.buildings)
         if plan:
             writer.add_person_plan(agent.id, plan)
 
     stream = StringIO()
     writer.write_to_stream(stream)
     xml_content = stream.getvalue()
-
-    with open("output/test.xml", "w", encoding="utf-8") as f:
-        f.write(xml_content)
-    return
+    await store.put(cache_key, xml_content.encode())
+    return Response(content=xml_content, media_type="application/xml")
 
 
 @app.get("/scenarios/{scenario_id}/runs/{run_id}/events/stream")
