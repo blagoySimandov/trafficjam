@@ -28,7 +28,7 @@ MarkupSafe==3.0.3
 mdurl==0.1.2
 nats-py==2.13.1
 packaging==26.0
-psycopg2-binary==2.9.10
+psycopg[binary]==3.3.3
 pluggy==1.6.0
 pydantic==2.12.5
 pydantic-extra-types==2.11.0

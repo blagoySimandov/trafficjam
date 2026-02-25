@@ -4,8 +4,14 @@ Alembic environment configuration for trafficjam-be.
 Uses async SQLAlchemy (asyncpg) and reads DB URL from config.py.
 """
 
+import sys
+import os
 import asyncio
 from logging.config import fileConfig
+
+# Add the project root (trafficjam-be/) to the Python path
+# so that `from db.models import Base` and `from config import get_settings` resolve correctly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -23,7 +29,7 @@ config = context.config
 # Inject the DB URL from our application config (overrides alembic.ini)
 settings = get_settings()
 # Alembic needs a synchronous URL (replace asyncpg driver with psycopg2 for migrations)
-sync_url = settings.database_url.replace("postgresql+asyncpg", "postgresql+psycopg2")
+sync_url = settings.database_url.replace("postgresql+asyncpg", "postgresql+psycopg")
 config.set_main_option("sqlalchemy.url", sync_url)
 
 # Set up loggers from alembic.ini

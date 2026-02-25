@@ -43,20 +43,20 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
 
-    # Create the RunStatus enum type in Postgres
+    # Create the RunStatus enum type in Postgres (checkfirst=True skips if already exists)
     runstatus_enum = postgresql.ENUM(
         "pending", "running", "completed", "failed",
         name="runstatus",
-        create_type=True,
+        create_type=False,
     )
-    runstatus_enum.create(op.get_bind())
+    runstatus_enum.create(op.get_bind(), checkfirst=True)
 
     # Create runs table, referencing scenarios
     op.create_table(
         "runs",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("scenario_id", postgresql.UUID(as_uuid=True), nullable=False, index=True),
-        sa.Column("status", sa.Enum("pending", "running", "completed", "failed", name="runstatus"), nullable=False, server_default="pending"),
+        sa.Column("scenario_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("status", postgresql.ENUM("pending", "running", "completed", "failed", name="runstatus", create_type=False), nullable=False, server_default="pending"),
         sa.Column("nats_subject", sa.Text(), nullable=True),
         sa.Column("event_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("duration_seconds", sa.Float(), nullable=True),
