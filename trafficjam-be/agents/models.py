@@ -95,10 +95,6 @@ class Adult(Agent):
     needs_to_dropoff_children: bool = False
 
 
-def _default_planner_config() -> "PlannerConfig":
-    return PlannerConfig()
-
-
 class PlannerConfig(BaseModel):
     population_density: int = _env_config.default_population_density
     shopping_probability: float = _env_config.shopping_probability
@@ -117,4 +113,4 @@ class PlanCreationRequest(BaseModel):
     bounds: dict[str, float]
     buildings: list[Building]
     country_code: str = "IRL"
-    config: PlannerConfig = Field(default_factory=_default_planner_config)
+    config: PlannerConfig = Field(default_factory=lambda: PlannerConfig())
