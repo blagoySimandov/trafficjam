@@ -1,24 +1,16 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import type { TrafficLink } from "../../../types";
 
-let multiSelectHeld = false;
-
-if (typeof window !== "undefined") {
-    window.addEventListener("keydown", (e) => {
-        if (e.metaKey || e.ctrlKey) multiSelectHeld = true;
-    });
-    window.addEventListener("keyup", (e) => {
-        if (e.key === "Meta" || e.key === "Control") multiSelectHeld = false;
-    });
-    window.addEventListener("blur", () => {
-        multiSelectHeld = false;
-    });
-}
-
 export function useMultiSelect(selectedLinks: TrafficLink[]) {
+    const held = useRef(false);
+
+    useHotkeys("mod", () => { held.current = true; }, { keydown: true, keyup: false });
+    useHotkeys("mod", () => { held.current = false; }, { keydown: false, keyup: true });
+
     const handleLinkClick = useCallback(
         (link: TrafficLink): TrafficLink[] => {
-            if (!multiSelectHeld) return [link];
+            if (!held.current) return [link];
 
             const isSelected = selectedLinks.some((l) => l.id === link.id);
             if (isSelected) return selectedLinks.filter((l) => l.id !== link.id);
