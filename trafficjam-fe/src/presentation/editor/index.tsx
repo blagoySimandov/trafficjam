@@ -6,12 +6,14 @@ import { LinkAttributePanel } from "../link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
 import { useUndoStack } from "./hooks/use-undo-stack";
 import type { TrafficLink, Network } from "../../types";
+import type { Scenario } from "../../api/scenarios";
 
 interface EditorProps {
+  activeScenario: Scenario | null;
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
 }
 
-export function Editor({ onRunSimulation }: EditorProps) {
+export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
   const [selectedLink, setSelectedLink] = useState<TrafficLink | null>(null);
@@ -103,6 +105,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
       {dialogOpen && (
         <LaunchDialog
+          activeScenario={activeScenario}
           network={network}
           onLaunch={handleLaunch}
           onClose={() => setDialogOpen(false)}

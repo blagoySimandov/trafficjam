@@ -1,0 +1,149 @@
+.titleInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #3b82f6;
+  margin-bottom: 1.25rem;
+  font-weight: 700;
+  border-bottom: 1px solid #222;
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  color: #bbb;
+  font-weight: 500;
+}
+
+.field input[type="number"], .field input[type="text"] {
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 0.4rem;
+  padding: 0.6rem;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.field input[type="range"] {
+  width: 100%;
+}
+
+.valueLabel {
+  font-size: 0.75rem;
+  color: #888;
+  text-align: right;
+}
+
+.rangeInput {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inputLabel {
+  font-size: 0.7rem;
+  color: #666;
+  width: 30px;
+  text-transform: uppercase;
+}
+
+.rangeInput input {
+  flex: 1;
+}
+
+.resetBtn, .cancelBtn, .saveBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.resetBtn {
+  background: none;
+  border: 1px solid #444;
+  color: #888;
+}
+
+.resetBtn:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.rightActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.cancelBtn {
+  background: none;
+  border: none;
+  color: #aaa;
+}
+
+.cancelBtn:hover {
+  color: #fff;
+}
+
+.saveBtn {
+  background: #2563eb;
+  border: none;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.saveBtn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
