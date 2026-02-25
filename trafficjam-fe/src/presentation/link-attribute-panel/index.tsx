@@ -8,7 +8,7 @@ import { useUpdateLink } from "./hooks/use-update-link";
 import { LANE_OPTIONS, MAXSPEED_OPTIONS, ONEWAY_OPTIONS } from "./constants";
 import styles from "./link-attribute-panel.module.css";
 
-const MIXED_VALUE = "__MIXED__";
+const MIXED_VALUE = Symbol("mixed");
 
 interface LinkAttributePanelProps {
   links: TrafficLink[];
