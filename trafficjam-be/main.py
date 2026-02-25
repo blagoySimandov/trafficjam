@@ -9,6 +9,7 @@ from typing import List, Optional
 import nats as nats_lib
 import httpx
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
 
 from pydantic import BaseModel
@@ -44,6 +45,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 async def _monitor_all_statuses(js):
