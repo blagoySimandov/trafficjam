@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DeckGL, TripsLayer, ScatterplotLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MAP_STYLE, MAPBOX_TOKEN } from "../../constants/map";
+import { MAPBOX_TOKEN } from "../../constants/map";
 import { loadTrips, getVehiclePositions } from "../../event-processing";
 import type { Trip } from "../../event-processing";
 import {
@@ -19,13 +19,6 @@ interface VisualizerProps {
   runId?: string;
   onBack: () => void;
 }
-
-// export function Visualizer() {
-//   const { data: trips = [] } = useQuery({
-//     queryKey: ["trips"],
-//     queryFn: loadTrips,
-//   });
-//   const positions = getVehiclePositions(trips, simulation.time);
 
 function useLayers(trips: Trip[], simulation: SimulationTimeState) {
   return [
@@ -69,7 +62,6 @@ export function Visualizer({ scenarioId, runId, onBack }: VisualizerProps) {
     <DeckGL initialViewState={INITIAL_STATE_CORK} controller layers={layers}>
       <Map mapStyle={DARK_MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
       <BackToEditorButton onClick={onBack} />
-      <Map mapStyle={MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
       <PlaybackBar simulation={simulation} />
     </DeckGL>
   );

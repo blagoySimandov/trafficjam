@@ -1,46 +1,20 @@
 import { useCallback, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useHotkeys } from "react-hotkeys-hook";
+import { useQueryClient } from "@tanstack/react-query";
 import { Play, Loader2 } from "lucide-react";
-import { loadTrips, getTimeRange } from "../../../../../event-processing";
-import { formatSimulationTime } from "../../../../../utils/format-time";
 import { networkToMatsim } from "../../../../../osm/matsim";
 import { calculateBounds } from "../../../../../utils/network-bounds";
 import { useSimulation } from "../../../../../api";
+import { Dialog } from "../../../../../components/dialog";
 import type { Network } from "../../../../../types";
+import type { Scenario } from "../../../../../api/scenarios";
+import { useSimulationParams } from "./use-simulation-params";
 import styles from "./launch-dialog.module.css";
 
 interface LaunchDialogProps {
+  activeScenario: Scenario | null;
   network: Network | null;
   onLaunch: (info: { scenarioId: string; runId: string }) => void;
   onClose: () => void;
-}
-
-function useTripStats() {
-  const { data: trips = [] } = useQuery({
-    queryKey: ["trips"],
-    queryFn: loadTrips,
-  });
-
-  if (trips.length === 0) return null;
-
-  const [min, max] = getTimeRange(trips);
-  return {
-    count: trips.length,
-    startTime: formatSimulationTime(min),
-    endTime: formatSimulationTime(max),
-  };
-}
-
-function StatsLine({ stats }: { stats: ReturnType<typeof useTripStats> }) {
-  if (!stats) return <p className={styles.stats}>Loading trips...</p>;
-
-  return (
-    <p className={styles.stats}>
-      {stats.count.toLocaleString()} vehicles &mdash; {stats.startTime} to{" "}
-      {stats.endTime}
-    </p>
-  );
 }
 
 function prepareSimulationData(network: Network) {
@@ -51,57 +25,109 @@ function prepareSimulationData(network: Network) {
   return { networkFile, buildings, bounds };
 }
 
-export function LaunchDialog({ network, onLaunch, onClose }: LaunchDialogProps) {
-  const stats = useTripStats();
-  const { start } = useSimulation("default");
+export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: LaunchDialogProps) {
+  const queryClient = useQueryClient();
+  const { start } = useSimulation(activeScenario?.id || "default");
+  const { params, setIterations, setRandomSeed, setNote } = useSimulationParams();
   const [error, setError] = useState<string | null>(null);
 
-  useHotkeys("escape", onClose);
-
-  const handleOverlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose],
-  );
-
   const handleLaunchClick = useCallback(() => {
-    if (!network) return;
+    if (!network || !activeScenario) return;
     setError(null);
 
     try {
       const { networkFile, buildings, bounds } = prepareSimulationData(network);
+      
       start.mutate(
-        { scenarioId: "default", networkFile, buildings, bounds, iterations: 1 },
+        { 
+          scenarioId: activeScenario.id, 
+          networkFile, 
+          buildings, 
+          bounds, 
+          iterations: params.iterations, 
+          randomSeed: params.randomSeed 
+        },
         {
-          onSuccess: (data) => onLaunch({ scenarioId: data.scenario_id, runId: data.run_id }),
+          onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["runs"] });
+            onLaunch({ scenarioId: data.scenario_id, runId: data.run_id });
+          },
           onError: (err) => setError(err instanceof Error ? err.message : "Failed to start simulation"),
         },
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to prepare simulation");
     }
-  }, [network, start, onLaunch]);
+  }, [network, activeScenario, params, start, onLaunch, queryClient]);
+
+  const dialogTitle = (
+    <>
+      Run Simulation
+      <div className={styles.scenarioBadge}>{activeScenario?.name}</div>
+    </>
+  );
+
+  const dialogFooter = (
+    <>
+      <button className={styles.cancelButton} onClick={onClose}>Cancel</button>
+      <button
+        className={styles.launchButton}
+        onClick={handleLaunchClick}
+        disabled={start.isPending || !network || !activeScenario}
+      >
+        {start.isPending ? (
+          <Loader2 size={16} className={styles.spinner} />
+        ) : (
+          <Play size={16} />
+        )}
+        {start.isPending ? "Launching..." : "Launch"}
+      </button>
+    </>
+  );
 
   return (
-    <div className={styles.overlay} onClick={handleOverlayClick}>
-      <div className={styles.card}>
-        <h2 className={styles.title}>Run Simulation</h2>
-        <StatsLine stats={stats} />
-        {error && <p className={styles.stats} style={{ color: "#ff6b6b" }}>{error}</p>}
-        <button
-          className={styles.launchButton}
-          onClick={handleLaunchClick}
-          disabled={start.isPending || !network}
-        >
-          {start.isPending ? (
-            <Loader2 size={16} className={styles.spinner} />
-          ) : (
-            <Play size={16} />
-          )}
-          {start.isPending ? "Launching..." : "Launch"}
-        </button>
+    <Dialog 
+      title={dialogTitle} 
+      footer={dialogFooter} 
+      onClose={onClose}
+      maxWidth={480}
+    >
+      <div className={styles.formGroup}>
+        <label className={styles.label}>Run Note (optional)</label>
+        <input 
+          type="text" 
+          className={styles.input} 
+          placeholder="e.g. Closed bridge experiment"
+          value={params.note}
+          onChange={e => setNote(e.target.value)}
+        />
       </div>
-    </div>
+
+      <div className={styles.row}>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Iterations</label>
+          <input 
+            type="number" 
+            className={styles.input} 
+            min={1} 
+            max={100}
+            value={params.iterations}
+            onChange={e => setIterations(parseInt(e.target.value) || 1)}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Random Seed</label>
+          <input 
+            type="number" 
+            className={styles.input} 
+            placeholder="Random"
+            value={params.randomSeed ?? ""}
+            onChange={e => setRandomSeed(e.target.value ? parseInt(e.target.value) : undefined)}
+          />
+        </div>
+      </div>
+
+      {error && <p className={styles.error}>{error}</p>}
+    </Dialog>
   );
 }
