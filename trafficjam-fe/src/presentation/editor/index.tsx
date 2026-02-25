@@ -8,7 +8,7 @@ import { useUndoStack } from "./hooks/use-undo-stack";
 import type { TrafficLink, Network } from "../../types";
 
 interface EditorProps {
-  onRunSimulation: () => void;
+  onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
 }
 
 export function Editor({ onRunSimulation }: EditorProps) {
@@ -70,10 +70,13 @@ export function Editor({ onRunSimulation }: EditorProps) {
     setSelectedLink(null);
   }, []);
 
-  const handleLaunch = useCallback(() => {
-    setDialogOpen(false);
-    onRunSimulation();
-  }, [onRunSimulation]);
+  const handleLaunch = useCallback(
+    (info: { scenarioId: string; runId: string }) => {
+      setDialogOpen(false);
+      onRunSimulation(info);
+    },
+    [onRunSimulation],
+  );
 
   return (
     <>
@@ -100,6 +103,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
       {dialogOpen && (
         <LaunchDialog
+          network={network}
           onLaunch={handleLaunch}
           onClose={() => setDialogOpen(false)}
         />

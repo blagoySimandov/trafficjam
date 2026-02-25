@@ -54,6 +54,12 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
 
   const linksXml = ["  <links>"];
   for (const l of linksArr) {
+    // Ensure both from and to nodes exist in the network
+    if (!network.nodes.has(l.from) || !network.nodes.has(l.to)) {
+      console.warn(`Skipping link ${l.id} because it references missing nodes: from=${l.from}, to=${l.to}`);
+      continue;
+    }
+
     const length = estimateLengthMeters(l);
     const freespeed = getFreespeedMs(l);
     const lanes = getLanes(l);
@@ -62,7 +68,7 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
     linksXml.push(
       `    <link id="${l.id}" from="${l.from}" to="${l.to}" length="${length.toFixed(
         2
-      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" allowedModes="car" />`
+      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" modes="car" />`
     );
   }
   linksXml.push("  </links>");
