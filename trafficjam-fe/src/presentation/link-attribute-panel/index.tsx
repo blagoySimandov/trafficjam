@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X } from "lucide-react";
+import { X, Ban } from "lucide-react";
 import type { Network, TrafficLink } from "../../types";
 import { HIGHWAY_TYPES } from "../../constants";
 import { AttributeField } from "./components/attribute-field";
