@@ -22,7 +22,7 @@ export function useLiveSimulation(scenarioId?: string, runId?: string) {
           // Using any here because the TransformedEvent from simengine 
           // might be slightly different from the complex Matsim events
           const e = event as any;
-          if (!e.agentId || e.x === undefined || e.y === undefined) continue;
+          if (!e.agentId || e.x == null || e.y == null) continue;
 
           let trip = tripsMap.get(e.agentId);
           if (!trip) {

@@ -40,7 +40,7 @@ public class MatsimRunner {
         Controler controler = new Controler(scenario);
 
         // Register event handlers (null callback = file output only, no streaming)
-        registerEventHandlers(controler, null);
+        registerEventHandlers(controler, null, scenario);
 
         // Run the simulation - this blocks until completion
         // MatSim will iterate through the configured number of iterations
@@ -62,7 +62,7 @@ public class MatsimRunner {
 
         Controler controler = new Controler(scenario);
 
-        registerEventHandlers(controler, eventCallback);
+        registerEventHandlers(controler, eventCallback, scenario);
 
         executor.submit(() -> {
             try {
@@ -149,12 +149,12 @@ public class MatsimRunner {
     /**
      * Registers custom event handlers to capture and stream simulation events.
      */
-    private void registerEventHandlers(Controler controler, EventCallback eventCallback) {
+    private void registerEventHandlers(Controler controler, EventCallback eventCallback, Scenario scenario) {
         if (eventCallback != null) {
             controler.addOverridingModule(new org.matsim.core.controler.AbstractModule() {
                 @Override
                 public void install() {
-                    EventHandler eventHandler = new EventHandler(eventCallback, 1);
+                    EventHandler eventHandler = new EventHandler(eventCallback, 1, scenario.getNetwork());
                     this.addEventHandlerBinding().toInstance(eventHandler);
                 }
             });
