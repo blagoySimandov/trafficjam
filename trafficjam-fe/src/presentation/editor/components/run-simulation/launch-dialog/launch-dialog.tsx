@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Play, Loader2 } from "lucide-react";
 import { networkToMatsim } from "../../../../../osm/matsim";
@@ -7,7 +8,6 @@ import { useSimulation } from "../../../../../api";
 import { Dialog } from "../../../../../components/dialog";
 import type { Network } from "../../../../../types";
 import type { Scenario } from "../../../../../api/scenarios";
-import { useSimulationParams } from "./use-simulation-params";
 import styles from "./launch-dialog.module.css";
 
 interface LaunchDialogProps {
@@ -15,6 +15,12 @@ interface LaunchDialogProps {
   network: Network | null;
   onLaunch: (info: { scenarioId: string; runId: string }) => void;
   onClose: () => void;
+}
+
+interface LaunchForm {
+  iterations: number;
+  randomSeed?: number;
+  note: string;
 }
 
 function prepareSimulationData(network: Network) {
@@ -28,10 +34,16 @@ function prepareSimulationData(network: Network) {
 export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: LaunchDialogProps) {
   const queryClient = useQueryClient();
   const { start } = useSimulation(activeScenario?.id || "default");
-  const { params, setIterations, setRandomSeed, setNote } = useSimulationParams();
   const [error, setError] = useState<string | null>(null);
+  
+  const { register, handleSubmit } = useForm<LaunchForm>({
+    defaultValues: {
+      iterations: 1,
+      note: ""
+    }
+  });
 
-  const handleLaunchClick = useCallback(() => {
+  const onSubmit = useCallback((data: LaunchForm) => {
     if (!network || !activeScenario) return;
     setError(null);
 
@@ -44,13 +56,13 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
           networkFile, 
           buildings, 
           bounds, 
-          iterations: params.iterations, 
-          randomSeed: params.randomSeed 
+          iterations: data.iterations, 
+          randomSeed: data.randomSeed 
         },
         {
-          onSuccess: (data) => {
+          onSuccess: (responseData) => {
             queryClient.invalidateQueries({ queryKey: ["runs"] });
-            onLaunch({ scenarioId: data.scenario_id, runId: data.run_id });
+            onLaunch({ scenarioId: responseData.scenario_id, runId: responseData.run_id });
           },
           onError: (err) => setError(err instanceof Error ? err.message : "Failed to start simulation"),
         },
@@ -58,7 +70,7 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to prepare simulation");
     }
-  }, [network, activeScenario, params, start, onLaunch, queryClient]);
+  }, [network, activeScenario, start, onLaunch, queryClient]);
 
   const dialogTitle = (
     <>
@@ -69,11 +81,12 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
 
   const dialogFooter = (
     <>
-      <button className={styles.cancelButton} onClick={onClose}>Cancel</button>
+      <button className={styles.cancelButton} onClick={onClose} type="button">Cancel</button>
       <button
         className={styles.launchButton}
-        onClick={handleLaunchClick}
+        onClick={handleSubmit(onSubmit)}
         disabled={start.isPending || !network || !activeScenario}
+        type="button"
       >
         {start.isPending ? (
           <Loader2 size={16} className={styles.spinner} />
@@ -92,42 +105,41 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
       onClose={onClose}
       maxWidth={480}
     >
-      <div className={styles.formGroup}>
-        <label className={styles.label}>Run Note (optional)</label>
-        <input 
-          type="text" 
-          className={styles.input} 
-          placeholder="e.g. Closed bridge experiment"
-          value={params.note}
-          onChange={e => setNote(e.target.value)}
-        />
-      </div>
-
-      <div className={styles.row}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Iterations</label>
+          <label className={styles.label}>Run Note (optional)</label>
           <input 
-            type="number" 
+            type="text" 
             className={styles.input} 
-            min={1} 
-            max={100}
-            value={params.iterations}
-            onChange={e => setIterations(parseInt(e.target.value) || 1)}
+            placeholder="e.g. Closed bridge experiment"
+            {...register("note")}
           />
         </div>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Random Seed</label>
-          <input 
-            type="number" 
-            className={styles.input} 
-            placeholder="Random"
-            value={params.randomSeed ?? ""}
-            onChange={e => setRandomSeed(e.target.value ? parseInt(e.target.value) : undefined)}
-          />
-        </div>
-      </div>
 
-      {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.row}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Iterations</label>
+            <input 
+              type="number" 
+              className={styles.input} 
+              min={1} 
+              max={100}
+              {...register("iterations", { valueAsNumber: true })}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Random Seed</label>
+            <input 
+              type="number" 
+              className={styles.input} 
+              placeholder="Random"
+              {...register("randomSeed", { valueAsNumber: true })}
+            />
+          </div>
+        </div>
+
+        {error && <p className={styles.error}>{error}</p>}
+      </form>
     </Dialog>
   );
 }
