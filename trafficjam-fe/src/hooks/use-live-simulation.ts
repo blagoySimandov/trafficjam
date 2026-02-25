@@ -1,59 +1,48 @@
-import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { simulationApi } from "../api/trafficjam-be";
 import type { Trip } from "../event-processing";
+import type { StreamedEvent } from "../api/trafficjam-be/types";
+
+const BATCH_SIZE = 50;
+
+function processEvent(event: StreamedEvent, tripsMap: Map<string, Trip>) {
+  if (!event.agentId || event.x == null || event.y == null) return;
+
+  let trip = tripsMap.get(event.agentId);
+  if (!trip) {
+    trip = { id: event.agentId, path: [], timestamps: [] };
+    tripsMap.set(event.agentId, trip);
+  }
+
+  trip.path.push([event.x, event.y]);
+  trip.timestamps.push(event.time);
+}
 
 export function useLiveSimulation(scenarioId?: string, runId?: string) {
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [isLive, setIsLive] = useState(false);
+  const queryClient = useQueryClient();
+  const queryKey = ["live-simulation", scenarioId, runId];
 
-  useEffect(() => {
-    if (!scenarioId || !runId) {
-      setIsLive(false);
-      return;
-    }
+  const { data: trips = [], isFetching } = useQuery({
+    queryKey,
+    queryFn: async ({ signal }) => {
+      const tripsMap = new Map<string, Trip>();
+      let eventCount = 0;
 
-    setIsLive(true);
-    const tripsMap = new Map<string, Trip>();
+      for await (const event of simulationApi.streamEvents(scenarioId!, runId!, signal)) {
+        processEvent(event, tripsMap);
+        eventCount++;
 
-    const stream = async () => {
-      try {
-        for await (const event of simulationApi.streamEvents(scenarioId, runId)) {
-          // We assume the event has agentId, x, y, and time
-          // Using any here because the TransformedEvent from simengine 
-          // might be slightly different from the complex Matsim events
-          const e = event as any;
-          if (!e.agentId || e.x == null || e.y == null) continue;
-
-          let trip = tripsMap.get(e.agentId);
-          if (!trip) {
-            trip = {
-              id: e.agentId,
-              path: [],
-              timestamps: [],
-            };
-            tripsMap.set(e.agentId, trip);
-          }
-
-          // In MATSim x is longitude and y is latitude for EPSG:4326
-          // DeckGL expects [longitude, latitude]
-          trip.path.push([e.x, e.y]);
-          trip.timestamps.push(e.time);
-
-          // Update trips state periodically or on every event (caution with performance)
-          // For now, let's update every few events or just at the end? 
-          // Actually, for a live feel, we need updates.
-          if (tripsMap.size % 10 === 0) {
-             setTrips(Array.from(tripsMap.values()));
-          }
+        if (eventCount % BATCH_SIZE === 0) {
+          queryClient.setQueryData(queryKey, Array.from(tripsMap.values()));
         }
-        setTrips(Array.from(tripsMap.values()));
-      } catch (err) {
-        console.error("Error streaming events:", err);
       }
-    };
 
-    stream();
-  }, [scenarioId, runId]);
+      return Array.from(tripsMap.values());
+    },
+    enabled: !!scenarioId && !!runId,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
 
-  return { trips, isLive };
+  return { trips, isLive: isFetching };
 }

@@ -1,9 +1,9 @@
-import type { Event } from "../../types/matsim-events";
 import { decodeEventStream } from "./decoder";
 import type {
   CreateRunResponse,
   StartRunResponse,
   StartRunParams,
+  StreamedEvent,
 } from "./types";
 
 const BASE_URL =
@@ -13,10 +13,9 @@ function buildFormData(params: StartRunParams): FormData {
   const formData = new FormData();
   formData.append("networkFile", params.networkFile);
   if (params.buildings) {
-    // We map buildings to the format expected by the backend AgentBuilding model
     const buildingsData = params.buildings.map((b) => ({
       id: b.id,
-      osm_id: 0, // Placeholder
+      osm_id: 0,
       position: b.position,
       geometry: b.geometry || [b.position],
       type: b.type,
@@ -61,10 +60,11 @@ async function startRun(params: StartRunParams): Promise<StartRunResponse> {
 async function* streamEvents(
   scenarioId: string,
   runId: string,
-): AsyncGenerator<Event> {
+  signal?: AbortSignal,
+): AsyncGenerator<StreamedEvent> {
   const response = await fetch(
     `${BASE_URL}/scenarios/${scenarioId}/runs/${runId}/events/stream`,
-    { headers: { Accept: "text/event-stream" } },
+    { headers: { Accept: "text/event-stream" }, signal },
   );
   assertOk(response);
   yield* decodeEventStream(response);

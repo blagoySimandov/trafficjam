@@ -1,23 +1,20 @@
-import type { Event } from "../../types/matsim-events";
+import type { StreamedEvent } from "./types";
 
 function getReader(response: Response) {
-  if (!response.body) {
-    throw new Error("Response body is null");
-  }
-  const stream = response.body.pipeThrough(new TextDecoderStream());
-  return stream.getReader();
+  if (!response.body) throw new Error("Response body is null");
+  return response.body.pipeThrough(new TextDecoderStream()).getReader();
 }
 
-function parseSSELine(line: string): Event | null {
+function parseSSELine(line: string): StreamedEvent | null {
   if (!line.startsWith("data:")) return null;
   const json = line.slice("data:".length).trim();
   if (!json) return null;
-  return JSON.parse(json) as Event;
+  return JSON.parse(json) as StreamedEvent;
 }
 
 export async function* decodeEventStream(
   response: Response,
-): AsyncGenerator<Event> {
+): AsyncGenerator<StreamedEvent> {
   const reader = getReader(response);
   let buffer = "";
 
