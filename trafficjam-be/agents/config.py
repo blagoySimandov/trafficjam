@@ -10,7 +10,7 @@ class AgentConfig(BaseSettings):
 
     default_population_density: int = 100
     shopping_probability: float = 0.40
-    max_shopping_distance_km: float = 2000.0
+    max_shopping_distance_km: float = 5.0
     healthcare_chance: float = 0.30
     elderly_age_threshold: int = 65
     kindergarten_age: int = 6

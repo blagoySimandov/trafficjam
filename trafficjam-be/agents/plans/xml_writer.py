@@ -52,9 +52,10 @@ class MATSimXMLWriter:
         for i, activity in enumerate(plan.activities):
             act = ET.SubElement(plan_elem, "act")
             act.set("type", activity.type.value)
-            x, y = activity.location
-            act.set("x", _format_coordinate(x))
-            act.set("y", _format_coordinate(y))
+            # activity.location is [lat, lon], but MATSim expects x=lon, y=lat
+            lat, lon = activity.location
+            act.set("x", _format_coordinate(lon))
+            act.set("y", _format_coordinate(lat))
 
             if activity.end_time:
                 act.set("end_time", activity.end_time.strftime("%H:%M:%S"))

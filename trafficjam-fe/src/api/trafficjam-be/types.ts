@@ -1,3 +1,5 @@
+import type { Building } from "../../types";
+
 export type RunStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
 
 export interface StartRunResponse {
@@ -16,6 +18,8 @@ export interface CreateRunResponse {
 export interface StartRunParams {
   scenarioId: string;
   networkFile: File;
+  buildings?: Building[];
+  bounds?: { north: number; south: number; east: number; west: number };
   iterations?: number;
   randomSeed?: number;
 }

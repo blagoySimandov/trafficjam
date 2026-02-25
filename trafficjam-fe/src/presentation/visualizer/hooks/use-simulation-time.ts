@@ -23,12 +23,13 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
     [trips],
   );
 
-  const [time, setTime] = useState(range[0]);
+  const [time, setTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeedState] = useState(DEFAULT_SPEED);
 
   const isPlayingRef = useRef(isPlaying);
   const speedRef = useRef(speed);
+  const initialTimeSetRef = useRef(false);
 
   const play = useCallback(() => {
     isPlayingRef.current = true;
@@ -53,7 +54,10 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
   const seekTo = useCallback((t: number) => setTime(t), []);
 
   useEffect(() => {
-    setTime(range[0]);
+    if (!initialTimeSetRef.current && range[0] !== 0) {
+      setTime(range[0]);
+      initialTimeSetRef.current = true;
+    }
   }, [range]);
 
   useEffect(() => {

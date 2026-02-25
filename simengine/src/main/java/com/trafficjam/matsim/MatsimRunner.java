@@ -4,6 +4,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,8 +127,14 @@ public class MatsimRunner {
         System.setProperty("matsim.preferLocalDtds", "true");
 
         Config config = ConfigUtils.loadConfig(configPath);
+        
+        // Enable overwriting of existing output files/directory
+        config.controller().setOverwriteFileSetting(org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting.overwriteExistingFiles);
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
+
+        // Clean the network to remove isolated nodes/links
+        new NetworkCleaner().run(scenario.getNetwork());
 
         if (scenario.getNetwork().getNodes().isEmpty()) {
             throw new RuntimeException("Network is empty - check network file path in config");

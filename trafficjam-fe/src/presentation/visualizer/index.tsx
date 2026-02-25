@@ -12,8 +12,11 @@ import {
 import { INITIAL_STATE_CORK, DARK_MAP_STYLE } from "./constants";
 import { BackToEditorButton } from "./components/back-button";
 import { PlaybackBar } from "./components/playback-bar";
+import { useLiveSimulation } from "../../hooks/use-live-simulation";
 
 interface VisualizerProps {
+  scenarioId?: string;
+  runId?: string;
   onBack: () => void;
 }
 
@@ -48,11 +51,16 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
   ];
 }
 
-export function Visualizer({ onBack }: VisualizerProps) {
-  const { data: trips = [] } = useQuery({
+export function Visualizer({ scenarioId, runId, onBack }: VisualizerProps) {
+  const { data: staticTrips = [] } = useQuery({
     queryKey: ["trips"],
     queryFn: loadTrips,
+    enabled: !runId,
   });
+
+  const { trips: liveTrips, isLive } = useLiveSimulation(scenarioId, runId);
+
+  const trips = isLive ? liveTrips : staticTrips;
 
   const simulation = useSimulationTime(trips);
   const layers = useLayers(trips, simulation);
