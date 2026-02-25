@@ -96,19 +96,7 @@ class Adult(Agent):
 
 
 def _default_planner_config() -> "PlannerConfig":
-    return PlannerConfig(
-        population_density=_env_config.default_population_density,
-        shopping_probability=_env_config.shopping_probability,
-        max_shopping_distance_km=_env_config.max_shopping_distance_km,
-        healthcare_chance=_env_config.healthcare_chance,
-        elderly_age_threshold=_env_config.elderly_age_threshold,
-        kindergarten_age=_env_config.kindergarten_age,
-        min_independent_school_age=_env_config.min_independent_school_age,
-        errand_min_minutes=_env_config.errand_min_minutes,
-        errand_max_minutes=_env_config.errand_max_minutes,
-        child_dropoff_min_minutes=_env_config.child_dropoff_min_minutes,
-        child_dropoff_max_minutes=_env_config.child_dropoff_max_minutes,
-    )
+    return PlannerConfig()
 
 
 class PlannerConfig(BaseModel):
