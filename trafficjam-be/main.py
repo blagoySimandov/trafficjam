@@ -16,6 +16,7 @@ from agents.agent_creation import create_agents_from_network
 from config import get_settings
 from consumers import EventConsumer
 from db import engine, async_session_factory, RunRepository, RunStatus
+from api.scenarios import router as scenarios_router
 
 MAX_AGENTS = 1000
 
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(scenarios_router)
 
 
 async def _monitor_all_statuses(js):
