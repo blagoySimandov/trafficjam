@@ -22,6 +22,10 @@ public class MatsimRunner {
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
     private final Map<String, SimulationInfo> activeSimulations = new ConcurrentHashMap<>();
 
+    public enum SimulationState {
+        RUNNING, COMPLETED, FAILED, STOPPED
+    }
+
     public void runSimulation(String configPath) {
         Scenario scenario = loadScenario(configPath);
         Controler controler = new Controler(scenario);
@@ -42,7 +46,7 @@ public class MatsimRunner {
                 handleSimulationFailure(simulationId, e, statusCallback);
                 return;
             }
-            statusCallback.onStatusChange(simulationId, "COMPLETED");
+            statusCallback.onStatusChange(simulationId, SimulationState.COMPLETED);
         });
 
         return simulationId;
@@ -51,7 +55,7 @@ public class MatsimRunner {
     private void executeSimulation(String simulationId, String configPath, Controler controler) {
         logger.info("Starting simulation {} with config: {}", simulationId, configPath);
 
-        SimulationInfo info = new SimulationInfo(Thread.currentThread(), "RUNNING");
+        SimulationInfo info = new SimulationInfo(Thread.currentThread(), SimulationState.RUNNING);
         activeSimulations.put(simulationId, info);
 
         controler.addControlerListener(
@@ -61,25 +65,25 @@ public class MatsimRunner {
 
         controler.run();
         logger.info("Simulation {} completed successfully", simulationId);
-        info.status = "COMPLETED";
+        info.status = SimulationState.COMPLETED;
     }
 
     private void handleSimulationFailure(String simulationId, Exception e, StatusCallback statusCallback) {
         if (isInterruption(e)) {
             logger.info("Simulation {} was stopped by user request.", simulationId);
             SimulationInfo info = activeSimulations.get(simulationId);
-            if (info != null && !"STOPPED".equals(info.status)) info.status = "STOPPED";
-            statusCallback.onStatusChange(simulationId, "STOPPED");
+            if (info != null && SimulationState.STOPPED != info.status) info.status = SimulationState.STOPPED;
+            statusCallback.onStatusChange(simulationId, SimulationState.STOPPED);
             return;
         }
 
         logger.error("Simulation {} FAILED: {}", simulationId, e.getMessage(), e);
         SimulationInfo info = activeSimulations.get(simulationId);
         if (info != null) {
-            info.status = "FAILED";
+            info.status = SimulationState.FAILED;
             info.error = e.getMessage();
         }
-        statusCallback.onStatusChange(simulationId, "FAILED");
+        statusCallback.onStatusChange(simulationId, SimulationState.FAILED);
     }
 
     private boolean isInterruption(Exception e) {
@@ -125,7 +129,7 @@ public class MatsimRunner {
     }
 
     public interface StatusCallback {
-        void onStatusChange(String simulationId, String status);
+        void onStatusChange(String simulationId, SimulationState status);
     }
 
     public void stopSimulation(String simulationId) {
@@ -134,7 +138,7 @@ public class MatsimRunner {
 
         if (info.thread != null && info.thread.isAlive()) {
             info.thread.interrupt();
-            info.status = "STOPPED";
+            info.status = SimulationState.STOPPED;
         }
     }
 
@@ -146,11 +150,11 @@ public class MatsimRunner {
 
     private static class SimulationInfo {
         final Thread thread;
-        String status;
+        SimulationState status;
         String error;
         Integer currentIteration;
 
-        SimulationInfo(Thread thread, String status) {
+        SimulationInfo(Thread thread, SimulationState status) {
             this.thread = thread;
             this.status = status;
             this.currentIteration = 0;
@@ -159,11 +163,11 @@ public class MatsimRunner {
 
     public static class SimulationStatus {
         public final String simulationId;
-        public final String status;
+        public final SimulationState status;
         public final String error;
         public final Integer iteration;
 
-        public SimulationStatus(String simulationId, String status, String error, Integer iteration) {
+        public SimulationStatus(String simulationId, SimulationState status, String error, Integer iteration) {
             this.simulationId = simulationId;
             this.status = status;
             this.error = error;
