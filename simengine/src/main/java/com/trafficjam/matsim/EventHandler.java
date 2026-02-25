@@ -1,8 +1,14 @@
 package com.trafficjam.matsim;
 
+import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.Event;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Custom event handler to capture and process MatSim events for streaming.
@@ -13,13 +19,15 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
     private final List<TransformedEvent> eventBuffer;
     private final int bufferSize;
     private final MatsimRunner.EventCallback callback;
+    private final Network network;
 
     /**
      * Constructor for EventHandler.
      */
-    public EventHandler(MatsimRunner.EventCallback callback, int bufferSize) {
+    public EventHandler(MatsimRunner.EventCallback callback, int bufferSize, Network network) {
         this.callback = callback;
         this.bufferSize = bufferSize;
+        this.network = network;
         this.eventBuffer = new ArrayList<>();
     }
 
@@ -77,13 +85,52 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
     private TransformedEvent transformEvent(Event event) {
         String eventType = event.getEventType();
         double time = event.getTime();
+        Map<String, String> attrs = event.getAttributes();
 
         // Extract common attributes
-        String agentId = (String) event.getAttributes().get("person");
-        String linkId = (String) event.getAttributes().get("link");
-        String activityType = (String) event.getAttributes().get("actType");
+        String agentId = attrs.get("person");
+        if (agentId == null) {
+            agentId = attrs.get("driver");
+        }
+        if (agentId == null) {
+            agentId = attrs.get("vehicle");
+        }
+        
+        String linkId = attrs.get("link");
+        String activityType = attrs.get("actType");
 
-        return new TransformedEvent(eventType, time, agentId, linkId, activityType);
+        Double x = null;
+        Double y = null;
+
+        // Try to get coordinates from attributes (for activity events)
+        if (attrs.containsKey("x") && attrs.get("x") != null) {
+            try {
+                x = Double.parseDouble(attrs.get("x"));
+                y = Double.parseDouble(attrs.get("y"));
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // If no coordinates but we have a link, use the link's nodes
+        if (x == null && linkId != null && network != null) {
+            Link link = network.getLinks().get(Id.createLinkId(linkId));
+            if (link != null) {
+                Coord coord;
+                if ("entered link".equals(eventType) || "departure".equals(eventType)) {
+                    coord = link.getFromNode().getCoord();
+                } else if ("left link".equals(eventType) || "arrival".equals(eventType)) {
+                    coord = link.getToNode().getCoord();
+                } else {
+                    coord = link.getCoord(); // Fallback to midpoint
+                }
+                
+                if (coord != null) {
+                    x = coord.getX();
+                    y = coord.getY();
+                }
+            }
+        }
+
+        return new TransformedEvent(eventType, time, agentId, linkId, activityType, x, y);
     }
 
     /**
@@ -142,12 +189,14 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
         public Double x; // X coordinate (if applicable)
         public Double y; // Y coordinate (if applicable)
 
-        public TransformedEvent(String type, double time, String agentId, String linkId, String activityType) {
+        public TransformedEvent(String type, double time, String agentId, String linkId, String activityType, Double x, Double y) {
             this.type = type;
             this.time = time;
             this.agentId = agentId;
             this.linkId = linkId;
             this.activityType = activityType;
+            this.x = x;
+            this.y = y;
         }
     }
 }
