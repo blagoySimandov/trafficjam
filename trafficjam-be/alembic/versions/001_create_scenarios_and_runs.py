@@ -81,12 +81,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop in reverse order to respect FK constraint
-    op.drop_index("ix_runs_scenario_id", table_name="runs")
-    op.drop_table("runs")
-
-    # Drop the enum type
-    runstatus_enum = postgresql.ENUM(name="runstatus", create_type=False)
-    runstatus_enum.drop(op.get_bind())
-
-    op.drop_table("scenarios")
+    pass
