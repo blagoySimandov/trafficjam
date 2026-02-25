@@ -79,9 +79,10 @@ def root():
 @app.post("/scenarios/{scenario_id}/runs")
 async def create_run(scenario_id: str, run_id: str | None = None):
     repo = RunRepository(async_session_factory)
+    parsed_scenario_id = uuid.UUID(scenario_id)
     parsed_id = uuid.UUID(run_id) if run_id else None
-    run = await repo.create_run(scenario_id, parsed_id)
-    return {"scenario_id": run.scenario_id, "run_id": str(run.id), "status": run.status}
+    run = await repo.create_run(parsed_scenario_id, parsed_id)
+    return {"scenario_id": str(run.scenario_id), "run_id": str(run.id), "status": run.status}
 
 
 @app.post("/scenarios/{scenario_id}/runs/start")
@@ -93,7 +94,8 @@ async def start_run(
 ):
     settings = get_settings()
     repo = RunRepository(async_session_factory)
-    run = await repo.create_run(scenario_id)
+    parsed_scenario_id = uuid.UUID(scenario_id)
+    run = await repo.create_run(parsed_scenario_id)
     run_id = str(run.id)
 
     async with httpx.AsyncClient() as client:
@@ -173,7 +175,8 @@ async def stream_run_events(scenario_id: str, run_id: str, request: Request):
         raise HTTPException(400, "Invalid run ID")
 
     repo = RunRepository(async_session_factory)
-    run = await repo.get_run_by_scenario(scenario_id, parsed_id)
+    parsed_scenario_id = uuid.UUID(scenario_id)
+    run = await repo.get_run_by_scenario(parsed_scenario_id, parsed_id)
     if not run:
         raise HTTPException(404, "Run not found")
 
