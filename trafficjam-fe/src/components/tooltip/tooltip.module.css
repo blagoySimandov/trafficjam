@@ -1,8 +1,11 @@
 .container {
-  position: relative;
   display: inline-flex;
   align-items: center;
   cursor: help;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
 }
 
 .helpIcon {
@@ -15,11 +18,6 @@
 }
 
 .content {
-  visibility: hidden;
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
   background-color: #333;
   color: #fff;
   text-align: center;
@@ -28,27 +26,13 @@
   width: 200px;
   font-size: 0.75rem;
   font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
+  z-index: 3000;
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
-.content::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: #333 transparent transparent transparent;
-}
-
-.container:hover .content {
-  visibility: visible;
-  opacity: 1;
+.arrow {
+  fill: #333;
 }

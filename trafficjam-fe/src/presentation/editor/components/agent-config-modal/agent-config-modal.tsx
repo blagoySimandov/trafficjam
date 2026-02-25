@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Save, Undo2 } from "lucide-react";
 import { Tooltip } from "../../../../components/tooltip";
 import { Dialog } from "../../../../components/dialog";
@@ -13,21 +13,17 @@ interface AgentConfigModalProps {
 }
 
 export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModalProps) {
-  const [config, setConfig] = useState<AgentConfig>({ ...scenario.agentConfig });
+  const { register, handleSubmit, reset, watch } = useForm<AgentConfig>({
+    defaultValues: { ...scenario.agentConfig }
+  });
 
-  const handleChange = (field: keyof AgentConfig, value: number) => {
-    setConfig((prev: AgentConfig) => ({ ...prev, [field]: value }));
-  };
+  const shoppingProbability = watch("shoppingProbability");
+  const healthcareChance = watch("healthcareChance");
 
   const handleReset = () => {
     if (confirm("Reset to defaults?")) {
-      setConfig({ ...DEFAULT_AGENT_CONFIG });
+      reset({ ...DEFAULT_AGENT_CONFIG });
     }
-  };
-
-  const handleSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    onSave(config);
   };
 
   const dialogTitle = (
@@ -44,7 +40,7 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
       </button>
       <div className={styles.rightActions}>
         <button type="button" className={styles.cancelBtn} onClick={onClose}>Cancel</button>
-        <button type="button" className={styles.saveBtn} onClick={() => handleSubmit()}>
+        <button type="button" className={styles.saveBtn} onClick={handleSubmit(onSave)}>
           <Save size={16} /> Save Changes
         </button>
       </div>
@@ -58,7 +54,7 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
       onClose={onClose}
       maxWidth={650}
     >
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit(onSave)} className={styles.form}>
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>
             Population & Distance
@@ -69,8 +65,7 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <label>Population Density (per km²)</label>
               <input 
                 type="number" 
-                value={config.populationDensity} 
-                onChange={e => handleChange("populationDensity", parseInt(e.target.value) || 0)} 
+                {...register("populationDensity", { valueAsNumber: true })} 
               />
             </div>
             <div className={styles.field}>
@@ -78,8 +73,7 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <input 
                 type="number" 
                 step="0.1"
-                value={config.maxShoppingDistanceKm} 
-                onChange={e => handleChange("maxShoppingDistanceKm", parseFloat(e.target.value) || 0)} 
+                {...register("maxShoppingDistanceKm", { valueAsNumber: true })} 
               />
             </div>
           </div>
@@ -95,19 +89,17 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <label>Shopping Probability (0-1)</label>
               <input 
                 type="range" min="0" max="1" step="0.05"
-                value={config.shoppingProbability} 
-                onChange={e => handleChange("shoppingProbability", parseFloat(e.target.value))} 
+                {...register("shoppingProbability", { valueAsNumber: true })} 
               />
-              <span className={styles.valueLabel}>{(config.shoppingProbability * 100).toFixed(0)}%</span>
+              <span className={styles.valueLabel}>{(shoppingProbability * 100).toFixed(0)}%</span>
             </div>
             <div className={styles.field}>
               <label>Healthcare Chance (0-1)</label>
               <input 
                 type="range" min="0" max="1" step="0.05"
-                value={config.healthcareChance} 
-                onChange={e => handleChange("healthcareChance", parseFloat(e.target.value))} 
+                {...register("healthcareChance", { valueAsNumber: true })} 
               />
-              <span className={styles.valueLabel}>{(config.healthcareChance * 100).toFixed(0)}%</span>
+              <span className={styles.valueLabel}>{(healthcareChance * 100).toFixed(0)}%</span>
             </div>
           </div>
         </section>
@@ -122,16 +114,14 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <label>Elderly Age Threshold</label>
               <input 
                 type="number" 
-                value={config.elderlyAgeThreshold} 
-                onChange={e => handleChange("elderlyAgeThreshold", parseInt(e.target.value) || 0)} 
+                {...register("elderlyAgeThreshold", { valueAsNumber: true })} 
               />
             </div>
             <div className={styles.field}>
               <label>Kindergarten Age</label>
               <input 
                 type="number" 
-                value={config.kindergartenAge} 
-                onChange={e => handleChange("kindergartenAge", parseInt(e.target.value) || 0)} 
+                {...register("kindergartenAge", { valueAsNumber: true })} 
               />
             </div>
           </div>
@@ -148,11 +138,11 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <div className={styles.rangeInput}>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Min</span>
-                  <input type="number" value={config.errandMinMinutes} onChange={e => handleChange("errandMinMinutes", parseInt(e.target.value) || 0)} />
+                  <input type="number" {...register("errandMinMinutes", { valueAsNumber: true })} />
                 </div>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Max</span>
-                  <input type="number" value={config.errandMaxMinutes} onChange={e => handleChange("errandMaxMinutes", parseInt(e.target.value) || 0)} />
+                  <input type="number" {...register("errandMaxMinutes", { valueAsNumber: true })} />
                 </div>
               </div>
             </div>
@@ -161,11 +151,11 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <div className={styles.rangeInput}>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Min</span>
-                  <input type="number" value={config.childDropoffMinMinutes} onChange={e => handleChange("childDropoffMinMinutes", parseInt(e.target.value) || 0)} />
+                  <input type="number" {...register("childDropoffMinMinutes", { valueAsNumber: true })} />
                 </div>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Max</span>
-                  <input type="number" value={config.childDropoffMaxMinutes} onChange={e => handleChange("childDropoffMaxMinutes", parseInt(e.target.value) || 0)} />
+                  <input type="number" {...register("childDropoffMaxMinutes", { valueAsNumber: true })} />
                 </div>
               </div>
             </div>
