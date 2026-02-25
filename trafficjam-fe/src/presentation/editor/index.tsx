@@ -30,8 +30,8 @@ export function Editor({ onRunSimulation }: EditorProps) {
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
   const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
-  const handleLinkClick = useCallback((link: TrafficLink) => {
-    setSelectedLinks(resolveSelection(link));
+  const handleLinkClick = useCallback((link: TrafficLink, modKey: boolean) => {
+    setSelectedLinks(resolveSelection(link, modKey));
   }, [resolveSelection]);
 
   const handleLinkSave = useCallback(
