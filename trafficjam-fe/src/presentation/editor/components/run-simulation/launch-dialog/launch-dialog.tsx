@@ -57,7 +57,7 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
           buildings, 
           bounds, 
           iterations: data.iterations, 
-          randomSeed: data.randomSeed 
+          randomSeed: (data.randomSeed !== undefined && !isNaN(data.randomSeed)) ? data.randomSeed : undefined 
         },
         {
           onSuccess: (responseData) => {
