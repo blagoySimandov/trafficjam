@@ -1,22 +1,17 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { simulationApi } from "./simengine";
-import type { StartSimulationParams } from "./simengine";
+import { useMutation } from "@tanstack/react-query";
+import { simulationApi } from "./trafficjam-be";
+import type { StartRunParams } from "./trafficjam-be";
 
-export function useSimulation(id: string | undefined) {
-  const status = useQuery({
-    queryKey: ["simulation", "status", id],
-    queryFn: () => simulationApi.getStatus(id!),
-    enabled: !!id,
-  });
-
+//_scenarioId is not used yet but will be in the future when we implement the concept of scenarios
+// eslint-disable-next-line
+export function useSimulation(_scenarioId: string | undefined) {
   const start = useMutation({
-    mutationFn: (params: StartSimulationParams) =>
-      simulationApi.start(params),
+    mutationFn: (params: StartRunParams) => simulationApi.startRun(params),
   });
 
-  const stop = useMutation({
-    mutationFn: (simId: string) => simulationApi.stop(simId),
+  const createRun = useMutation({
+    mutationFn: (id: string) => simulationApi.createRun(id),
   });
 
-  return { status, start, stop };
+  return { start, createRun };
 }

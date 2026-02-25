@@ -55,3 +55,10 @@ simengine/eclipse-formatter.xml
 simengine/.classpath
 simengine/.factorypath
 simengine/.project
+.claude
+map-data-service/.env.example
+trafficjam-fe/.env
+trafficjam-fe/.env
+trafficjam-fe/.env
+trafficjam-fe/.env
+trafficjam-be/java/.*
