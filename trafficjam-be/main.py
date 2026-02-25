@@ -15,7 +15,7 @@ from agents.plans import generate_plan_for_agent, MATSimXMLWriter
 from agents.agent_creation import create_agents_from_network
 from config import get_settings
 from consumers import EventConsumer
-from db import engine, async_session_factory, Base, RunRepository, RunStatus
+from db import engine, async_session_factory, RunRepository, RunStatus
 
 MAX_AGENTS = 1000
 
@@ -30,8 +30,6 @@ class StatusMessage(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
     app.state.nc = await nats_lib.connect(settings.nats_url)
     app.state.js = app.state.nc.jetstream()
     app.state.status_worker = asyncio.create_task(_monitor_all_statuses(app.state.js))
