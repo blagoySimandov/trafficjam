@@ -2,7 +2,6 @@ import random
 from datetime import time
 
 from ..config import (
-    config,
     ADULT_DEPARTURE_CUMULATIVE_PROBS,
     ELDERLY_DEPARTURE_HOURS,
     ELDERLY_DEPARTURE_WEIGHTS,
@@ -12,6 +11,7 @@ from ..config import (
     SCHOOL_DEPARTURE_HOURS,
     SCHOOL_DEPARTURE_WEIGHTS,
 )
+from ..models import PlannerConfig
 
 
 def generate_departure_time_adult() -> time:
@@ -41,7 +41,7 @@ def generate_departure_time_elderly() -> time:
     return time(hour, random.randint(0, 59))
 
 
-def generate_departure_time_school(age: int) -> time:
+def generate_departure_time_school(age: int, config: PlannerConfig) -> time:
     if age < config.min_independent_school_age:
         hour, minute = 8, random.randint(0, 30)
     else:
@@ -57,7 +57,7 @@ def generate_work_duration() -> time:
     return time(hours, minutes)
 
 
-def generate_school_duration(age: int) -> time:
+def generate_school_duration(age: int, config: PlannerConfig) -> time:
     if age < config.kindergarten_age:
         hours = random.randint(4, 6)
     elif age < config.min_independent_school_age:
@@ -68,10 +68,10 @@ def generate_school_duration(age: int) -> time:
     return time(hours, random.choice([0, 30]))
 
 
-def generate_errand_duration() -> time:
+def generate_errand_duration(config: PlannerConfig) -> time:
     total_minutes = random.randint(config.errand_min_minutes, config.errand_max_minutes)
     return time(total_minutes // 60, total_minutes % 60)
 
 
-def should_go_shopping() -> bool:
+def should_go_shopping(config: PlannerConfig) -> bool:
     return random.random() < config.shopping_probability

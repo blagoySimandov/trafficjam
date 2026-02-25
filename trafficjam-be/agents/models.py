@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from enum import Enum
 from datetime import time
+
+from .config import config as _env_config
 
 
 class Building(BaseModel):
@@ -16,7 +18,6 @@ class Building(BaseModel):
         return self.tags.get(key)
 
 
-# Plans
 class ActivityType(str, Enum):
     HOME = "home"
     WORK = "work"
@@ -29,7 +30,6 @@ class ActivityType(str, Enum):
 class Activity(BaseModel):
     type: ActivityType
     location: tuple[float, float] = (0, 0)
-    # Start time is implicite, its just end time of the previous task (first one is just the 00:00:00)
     end_time: time | None = None
     duration: time | None = None
 
@@ -72,7 +72,6 @@ class TransportMode(str, Enum):
     BIKE = "bike"
 
 
-# Agents
 class Agent(BaseModel):
     id: str
     age: int
@@ -96,8 +95,38 @@ class Adult(Agent):
     needs_to_dropoff_children: bool = False
 
 
-# Request/Response types
+def _default_planner_config() -> "PlannerConfig":
+    return PlannerConfig(
+        population_density=_env_config.default_population_density,
+        shopping_probability=_env_config.shopping_probability,
+        max_shopping_distance_km=_env_config.max_shopping_distance_km,
+        healthcare_chance=_env_config.healthcare_chance,
+        elderly_age_threshold=_env_config.elderly_age_threshold,
+        kindergarten_age=_env_config.kindergarten_age,
+        min_independent_school_age=_env_config.min_independent_school_age,
+        errand_min_minutes=_env_config.errand_min_minutes,
+        errand_max_minutes=_env_config.errand_max_minutes,
+        child_dropoff_min_minutes=_env_config.child_dropoff_min_minutes,
+        child_dropoff_max_minutes=_env_config.child_dropoff_max_minutes,
+    )
+
+
+class PlannerConfig(BaseModel):
+    population_density: int = _env_config.default_population_density
+    shopping_probability: float = _env_config.shopping_probability
+    max_shopping_distance_km: float = _env_config.max_shopping_distance_km
+    healthcare_chance: float = _env_config.healthcare_chance
+    elderly_age_threshold: int = _env_config.elderly_age_threshold
+    kindergarten_age: int = _env_config.kindergarten_age
+    min_independent_school_age: int = _env_config.min_independent_school_age
+    errand_min_minutes: int = _env_config.errand_min_minutes
+    errand_max_minutes: int = _env_config.errand_max_minutes
+    child_dropoff_min_minutes: int = _env_config.child_dropoff_min_minutes
+    child_dropoff_max_minutes: int = _env_config.child_dropoff_max_minutes
+
+
 class PlanCreationRequest(BaseModel):
-    bounds: dict[str, float]  # {"north": ..., "south": ..., "east": ..., "west": ...}
+    bounds: dict[str, float]
     buildings: list[Building]
     country_code: str = "IRL"
+    config: PlannerConfig = Field(default_factory=_default_planner_config)
