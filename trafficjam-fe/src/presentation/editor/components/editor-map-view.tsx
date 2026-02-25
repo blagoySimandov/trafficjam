@@ -33,7 +33,7 @@ interface EditorMapViewProps {
   onUndo: () => void;
   onClear: () => void;
   canUndo: boolean;
-  selectedLinkId: string[] | string | null;
+  selectedLinkId: string[];
 }
 
 export function EditorMapView({

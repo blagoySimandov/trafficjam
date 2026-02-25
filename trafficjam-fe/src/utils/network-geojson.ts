@@ -23,14 +23,10 @@ function calculateWeight(baseWeight: number, lanes: number): number {
 
 export function networkToGeoJSON(
   network: Network,
-  selectedLinkIds?: string[] | string | null,
+  selectedLinkIds: string[] = [],
 ): FeatureCollection<LineString, LinkFeatureProperties> {
   const features: Feature<LineString, LinkFeatureProperties>[] = [];
-  const selectedIds = Array.isArray(selectedLinkIds)
-    ? new Set(selectedLinkIds)
-    : selectedLinkIds
-      ? new Set([selectedLinkIds])
-      : new Set<string>();
+  const selectedIds = new Set(selectedLinkIds);
 
   for (const link of network.links.values()) {
     const isSelected = selectedIds.has(link.id);
