@@ -2,7 +2,7 @@ import logging
 import random
 import uuid
 
-from .models import Building, Child, Adult, Agent, TransportMode
+from .models import Building, Child, Adult, Agent, TransportMode, PlannerConfig
 from .geo import calculate_area_wgs84
 from .population import estimate_population
 from .work_assignment import assign_work_location
@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_population_from_bounds(
-    bounds: dict[str, float], country_code: str
+    bounds: dict[str, float], country_code: str, config: PlannerConfig
 ) -> int:
     area_km2 = calculate_area_wgs84(bounds)
-    return estimate_population(area_km2, country_code)
+    return estimate_population(area_km2, country_code, config)
 
 
 def create_child(
@@ -49,11 +49,12 @@ def create_adult(
     has_transport: bool,
     needs_to_dropoff_children: bool,
     children_ids: list[Child],
+    config: PlannerConfig,
 ) -> Adult:
-    age = generate_adult_age()
-    employed, is_student = determine_employment_status(age)
+    age = generate_adult_age(config)
+    employed, is_student = determine_employment_status(age, config)
     uses_pt, has_car = determine_transport_preferences(
-        age, employed, has_transport, needs_to_dropoff_children
+        age, employed, has_transport, needs_to_dropoff_children, config
     )
 
     if has_car:
@@ -88,6 +89,7 @@ def create_household(
     schools: list[Building],
     kindergartens: list[Building],
     has_transport: bool,
+    config: PlannerConfig,
 ) -> list[Agent]:
     num_children = random.choices([0, 1, 2, 3], weights=[0.3, 0.35, 0.25, 0.1])[0]
     num_adults = random.choices([1, 2], weights=[0.3, 0.7])[0]
@@ -106,6 +108,7 @@ def create_household(
             has_transport,
             is_dropper,
             children_ids if is_dropper else [],
+            config,
         )
         adults.append(adult)
 
@@ -117,9 +120,10 @@ def create_agents_from_network(
     bounds: dict[str, float],
     buildings: list[Building],
     transport_routes: list,
-    country_code: str = "IRL",
+    country_code: str,
+    config: PlannerConfig,
 ) -> list[Agent]:
-    total_population = calculate_population_from_bounds(bounds, country_code)
+    total_population = calculate_population_from_bounds(bounds, country_code, config)
     logger.info(f"Creating ~{total_population} agents for {country_code}")
 
     residential_buildings = [
@@ -138,7 +142,7 @@ def create_agents_from_network(
     for _ in range(num_households):
         home = random.choice(residential_buildings)
         household = create_household(
-            home, buildings, schools, kindergartens, has_transport
+            home, buildings, schools, kindergartens, has_transport, config
         )
         agents.extend(household)
 

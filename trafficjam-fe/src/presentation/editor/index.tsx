@@ -15,7 +15,6 @@ interface EditorProps {
 }
 
 export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
-  //TODO: move this to util
   function remapSelectedLinks(
     selectedLinks: TrafficLink[],
     network: Network,
