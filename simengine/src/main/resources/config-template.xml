@@ -28,16 +28,48 @@
 		
 		<!-- STATIC: Activity parameters for home -->
 		<parameterset type="activityParams">
-			<param name="activityType" value="h" />
+			<param name="activityType" value="home" />
 			<param name="typicalDuration" value="12:00:00" />
 		</parameterset>
 		
 		<!-- STATIC: Activity parameters for work -->
 		<parameterset type="activityParams">
-			<param name="activityType" value="w" />
+			<param name="activityType" value="work" />
 			<param name="typicalDuration" value="08:00:00" />
 			<param name="openingTime" value="07:00:00" />
 			<param name="closingTime" value="18:00:00" />
+		</parameterset>
+
+		<!-- STATIC: Activity parameters for education -->
+		<parameterset type="activityParams">
+			<param name="activityType" value="education" />
+			<param name="typicalDuration" value="06:00:00" />
+			<param name="openingTime" value="08:00:00" />
+			<param name="closingTime" value="16:00:00" />
+		</parameterset>
+
+		<!-- STATIC: Activity parameters for shopping -->
+		<parameterset type="activityParams">
+			<param name="activityType" value="shopping" />
+			<param name="typicalDuration" value="01:00:00" />
+			<param name="openingTime" value="08:00:00" />
+			<param name="closingTime" value="21:00:00" />
+		</parameterset>
+
+		<!-- STATIC: Activity parameters for healthcare -->
+		<parameterset type="activityParams">
+			<param name="activityType" value="healthcare" />
+			<param name="typicalDuration" value="01:00:00" />
+			<param name="openingTime" value="08:00:00" />
+			<param name="closingTime" value="18:00:00" />
+		</parameterset>
+
+		<!-- STATIC: Activity parameters for leisure -->
+		<parameterset type="activityParams">
+			<param name="activityType" value="leisure" />
+			<param name="typicalDuration" value="02:00:00" />
+			<param name="openingTime" value="10:00:00" />
+			<param name="closingTime" value="23:00:00" />
 		</parameterset>
 		
 		<!-- STATIC: Mode parameters for car -->
@@ -61,16 +93,9 @@
 			<param name="marginalUtilityOfTraveling_util_hr" value="-10.0"/>
 		</parameterset>
 		
-		<!-- STATIC: Mode parameters for bus -->
+		<!-- STATIC: Mode parameters for public transport -->
 		<parameterset type="modeParams">
-			<param name="mode" value="bus"/>
-			<param name="constant" value="-2.0"/>
-			<param name="marginalUtilityOfTraveling_util_hr" value="-6.0"/>
-		</parameterset>
-		
-		<!-- STATIC: Mode parameters for car_passenger -->
-		<parameterset type="modeParams">
-			<param name="mode" value="car_passenger"/>
+			<param name="mode" value="pt"/>
 			<param name="constant" value="-1.0"/>
 			<param name="marginalUtilityOfTraveling_util_hr" value="-6.0"/>
 		</parameterset>
@@ -114,11 +139,11 @@
 
 	<!-- STATIC: Routing configuration for teleported modes (non-network modes) -->
 	<module name="routing">
-		<!-- STATIC: car_passenger teleported mode (~50 km/h) -->
+		<!-- STATIC: pt teleported mode (~30 km/h) -->
 		<parameterset type="teleportedModeParameters">
-			<param name="mode" value="car_passenger" />
-			<param name="teleportedModeSpeed" value="13.88" />  <!-- 50 km/h in m/s -->
-			<param name="beelineDistanceFactor" value="1.3" />  <!-- Road network detour factor -->
+			<param name="mode" value="pt" />
+			<param name="teleportedModeSpeed" value="8.33" />
+			<param name="beelineDistanceFactor" value="1.5" />
 		</parameterset>
 		
 		<!-- STATIC: walk teleported mode (~5 km/h) -->
@@ -133,13 +158,6 @@
 			<param name="mode" value="bike" />
 			<param name="teleportedModeSpeed" value="4.17" />  <!-- 15 km/h in m/s -->
 			<param name="beelineDistanceFactor" value="1.3" />
-		</parameterset>
-		
-		<!-- STATIC: bus teleported mode (~30 km/h, slower due to stops) -->
-		<parameterset type="teleportedModeParameters">
-			<param name="mode" value="bus" />
-			<param name="teleportedModeSpeed" value="8.33" />  <!-- 30 km/h in m/s -->
-			<param name="beelineDistanceFactor" value="1.5" />  <!-- Less direct routes than car -->
 		</parameterset>
 	</module>
 

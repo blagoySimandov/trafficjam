@@ -9,7 +9,7 @@ import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import type { TrafficLink, Network } from "../../types";
 
 interface EditorProps {
-  onRunSimulation: () => void;
+  onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
 }
 
 function remapSelectedLinks(
@@ -71,6 +71,15 @@ export function Editor({ onRunSimulation }: EditorProps) {
     setSelectedLinks([]);
   }, []);
 
+
+  const handleLaunch = useCallback(
+    (info: { scenarioId: string; runId: string }) => {
+      setDialogOpen(false);
+      onRunSimulation(info);
+    },
+    [onRunSimulation],
+  );
+  
   const handleSelectAllWithSameName = useCallback(
     (streetName: string) => {
       if (!network) return;
@@ -83,10 +92,6 @@ export function Editor({ onRunSimulation }: EditorProps) {
     [network],
   );
 
-  const handleLaunch = useCallback(() => {
-    setDialogOpen(false);
-    onRunSimulation();
-  }, [onRunSimulation]);
 
   return (
     <>
@@ -114,6 +119,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
       {dialogOpen && (
         <LaunchDialog
+          network={network}
           onLaunch={handleLaunch}
           onClose={() => setDialogOpen(false)}
         />
