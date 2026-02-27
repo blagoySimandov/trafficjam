@@ -116,6 +116,17 @@
   text-overflow: ellipsis;
 }
 
+.scenarioActions {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.deleteBtn:hover {
+  color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
 .newScenarioBtn, .iconBtn {
   background: none;
   border: none;

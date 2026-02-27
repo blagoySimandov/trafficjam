@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Visualizer } from "./presentation/visualizer";
 import { Editor } from "./presentation/editor";
 import { Sidebar } from "./components/sidebar/sidebar";
+import { ConfirmDialog } from "./components/confirm-dialog";
 import { AgentConfigModal } from "./presentation/editor/components/agent-config-modal/agent-config-modal";
 import { useScenarioManager } from "./api/scenarios";
 import type { Run } from "./api/scenarios";
@@ -17,8 +18,12 @@ export default function App() {
     setActiveScenarioId,
     createScenario,
     updateScenario,
+    deleteScenario,
     runs,
   } = useScenarioManager();
+
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const [runInfo, setRunInfo] = useState<{
     scenarioId: string;
@@ -39,12 +44,15 @@ export default function App() {
     setMode("editor");
   }, []);
 
-  const handleCreateScenario = useCallback(() => {
-    const name = prompt("Enter scenario name:", "New Scenario");
-    if (name) {
-      createScenario(name);
-      setMode("editor");
-    }
+  const handleConfirmDelete = useCallback(() => {
+    if (deleteTarget) deleteScenario(deleteTarget);
+    setDeleteTarget(null);
+  }, [deleteTarget, deleteScenario]);
+
+  const handleCreateScenario = useCallback((name: string) => {
+    createScenario(name);
+    setIsCreateOpen(false);
+    setMode("editor");
   }, [createScenario]);
 
   return (
@@ -56,8 +64,9 @@ export default function App() {
           setActiveScenarioId(id);
           setMode("editor");
         }}
-        onCreateScenario={handleCreateScenario}
+        onCreateScenario={() => setIsCreateOpen(true)}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
+        onDeleteScenario={setDeleteTarget}
         runs={runs}
         onSelectRun={handleSelectRun}
       />
@@ -75,6 +84,27 @@ export default function App() {
           />
         )}
       </main>
+
+      {isCreateOpen && (
+        <ConfirmDialog
+          title="New Scenario"
+          message="Enter a name for the new scenario."
+          confirmLabel="Create"
+          variant="primary"
+          input={{ placeholder: "Scenario name", defaultValue: "New Scenario" }}
+          onConfirm={handleCreateScenario}
+          onClose={() => setIsCreateOpen(false)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete Scenario"
+          message="This will permanently delete this scenario and cannot be undone."
+          onConfirm={handleConfirmDelete}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
 
       {isConfigOpen && activeScenario && (
         <AgentConfigModal
