@@ -1,35 +1,121 @@
-import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
 import { Visualizer } from "./presentation/visualizer";
 import { Editor } from "./presentation/editor";
-
-const queryClient = new QueryClient();
+import { Sidebar } from "./components/sidebar/sidebar";
+import { ConfirmDialog } from "./components/confirm-dialog";
+import { AgentConfigModal } from "./presentation/editor/components/agent-config-modal/agent-config-modal";
+import { useScenarioManager } from "./api/scenarios";
+import type { Run } from "./api/scenarios";
 
 type Mode = "editor" | "visualizer";
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("editor");
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const {
+    scenarios,
+    activeScenario,
+    setActiveScenarioId,
+    createScenario,
+    updateScenario,
+    deleteScenario,
+    runs,
+  } = useScenarioManager();
+
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
   const [runInfo, setRunInfo] = useState<{
     scenarioId: string;
     runId: string;
   } | null>(null);
 
+  const handleRunSimulation = useCallback((info: { scenarioId: string; runId: string }) => {
+    setRunInfo(info);
+    setMode("visualizer");
+  }, []);
+
+  const handleSelectRun = useCallback((run: Run) => {
+    setRunInfo({ scenarioId: run.scenarioId, runId: run.id });
+    setMode("visualizer");
+  }, []);
+
+  const handleBackToEditor = useCallback(() => {
+    setMode("editor");
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deleteTarget) deleteScenario(deleteTarget);
+    setDeleteTarget(null);
+  }, [deleteTarget, deleteScenario]);
+
+  const handleCreateScenario = useCallback((name: string) => {
+    createScenario(name);
+    setIsCreateOpen(false);
+    setMode("editor");
+  }, [createScenario]);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      {mode === "editor" ? (
-        <Editor
-          onRunSimulation={(info) => {
-            setRunInfo(info);
-            setMode("visualizer");
-          }}
-        />
-      ) : (
-        <Visualizer
-          scenarioId={runInfo?.scenarioId}
-          runId={runInfo?.runId}
-          onBack={() => setMode("editor")}
+    <div style={{ display: "flex", width: "100vw", height: "100vh", overflow: "hidden" }}>
+      <Sidebar
+        scenarios={scenarios}
+        activeScenarioId={activeScenario?.id || null}
+        onSelectScenario={(id) => {
+          setActiveScenarioId(id);
+          setMode("editor");
+        }}
+        onCreateScenario={() => setIsCreateOpen(true)}
+        onOpenAgentConfig={() => setIsConfigOpen(true)}
+        onDeleteScenario={setDeleteTarget}
+        runs={runs}
+        onSelectRun={handleSelectRun}
+      />
+      <main style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+        {mode === "editor" ? (
+          <Editor
+            activeScenario={activeScenario}
+            onRunSimulation={handleRunSimulation}
+          />
+        ) : (
+          <Visualizer
+            scenarioId={runInfo?.scenarioId}
+            runId={runInfo?.runId}
+            onBack={handleBackToEditor}
+          />
+        )}
+      </main>
+
+      {isCreateOpen && (
+        <ConfirmDialog
+          title="New Scenario"
+          message="Enter a name for the new scenario."
+          confirmLabel="Create"
+          variant="primary"
+          input={{ placeholder: "Scenario name", defaultValue: "New Scenario" }}
+          onConfirm={handleCreateScenario}
+          onClose={() => setIsCreateOpen(false)}
         />
       )}
-    </QueryClientProvider>
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete Scenario"
+          message="This will permanently delete this scenario and cannot be undone."
+          onConfirm={handleConfirmDelete}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {isConfigOpen && activeScenario && (
+        <AgentConfigModal
+          scenario={activeScenario}
+          onClose={() => setIsConfigOpen(false)}
+          onSave={(config) => {
+            updateScenario(activeScenario.id, { agentConfig: config });
+            setIsConfigOpen(false);
+          }}
+        />
+      )}
+    </div>
   );
 }

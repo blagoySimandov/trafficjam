@@ -1,0 +1,76 @@
+.message {
+  font-size: 0.95rem;
+  color: #ccc;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.input {
+  width: 100%;
+  margin-top: 1rem;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  color: #fff;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #333;
+}
+
+.cancelButton {
+  background: none;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cancelButton:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.dangerButton,
+.primaryButton {
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dangerButton {
+  background: #dc2626;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.primaryButton {
+  background: #2563eb;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.dangerButton:disabled,
+.primaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
