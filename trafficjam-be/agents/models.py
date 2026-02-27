@@ -95,9 +95,3 @@ class Adult(Agent):
     children: list[Child] = []
     needs_to_dropoff_children: bool = False
 
-
-# Request/Response types
-class PlanCreationRequest(BaseModel):
-    bounds: dict[str, float]  # {"north": ..., "south": ..., "east": ..., "west": ...}
-    buildings: list[Building]
-    country_code: str = "IRL"
