@@ -205,13 +205,14 @@ async def plan_creation(request: PlanCreationRequest):
         buildings=request.buildings,
         transport_routes=[],
         country_code=request.country_code,
+        config=request.config,
     )
 
     if len(agents) > MAX_AGENTS:
         agents = agents[:MAX_AGENTS]
 
     for agent in agents:
-        plan = generate_plan_for_agent(agent, request.buildings)
+        plan = generate_plan_for_agent(agent, request.buildings, request.config)
         if plan:
             writer.add_person_plan(agent.id, plan)
 
