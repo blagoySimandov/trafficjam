@@ -1,3 +1,4 @@
+alembic==1.15.1
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.12.1
@@ -27,6 +28,7 @@ MarkupSafe==3.0.3
 mdurl==0.1.2
 nats-py==2.13.1
 packaging==26.0
+psycopg[binary]==3.3.3
 pluggy==1.6.0
 pydantic==2.12.5
 pydantic-extra-types==2.11.0
