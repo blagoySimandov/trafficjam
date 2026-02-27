@@ -3,6 +3,7 @@ export interface Trip {
   id: string;
   path: [number, number][];
   timestamps: number[];
+  activityType?: string;
 }
 
 export async function loadTrips(): Promise<Trip[]> {

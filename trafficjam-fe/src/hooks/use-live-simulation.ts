@@ -16,6 +16,7 @@ function processEvent(event: StreamedEvent, tripsMap: Map<string, Trip>) {
 
   trip.path.push([event.x, event.y]);
   trip.timestamps.push(event.time);
+  trip.activityType = event.activityType || undefined;
 }
 
 export function useLiveSimulation(scenarioId?: string, runId?: string) {
@@ -28,7 +29,11 @@ export function useLiveSimulation(scenarioId?: string, runId?: string) {
       const tripsMap = new Map<string, Trip>();
       let eventCount = 0;
 
-      for await (const event of simulationApi.streamEvents(scenarioId!, runId!, signal)) {
+      for await (const event of simulationApi.streamEvents(
+        scenarioId!,
+        runId!,
+        signal,
+      )) {
         processEvent(event, tripsMap);
         eventCount++;
 

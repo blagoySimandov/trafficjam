@@ -1,46 +1,26 @@
 import { useCallback, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useHotkeys } from "react-hotkeys-hook";
+import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { Play, Loader2 } from "lucide-react";
-import { loadTrips, getTimeRange } from "../../../../../event-processing";
-import { formatSimulationTime } from "../../../../../utils/format-time";
 import { networkToMatsim } from "../../../../../osm/matsim";
 import { calculateBounds } from "../../../../../utils/network-bounds";
 import { useSimulation } from "../../../../../api";
+import { Dialog } from "../../../../../components/dialog";
 import type { Network } from "../../../../../types";
+import type { Scenario } from "../../../../../api/scenarios";
 import styles from "./launch-dialog.module.css";
 
 interface LaunchDialogProps {
+  activeScenario: Scenario | null;
   network: Network | null;
   onLaunch: (info: { scenarioId: string; runId: string }) => void;
   onClose: () => void;
 }
 
-function useTripStats() {
-  const { data: trips = [] } = useQuery({
-    queryKey: ["trips"],
-    queryFn: loadTrips,
-  });
-
-  if (trips.length === 0) return null;
-
-  const [min, max] = getTimeRange(trips);
-  return {
-    count: trips.length,
-    startTime: formatSimulationTime(min),
-    endTime: formatSimulationTime(max),
-  };
-}
-
-function StatsLine({ stats }: { stats: ReturnType<typeof useTripStats> }) {
-  if (!stats) return <p className={styles.stats}>Loading trips...</p>;
-
-  return (
-    <p className={styles.stats}>
-      {stats.count.toLocaleString()} vehicles &mdash; {stats.startTime} to{" "}
-      {stats.endTime}
-    </p>
-  );
+interface LaunchForm {
+  iterations: number;
+  randomSeed?: number;
+  note: string;
 }
 
 function prepareSimulationData(network: Network) {
@@ -51,57 +31,115 @@ function prepareSimulationData(network: Network) {
   return { networkFile, buildings, bounds };
 }
 
-export function LaunchDialog({ network, onLaunch, onClose }: LaunchDialogProps) {
-  const stats = useTripStats();
-  const { start } = useSimulation("default");
+export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: LaunchDialogProps) {
+  const queryClient = useQueryClient();
+  const { start } = useSimulation(activeScenario?.id || "default");
   const [error, setError] = useState<string | null>(null);
 
-  useHotkeys("escape", onClose);
+  const { register, handleSubmit } = useForm<LaunchForm>({
+    defaultValues: {
+      iterations: 1,
+      note: ""
+    }
+  });
 
-  const handleOverlayClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose],
-  );
-
-  const handleLaunchClick = useCallback(() => {
-    if (!network) return;
+  const onSubmit = useCallback((data: LaunchForm) => {
+    if (!network || !activeScenario) return;
     setError(null);
 
     try {
       const { networkFile, buildings, bounds } = prepareSimulationData(network);
+
       start.mutate(
-        { scenarioId: "default", networkFile, buildings, bounds, iterations: 1 },
         {
-          onSuccess: (data) => onLaunch({ scenarioId: data.scenario_id, runId: data.run_id }),
+          scenarioId: activeScenario.id,
+          networkFile,
+          buildings,
+          bounds,
+          iterations: data.iterations,
+          randomSeed: (data.randomSeed !== undefined && !isNaN(data.randomSeed)) ? data.randomSeed : undefined
+        },
+        {
+          onSuccess: (responseData) => {
+            queryClient.invalidateQueries({ queryKey: ["runs"] });
+            onLaunch({ scenarioId: responseData.scenario_id, runId: responseData.run_id });
+          },
           onError: (err) => setError(err instanceof Error ? err.message : "Failed to start simulation"),
         },
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to prepare simulation");
     }
-  }, [network, start, onLaunch]);
+  }, [network, activeScenario, start, onLaunch, queryClient]);
+
+  const dialogTitle = (
+    <>
+      Run Simulation
+      <div className={styles.scenarioBadge}>{activeScenario?.name}</div>
+    </>
+  );
+
+  const dialogFooter = (
+    <>
+      <button className={styles.cancelButton} onClick={onClose} type="button">Cancel</button>
+      <button
+        className={styles.launchButton}
+        onClick={handleSubmit(onSubmit)}
+        disabled={start.isPending || !network || !activeScenario}
+        type="button"
+      >
+        {start.isPending ? (
+          <Loader2 size={16} className={styles.spinner} />
+        ) : (
+          <Play size={16} />
+        )}
+        {start.isPending ? "Launching..." : "Launch"}
+      </button>
+    </>
+  );
 
   return (
-    <div className={styles.overlay} onClick={handleOverlayClick}>
-      <div className={styles.card}>
-        <h2 className={styles.title}>Run Simulation</h2>
-        <StatsLine stats={stats} />
-        {error && <p className={styles.stats} style={{ color: "#ff6b6b" }}>{error}</p>}
-        <button
-          className={styles.launchButton}
-          onClick={handleLaunchClick}
-          disabled={start.isPending || !network}
-        >
-          {start.isPending ? (
-            <Loader2 size={16} className={styles.spinner} />
-          ) : (
-            <Play size={16} />
-          )}
-          {start.isPending ? "Launching..." : "Launch"}
-        </button>
-      </div>
-    </div>
+    <Dialog
+      title={dialogTitle}
+      footer={dialogFooter}
+      onClose={onClose}
+      maxWidth={480}
+    >
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Run Note (optional)</label>
+          <input
+            type="text"
+            className={styles.input}
+            placeholder="e.g. Closed bridge experiment"
+            {...register("note")}
+          />
+        </div>
+
+        <div className={styles.row}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Iterations</label>
+            <input
+              type="number"
+              className={styles.input}
+              min={1}
+              max={100}
+              {...register("iterations", { valueAsNumber: true })}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Random Seed</label>
+            <input
+              type="number"
+              className={styles.input}
+              placeholder="Random"
+              {...register("randomSeed", { valueAsNumber: true })}
+            />
+          </div>
+        </div>
+
+        {error && <p className={styles.error}>{error}</p>}
+      </form>
+    </Dialog>
   );
 }
