@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from "uuid";
 import type { Scenario, Run, AgentConfig } from "./types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 
-// Simple in-memory storage that resets on reload
 const mockScenarios: Scenario[] = [
   {
     id: "default-scenario",

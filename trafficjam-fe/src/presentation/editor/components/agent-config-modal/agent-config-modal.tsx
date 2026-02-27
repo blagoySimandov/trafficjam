@@ -1,8 +1,11 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Save, Undo2 } from "lucide-react";
 import { Tooltip } from "../../../../components/tooltip";
 import { Dialog } from "../../../../components/dialog";
-import { DEFAULT_AGENT_CONFIG } from "../../../../api/scenarios";
+import {
+  DEFAULT_AGENT_CONFIG,
+  AGENT_CONFIG_PLACEHOLDERS,
+} from "../../../../api/scenarios";
 import type { AgentConfig, Scenario } from "../../../../api/scenarios";
 import styles from "./agent-config-modal.module.css";
 
@@ -12,13 +15,17 @@ interface AgentConfigModalProps {
   onClose: () => void;
 }
 
-export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModalProps) {
-  const { register, handleSubmit, reset, watch } = useForm<AgentConfig>({
-    defaultValues: { ...scenario.agentConfig }
+export function AgentConfigModal({
+  scenario,
+  onSave,
+  onClose,
+}: AgentConfigModalProps) {
+  const { register, handleSubmit, reset, control } = useForm<AgentConfig>({
+    defaultValues: { ...scenario.agentConfig },
   });
 
-  const shoppingProbability = watch("shoppingProbability");
-  const healthcareChance = watch("healthcareChance");
+  const shoppingProbability = useWatch({ control, name: "shoppingProbability" });
+  const healthcareChance = useWatch({ control, name: "healthcareChance" });
 
   const handleReset = () => {
     if (confirm("Reset to defaults?")) {
@@ -39,8 +46,14 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
         <Undo2 size={16} /> Reset
       </button>
       <div className={styles.rightActions}>
-        <button type="button" className={styles.cancelBtn} onClick={onClose}>Cancel</button>
-        <button type="button" className={styles.saveBtn} onClick={handleSubmit(onSave)}>
+        <button type="button" className={styles.cancelBtn} onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className={styles.saveBtn}
+          onClick={handleSubmit(onSave)}
+        >
           <Save size={16} /> Save Changes
         </button>
       </div>
@@ -48,9 +61,9 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
   );
 
   return (
-    <Dialog 
-      title={dialogTitle} 
-      footer={dialogFooter} 
+    <Dialog
+      title={dialogTitle}
+      footer={dialogFooter}
       onClose={onClose}
       maxWidth={650}
     >
@@ -63,17 +76,19 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
           <div className={styles.grid}>
             <div className={styles.field}>
               <label>Population Density (per km²)</label>
-              <input 
-                type="number" 
-                {...register("populationDensity", { valueAsNumber: true })} 
+              <input
+                type="number"
+                placeholder={AGENT_CONFIG_PLACEHOLDERS.populationDensity}
+                {...register("populationDensity", { valueAsNumber: true })}
               />
             </div>
             <div className={styles.field}>
               <label>Max Shopping Distance (km)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 step="0.1"
-                {...register("maxShoppingDistanceKm", { valueAsNumber: true })} 
+                placeholder={AGENT_CONFIG_PLACEHOLDERS.maxShoppingDistanceKm}
+                {...register("maxShoppingDistanceKm", { valueAsNumber: true })}
               />
             </div>
           </div>
@@ -87,19 +102,29 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
           <div className={styles.grid}>
             <div className={styles.field}>
               <label>Shopping Probability (0-1)</label>
-              <input 
-                type="range" min="0" max="1" step="0.05"
-                {...register("shoppingProbability", { valueAsNumber: true })} 
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                {...register("shoppingProbability", { valueAsNumber: true })}
               />
-              <span className={styles.valueLabel}>{(shoppingProbability * 100).toFixed(0)}%</span>
+              <span className={styles.valueLabel}>
+                {(shoppingProbability * 100).toFixed(0)}%
+              </span>
             </div>
             <div className={styles.field}>
               <label>Healthcare Chance (0-1)</label>
-              <input 
-                type="range" min="0" max="1" step="0.05"
-                {...register("healthcareChance", { valueAsNumber: true })} 
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                {...register("healthcareChance", { valueAsNumber: true })}
               />
-              <span className={styles.valueLabel}>{(healthcareChance * 100).toFixed(0)}%</span>
+              <span className={styles.valueLabel}>
+                {(healthcareChance * 100).toFixed(0)}%
+              </span>
             </div>
           </div>
         </section>
@@ -112,16 +137,18 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
           <div className={styles.grid}>
             <div className={styles.field}>
               <label>Elderly Age Threshold</label>
-              <input 
-                type="number" 
-                {...register("elderlyAgeThreshold", { valueAsNumber: true })} 
+              <input
+                type="number"
+                placeholder={AGENT_CONFIG_PLACEHOLDERS.elderlyAgeThreshold}
+                {...register("elderlyAgeThreshold", { valueAsNumber: true })}
               />
             </div>
             <div className={styles.field}>
               <label>Kindergarten Age</label>
-              <input 
-                type="number" 
-                {...register("kindergartenAge", { valueAsNumber: true })} 
+              <input
+                type="number"
+                placeholder={AGENT_CONFIG_PLACEHOLDERS.kindergartenAge}
+                {...register("kindergartenAge", { valueAsNumber: true })}
               />
             </div>
           </div>
@@ -138,11 +165,19 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <div className={styles.rangeInput}>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Min</span>
-                  <input type="number" {...register("errandMinMinutes", { valueAsNumber: true })} />
+                  <input
+                    type="number"
+                    placeholder={AGENT_CONFIG_PLACEHOLDERS.errandMinMinutes}
+                    {...register("errandMinMinutes", { valueAsNumber: true })}
+                  />
                 </div>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Max</span>
-                  <input type="number" {...register("errandMaxMinutes", { valueAsNumber: true })} />
+                  <input
+                    type="number"
+                    placeholder={AGENT_CONFIG_PLACEHOLDERS.errandMaxMinutes}
+                    {...register("errandMaxMinutes", { valueAsNumber: true })}
+                  />
                 </div>
               </div>
             </div>
@@ -151,11 +186,27 @@ export function AgentConfigModal({ scenario, onSave, onClose }: AgentConfigModal
               <div className={styles.rangeInput}>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Min</span>
-                  <input type="number" {...register("childDropoffMinMinutes", { valueAsNumber: true })} />
+                  <input
+                    type="number"
+                    placeholder={
+                      AGENT_CONFIG_PLACEHOLDERS.childDropoffMinMinutes
+                    }
+                    {...register("childDropoffMinMinutes", {
+                      valueAsNumber: true,
+                    })}
+                  />
                 </div>
                 <div className={styles.inputWrapper}>
                   <span className={styles.inputLabel}>Max</span>
-                  <input type="number" {...register("childDropoffMaxMinutes", { valueAsNumber: true })} />
+                  <input
+                    type="number"
+                    placeholder={
+                      AGENT_CONFIG_PLACEHOLDERS.childDropoffMaxMinutes
+                    }
+                    {...register("childDropoffMaxMinutes", {
+                      valueAsNumber: true,
+                    })}
+                  />
                 </div>
               </div>
             </div>
