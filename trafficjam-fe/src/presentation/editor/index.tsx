@@ -108,6 +108,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       />
       {selectedLinks.length > 0 && (
         <LinkAttributePanel
+          key={selectedLinks.map(l => l.id).join(",")}
           links={selectedLinks}
           network={network}
           onClose={handleClosePanel}

@@ -25,14 +25,7 @@ export function LinkAttributePanel({
   onSave,
   onSelectAllWithSameName,
 }: LinkAttributePanelProps) {
-  const linksKey = useMemo(() => links.map(l => l.id).join(','), [links]);
-  const [prevLinksKey, setPrevLinksKey] = useState(linksKey);
   const [editedValues, setEditedValues] = useState<Partial<TrafficLink["tags"]>>({});
-  
-  if (linksKey !== prevLinksKey) {
-    setPrevLinksKey(linksKey);
-    setEditedValues({});
-  }
   
   const { updateLinks } = useUpdateLink(network, onSave);
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
