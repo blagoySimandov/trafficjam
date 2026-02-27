@@ -29,7 +29,11 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
 
   const handleConfirm = () => {
     if (isDisabled) return;
-    input ? (props as WithInput).onConfirm(value.trim()) : (props as WithoutInput).onConfirm();
+    if (input) {
+      (props as WithInput).onConfirm(value.trim());
+    } else {
+      (props as WithoutInput).onConfirm();
+    }
   };
 
   const btnClass = variant === "danger" ? styles.dangerButton : styles.primaryButton;
