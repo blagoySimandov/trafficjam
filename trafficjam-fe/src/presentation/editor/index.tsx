@@ -5,23 +5,40 @@ import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-d
 import { LinkAttributePanel } from "../link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
 import { useUndoStack } from "./hooks/use-undo-stack";
+import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import type { TrafficLink, Network } from "../../types";
+import type { Scenario } from "../../api/scenarios";
 
 interface EditorProps {
-  onRunSimulation: () => void;
+  activeScenario: Scenario | null;
+  onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
 }
 
-export function Editor({ onRunSimulation }: EditorProps) {
+export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
+  //TODO: move this to util
+  function remapSelectedLinks(
+    selectedLinks: TrafficLink[],
+    network: Network,
+  ): TrafficLink[] {
+    return selectedLinks
+      .map((link) => network.links.get(link.id))
+      .filter((link): link is TrafficLink => link !== undefined);
+  }
+
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
-  const [selectedLink, setSelectedLink] = useState<TrafficLink | null>(null);
+  const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
+  const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
-  const handleLinkClick = useCallback((link: TrafficLink) => {
-    setSelectedLink(link);
-  }, []);
+  const handleLinkClick = useCallback(
+    (link: TrafficLink) => {
+      setSelectedLinks(resolveSelection(link));
+    },
+    [resolveSelection],
+  );
 
   const handleLinkSave = useCallback(
     (updatedNetwork: Network, message: string) => {
@@ -31,16 +48,11 @@ export function Editor({ onRunSimulation }: EditorProps) {
       setNetwork(updatedNetwork);
       setStatus(message);
 
-      if (selectedLink) {
-        const updatedLink = updatedNetwork.links.get(selectedLink.id);
-        if (updatedLink) {
-          setSelectedLink(updatedLink);
-        } else {
-          setSelectedLink(null);
-        }
+      if (selectedLinks.length > 0) {
+        setSelectedLinks(remapSelectedLinks(selectedLinks, updatedNetwork));
       }
     },
-    [network, selectedLink, pushToUndoStack],
+    [network, selectedLinks, pushToUndoStack],
   );
 
   const handleUndo = useCallback(() => {
@@ -49,31 +61,41 @@ export function Editor({ onRunSimulation }: EditorProps) {
       setNetwork(previousNetwork);
       setStatus("Undid last change");
 
-      if (selectedLink) {
-        const previousLink = previousNetwork.links.get(selectedLink.id);
-        if (previousLink) {
-          setSelectedLink(previousLink);
-        } else {
-          setSelectedLink(null);
-        }
+      if (selectedLinks.length > 0) {
+        setSelectedLinks(remapSelectedLinks(selectedLinks, previousNetwork));
       }
     }
-  }, [selectedLink, undo]);
+  }, [selectedLinks, undo]);
 
   const handleClear = useCallback(() => {
     setNetwork(null);
-    setSelectedLink(null);
+    setSelectedLinks([]);
     clearUndoStack();
   }, [clearUndoStack]);
 
   const handleClosePanel = useCallback(() => {
-    setSelectedLink(null);
+    setSelectedLinks([]);
   }, []);
 
-  const handleLaunch = useCallback(() => {
-    setDialogOpen(false);
-    onRunSimulation();
-  }, [onRunSimulation]);
+  const handleLaunch = useCallback(
+    (info: { scenarioId: string; runId: string }) => {
+      setDialogOpen(false);
+      onRunSimulation(info);
+    },
+    [onRunSimulation],
+  );
+
+  const handleSelectAllWithSameName = useCallback(
+    (streetName: string) => {
+      if (!network) return;
+      const matchingLinks = Array.from(network.links.values()).filter(
+        (link) => link.tags.name === streetName,
+      );
+      setSelectedLinks(matchingLinks);
+      setStatus(`Selected ${matchingLinks.length} links on ${streetName}`);
+    },
+    [network],
+  );
 
   return (
     <>
@@ -86,20 +108,23 @@ export function Editor({ onRunSimulation }: EditorProps) {
         onUndo={handleUndo}
         onClear={handleClear}
         canUndo={canUndo}
-        selectedLinkId={selectedLink?.id || null}
+        selectedLinkId={selectedLinks.map((link) => link.id)}
       />
-      {selectedLink && (
+      {selectedLinks.length > 0 && (
         <LinkAttributePanel
-          link={selectedLink}
+          links={selectedLinks}
           network={network}
           onClose={handleClosePanel}
           onSave={handleLinkSave}
+          onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
       {status && <StatusBar message={status} />}
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
       {dialogOpen && (
         <LaunchDialog
+          activeScenario={activeScenario}
+          network={network}
           onLaunch={handleLaunch}
           onClose={() => setDialogOpen(false)}
         />

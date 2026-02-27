@@ -1,0 +1,200 @@
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background-color: #1a1a1a;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  color: #e0e0e0;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.header {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.logo::after {
+  content: "■";
+  color: #3b82f6;
+  margin-left: 4px;
+  font-size: 0.8rem;
+  vertical-align: middle;
+}
+
+.scrollRoot {
+  flex: 1;
+  overflow: hidden;
+}
+
+.scrollViewport {
+  width: 100%;
+  height: 100%;
+}
+
+.scrollbar {
+  display: flex;
+  user-select: none;
+  touch-action: none;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.05);
+  transition: background 160ms ease-out;
+  width: 8px;
+}
+
+.scrollbar:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.thumb {
+  flex: 1;
+  background: #333;
+  border-radius: 10px;
+  position: relative;
+}
+
+.section {
+  padding: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+  background-color: transparent;
+}
+
+.listItem:hover {
+  background-color: #2a2a2a;
+}
+
+.active {
+  background-color: #333;
+  border: 1px solid #444;
+}
+
+.scenarioName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.newScenarioBtn, .iconBtn {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.newScenarioBtn:hover, .iconBtn:hover {
+  background-color: #444;
+  color: #fff;
+}
+
+.runItem {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  transition: background-color 0.2s;
+  border: 1px solid #333;
+}
+
+.runItem:hover {
+  background-color: #2a2a2a;
+}
+
+.runStatus {
+  padding-top: 2px;
+}
+
+.runInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.runNote {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.runMeta {
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.spinner {
+  color: #4f46e5;
+  animation: spin 1s linear infinite;
+}
+
+.success {
+  color: #10b981;
+}
+
+.error {
+  color: #ef4444;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.emptyMsg {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+  padding: 1rem;
+  font-style: italic;
+}
