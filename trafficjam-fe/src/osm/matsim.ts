@@ -9,7 +9,18 @@ function haversineMeters(a: [number, number], b: [number, number]) {
   const lat2 = toRad(b[0]);
   const sinDLat = Math.sin(dLat / 2);
   const sinDLon = Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon), Math.sqrt(1 - (sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon)));
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(
+        sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon,
+      ),
+      Math.sqrt(
+        1 -
+        (sinDLat * sinDLat +
+          Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
+      ),
+    );
   return R * c;
 }
 
@@ -47,13 +58,21 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
   for (const n of nodesArr) {
     // note: MATSim expects x=lon, y=lat commonly when using EPSG:4326
     nodesXml.push(
-      `    <node id="${n.id}" x="${n.position[1].toFixed(6)}" y="${n.position[0].toFixed(6)}" />`
+      `    <node id="${n.id}" x="${n.position[1].toFixed(6)}" y="${n.position[0].toFixed(6)}" />`,
     );
   }
   nodesXml.push("  </nodes>");
 
   const linksXml = ["  <links>"];
   for (const l of linksArr) {
+    // Ensure both from and to nodes exist in the network
+    if (!network.nodes.has(l.from) || !network.nodes.has(l.to)) {
+      console.warn(
+        `Skipping link ${l.id} because it references missing nodes: from=${l.from}, to=${l.to}`,
+      );
+      continue;
+    }
+
     const length = estimateLengthMeters(l);
     const freespeed = getFreespeedMs(l);
     const lanes = getLanes(l);
@@ -72,3 +91,4 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
   const body = [attrs, ...nodesXml, ...linksXml, "</network>"].join("\n");
   return header + body;
 }
+
