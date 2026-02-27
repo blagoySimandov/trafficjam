@@ -9,13 +9,26 @@ type Mode = "editor" | "visualizer";
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("editor");
+  const [runInfo, setRunInfo] = useState<{
+    scenarioId: string;
+    runId: string;
+  } | null>(null);
 
   return (
     <QueryClientProvider client={queryClient}>
       {mode === "editor" ? (
-        <Editor onRunSimulation={() => setMode("visualizer")} />
+        <Editor
+          onRunSimulation={(info) => {
+            setRunInfo(info);
+            setMode("visualizer");
+          }}
+        />
       ) : (
-        <Visualizer onBack={() => setMode("editor")} />
+        <Visualizer
+          scenarioId={runInfo?.scenarioId}
+          runId={runInfo?.runId}
+          onBack={() => setMode("editor")}
+        />
       )}
     </QueryClientProvider>
   );

@@ -1,17 +1,31 @@
-import type { Event } from "../../types/matsim-events";
 import { decodeEventStream } from "./decoder";
 import type {
   CreateRunResponse,
   StartRunResponse,
   StartRunParams,
+  StreamedEvent,
 } from "./types";
 
 const BASE_URL =
-  import.meta.env.VITE_TRAFFICJAM_BE_URL || "http://localhost:8000";
+  import.meta.env.VITE_TRAFFICJAM_BE_URL || "http://localhost:8001";
 
 function buildFormData(params: StartRunParams): FormData {
   const formData = new FormData();
   formData.append("networkFile", params.networkFile);
+  if (params.buildings) {
+    const buildingsData = params.buildings.map((b) => ({
+      id: b.id,
+      osm_id: 0,
+      position: b.position,
+      geometry: b.geometry || [b.position],
+      type: b.type,
+      tags: b.tags,
+    }));
+    formData.append("buildings", JSON.stringify(buildingsData));
+  }
+  if (params.bounds) {
+    formData.append("bounds", JSON.stringify(params.bounds));
+  }
   if (params.iterations !== undefined)
     formData.append("iterations", params.iterations.toString());
   if (params.randomSeed !== undefined)
@@ -46,10 +60,11 @@ async function startRun(params: StartRunParams): Promise<StartRunResponse> {
 async function* streamEvents(
   scenarioId: string,
   runId: string,
-): AsyncGenerator<Event> {
+  signal?: AbortSignal,
+): AsyncGenerator<StreamedEvent> {
   const response = await fetch(
     `${BASE_URL}/scenarios/${scenarioId}/runs/${runId}/events/stream`,
-    { headers: { Accept: "text/event-stream" } },
+    { headers: { Accept: "text/event-stream" }, signal },
   );
   assertOk(response);
   yield* decodeEventStream(response);

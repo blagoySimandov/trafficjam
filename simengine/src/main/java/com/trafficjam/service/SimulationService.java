@@ -46,12 +46,12 @@ public class SimulationService {
 
     Path configPath = prepareSimulationFiles(finalScenarioId, networkFile, plansFile, iterations, randomSeed);
 
-    natsClient.publishStatus(finalScenarioId, finalRunId, "running");
+    natsClient.publishStatus(finalScenarioId, finalRunId, MatsimRunner.SimulationState.RUNNING.name());
 
     String actualSimId = matsimRunner.runSimulationAsync(
         configPath.toString(),
         event -> handleOutputEvent(finalScenarioId, finalRunId, event),
-        (simId, status) -> natsClient.publishStatus(finalScenarioId, finalRunId, status));
+        (simId, status) -> natsClient.publishStatus(finalScenarioId, finalRunId, status.name()));
 
     return new SimulationStartResult(actualSimId, finalScenarioId, finalRunId);
   }
@@ -131,8 +131,9 @@ public class SimulationService {
           }
 
           // Send status update
-          String statusText = currentStatus.status;
-          if ("RUNNING".equals(statusText) && currentStatus.iteration != null) {
+          MatsimRunner.SimulationState currentState = currentStatus.status;
+          String statusText = currentState.name();
+          if (MatsimRunner.SimulationState.RUNNING == currentState && currentStatus.iteration != null) {
             statusText += " - Iteration " + currentStatus.iteration;
           }
 
@@ -141,14 +142,14 @@ public class SimulationService {
               .data(statusText));
 
           // Check if simulation finished
-          if ("COMPLETED".equals(currentStatus.status) ||
-              "FAILED".equals(currentStatus.status) ||
-              "STOPPED".equals(currentStatus.status)) {
+          if (MatsimRunner.SimulationState.COMPLETED == currentState ||
+              MatsimRunner.SimulationState.FAILED == currentState ||
+              MatsimRunner.SimulationState.STOPPED == currentState) {
 
             // Send final message
             emitter.send(SseEmitter.event()
                 .name("finished")
-                .data(currentStatus.status));
+                .data(currentState.name()));
 
             emitter.complete();
             break;
