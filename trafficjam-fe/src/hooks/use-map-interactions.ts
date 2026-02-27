@@ -71,8 +71,7 @@ export function useMapInteractions({
         });
         return true;
       } else if (link && onLinkClick) {
-        const modKey = event.originalEvent.metaKey || event.originalEvent.ctrlKey;
-        onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat }, modKey);
+        onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat }, event.originalEvent.metaKey || event.originalEvent.ctrlKey);
         return true;
       }
 
