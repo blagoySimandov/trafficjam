@@ -18,16 +18,16 @@ interface EditorProps {
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
 }
 
-function remapSelectedLinks(
-  selectedLinks: TrafficLink[],
-  network: Network,
-): TrafficLink[] {
-  return selectedLinks
-    .map((link) => network.links.get(link.id))
-    .filter((link): link is TrafficLink => link !== undefined);
-}
-
 export function Editor({ city, activeScenario, onRunSimulation }: EditorProps) {
+  function remapSelectedLinks(
+    selectedLinks: TrafficLink[],
+    network: Network,
+  ): TrafficLink[] {
+    return selectedLinks
+      .map((link) => network.links.get(link.id))
+      .filter((link): link is TrafficLink => link !== undefined);
+  }
+
   const { data: autoNetwork, isLoading } = useAutoLoadMap(city);
 
   const [status, setStatus] = useState("");
@@ -35,14 +35,20 @@ export function Editor({ city, activeScenario, onRunSimulation }: EditorProps) {
   const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const activeNetwork = useMemo(() => network ?? autoNetwork ?? null, [network, autoNetwork]);
+  const activeNetwork = useMemo(
+    () => network ?? autoNetwork ?? null,
+    [network, autoNetwork],
+  );
 
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
   const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
-  const handleLinkClick = useCallback((link: TrafficLink, modKey: boolean) => {
-    setSelectedLinks(resolveSelection(link, modKey));
-  }, [resolveSelection]);
+  const handleLinkClick = useCallback(
+    (link: TrafficLink, modKey: boolean) => {
+      setSelectedLinks(resolveSelection(link, modKey));
+    },
+    [resolveSelection],
+  );
 
   const handleLinkSave = useCallback(
     (updatedNetwork: Network, message: string) => {
@@ -120,7 +126,7 @@ export function Editor({ city, activeScenario, onRunSimulation }: EditorProps) {
       />
       {selectedLinks.length > 0 && (
         <LinkAttributePanel
-        key={selectedLinks.map(l => l.id).join(",")}
+          key={selectedLinks.map((l) => l.id).join(",")}
           links={selectedLinks}
           network={activeNetwork}
           onClose={handleClosePanel}

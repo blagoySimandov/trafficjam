@@ -73,9 +73,10 @@ export function EditorMapView({
 
   const {
     isDragging,
-    staticNetwork,
-    draftNetwork,
+    staticNetwork: dragStaticNetwork,
+    draftNetwork: dragDraftNetwork,
     draggedNodeId,
+    hiddenIds: dragHiddenIds,
     onMouseDown: nodeDragMouseDown,
     onMouseMove: nodeDragMouseMove,
     onMouseUp: nodeDragMouseUp,
@@ -93,7 +94,8 @@ export function EditorMapView({
 
   const {
     isAddingNode,
-    displayNetwork: addDisplayNetwork,
+    staticNetwork: addStaticNetwork,
+    draftNetwork: addDraftNetwork,
     tempNodeId,
     onMouseDown: nodeAddMouseDown,
     onMouseMove: nodeAddMouseMove,
@@ -111,7 +113,7 @@ export function EditorMapView({
     onBeforeChange: () => {},
   });
 
-  const baseNetwork = isAddingNode ? addDisplayNetwork : staticNetwork;
+  const baseNetwork = network;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -215,6 +217,7 @@ export function EditorMapView({
           hoverInfo={null}
           selectedLinkId={selectedLinkId}
           idPrefix="static"
+          filterIds={isDragging ? dragHiddenIds : []}
         />
       )}
       {baseNetwork && (
@@ -224,24 +227,26 @@ export function EditorMapView({
           draggedNodeId={draggedNodeId}
           tempNodeId={isAddingNode ? tempNodeId : null}
           idPrefix="static"
+          filterIds={isDragging ? dragHiddenIds : []}
         />
       )}
-      {isDragging && draftNetwork && (
+      {(isDragging && dragDraftNetwork) || (isAddingNode && addDraftNetwork) ? (
         <>
           <NetworkLayer
-            network={draftNetwork}
+            network={(isDragging ? dragDraftNetwork : addDraftNetwork) as Network}
             hoverInfo={null}
             selectedLinkId={selectedLinkId}
             idPrefix="draft"
           />
           <NodeLayer
-            network={draftNetwork}
+            network={(isDragging ? dragDraftNetwork : addDraftNetwork) as Network}
             editorMode={editorMode}
             draggedNodeId={draggedNodeId}
+            tempNodeId={isAddingNode ? tempNodeId : null}
             idPrefix="draft"
           />
         </>
-      )}
+      ) : null}
       {baseNetwork?.transportRoutes &&
         baseNetwork.transportRoutes.size > 0 && (
           <TransportLayer

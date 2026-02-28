@@ -48,20 +48,10 @@ export function useNodeDrag({
     };
   }, []);
 
-  const staticNetwork = useMemo(() => {
-    if (!network) return null;
-    if (!isDragging || !draggedNodeId) return network;
-
-    const nodes = new Map(network.nodes);
-    nodes.delete(draggedNodeId);
-
-    const links = new Map(network.links);
-    for (const { linkId } of connectedLinksRef.current) {
-      links.delete(linkId);
-    }
-
-    return { ...network, nodes, links } as Network;
-  }, [isDragging, draggedNodeId, network]);
+  const hiddenIds = useMemo(() => {
+    if (!isDragging || !draggedNodeId) return [];
+    return [draggedNodeId, ...connectedLinksRef.current.map(l => l.linkId)];
+  }, [isDragging, draggedNodeId]);
 
   const draftNetwork = useMemo(() => {
     if (!isDragging || !draggedNodeId || !tempDragPosition || !network) return null;
@@ -96,9 +86,8 @@ export function useNodeDrag({
 
       const feature = features[0];
       const nodeId = feature.properties?.id || feature.id;
-      
       if (!nodeId) return false;
-      
+
       const node = network.nodes.get(nodeId.toString());
       if (!node) return false;
 
@@ -124,13 +113,13 @@ export function useNodeDrag({
       }
 
       connectedLinksRef.current = connectedLinks;
-      draggedNodeIdRef.current = nodeId;
+      draggedNodeIdRef.current = nodeId.toString();
       isDraggingRef.current = true;
       dragStartPos.current = { x: e.point.x, y: e.point.y };
       hasMoved.current = false;
       tempDragPositionRef.current = null;
 
-      setDraggedNodeId(nodeId);
+      setDraggedNodeId(nodeId.toString());
       setTempDragPosition(null);
 
       if (map.dragPan) {
@@ -229,8 +218,9 @@ export function useNodeDrag({
   return {
     isDragging,
     draggedNodeId,
-    staticNetwork,
+    staticNetwork: network,
     draftNetwork,
+    hiddenIds,
     onMouseDown: handleMouseDown,
     onMouseMove: handleMouseMove,
     onMouseUp: handleMouseUp,
