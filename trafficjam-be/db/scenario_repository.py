@@ -10,8 +10,8 @@ class ScenarioRepository:
     async def create_scenario(
         self,
         name: str,
-        network_config: dict,
-        plan_params: dict,
+        network_config: str,
+        plan_params: str,
         description: str | None = None,
         matsim_config: dict | None = None,
     ) -> Scenario:
@@ -42,8 +42,8 @@ class ScenarioRepository:
         scenario_id: uuid.UUID,
         name: str | None = None,
         description: str | None = None,
-        network_config: dict | None = None,
-        plan_params: dict | None = None,
+        network_config: str | None = None,
+        plan_params: str | None = None,
         matsim_config: dict | None = None,
     ) -> Scenario | None:
         async with self.session_factory() as session:
