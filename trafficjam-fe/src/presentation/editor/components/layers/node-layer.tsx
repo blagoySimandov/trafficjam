@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
 import type { Network } from "../../../../types";
 import { useNodeLayerStyle } from "../../hooks/use-node-layer-style";
+import { mergeFilters } from "../../../../utils";
 
 interface NodeLayerProps {
   network: Network;
@@ -10,20 +11,6 @@ interface NodeLayerProps {
   tempNodeId?: string | null;
   idPrefix?: string;
   filterIds?: string[];
-}
-
-function mergeFilters(baseFilter: any[] | undefined, filterOutIds: string[] | undefined): any[] | undefined {
-  if (!filterOutIds || filterOutIds.length === 0) return baseFilter;
-  
-  const idFilter = ["!", ["in", ["get", "id"], ["literal", filterOutIds]]];
-  
-  if (!baseFilter) return idFilter;
-  
-  if (Array.isArray(baseFilter) && baseFilter[0] === "all") {
-    return [...baseFilter, idFilter];
-  }
-  
-  return ["all", baseFilter, idFilter];
 }
 
 export function NodeLayer({
@@ -45,7 +32,7 @@ export function NodeLayer({
     return {
       ...layerStyle,
       id: `${idPrefix}-${layerStyle.id}`,
-      ...(filter ? { filter } : {})
+      ...(filter ? { filter } : {}),
     };
   }, [layerStyle, idPrefix, filterIds]);
 

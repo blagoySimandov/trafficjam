@@ -6,6 +6,11 @@ export const MIN_IMPORT_ZOOM = 14;
 export const MIN_EDIT_ZOOM = 17;
 export const MAP_STYLE = "mapbox://styles/mapbox/light-v11";
 export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
+/**
+ * IDs of layers that can be interacted with via mouse events.
+ * Includes both "static" layers (stable map data) and "draft" layers
+ * (temporary visuals for active dragging/adding operations).
+ */
 export const INTERACTIVE_LAYER_IDS = [
   NETWORK_LAYER_ID,
   `static-${NETWORK_LAYER_ID}`,

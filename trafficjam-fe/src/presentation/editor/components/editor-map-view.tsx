@@ -1,16 +1,17 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
+import { useHotkeys } from "react-hotkeys-hook";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../../../types";
-import type { CityConfig } from "../../../constants/cities";
-import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import {
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
   MIN_EDIT_ZOOM,
+  type CityConfig,
 } from "../../../constants";
+import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
@@ -21,6 +22,7 @@ import { TransportLayer } from "../../../components/layers/transport-layer";
 import { BuildingLayer } from "../../../components/layers/building-layer";
 import { NodeLayer } from "./layers/node-layer";
 import { CombinedTooltip } from "../../../components/combined-tooltip";
+import { getMaxBounds } from "../../../utils";
 
 interface EditorMapViewProps {
   network: Network | null;
@@ -73,7 +75,6 @@ export function EditorMapView({
 
   const {
     isDragging,
-    staticNetwork: dragStaticNetwork,
     draftNetwork: dragDraftNetwork,
     draggedNodeId,
     hiddenIds: dragHiddenIds,
@@ -94,7 +95,6 @@ export function EditorMapView({
 
   const {
     isAddingNode,
-    staticNetwork: addStaticNetwork,
     draftNetwork: addDraftNetwork,
     tempNodeId,
     onMouseDown: nodeAddMouseDown,
@@ -115,22 +115,14 @@ export function EditorMapView({
 
   const baseNetwork = network;
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        (event.metaKey || event.ctrlKey) &&
-        event.key === "z" &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
-        if (!canUndo) return;
-        onUndo();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onUndo, canUndo]);
+  useHotkeys(
+    "mod+z",
+    (e) => {
+      e.preventDefault();
+      if (canUndo) onUndo();
+    },
+    [onUndo, canUndo],
+  );
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
@@ -176,11 +168,6 @@ export function EditorMapView({
     [nodeDragMouseMove, nodeAddMouseMove, onMouseMove],
   );
 
-  const maxBounds: [[number, number], [number, number]] = [
-    [city.bounds.west, city.bounds.south],
-    [city.bounds.east, city.bounds.north],
-  ];
-
   return (
     <Map
       ref={handleMapRef}
@@ -189,7 +176,7 @@ export function EditorMapView({
         latitude: city.center[1],
         zoom: city.zoom,
       }}
-      maxBounds={maxBounds}
+      maxBounds={getMaxBounds(city)}
       style={{ width: "100%", height: "100%" }}
       mapStyle={MAP_STYLE}
       mapboxAccessToken={MAPBOX_TOKEN}

@@ -218,7 +218,6 @@ export function useNodeDrag({
   return {
     isDragging,
     draggedNodeId,
-    staticNetwork: network,
     draftNetwork,
     hiddenIds,
     onMouseDown: handleMouseDown,

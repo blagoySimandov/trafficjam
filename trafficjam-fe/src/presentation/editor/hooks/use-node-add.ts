@@ -159,7 +159,6 @@ export function useNodeAdd({
 
   return {
     isAddingNode,
-    staticNetwork: network,
     draftNetwork,
     tempNodeId,
     onMouseDown: handleMouseDown,
