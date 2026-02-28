@@ -16,7 +16,6 @@ class Building(BaseModel):
         return self.tags.get(key)
 
 
-# Plans
 class ActivityType(str, Enum):
     HOME = "home"
     WORK = "work"
@@ -29,7 +28,6 @@ class ActivityType(str, Enum):
 class Activity(BaseModel):
     type: ActivityType
     location: tuple[float, float] = (0, 0)
-    # Start time is implicite, its just end time of the previous task (first one is just the 00:00:00)
     end_time: time | None = None
     duration: time | None = None
 
@@ -72,7 +70,6 @@ class TransportMode(str, Enum):
     BIKE = "bike"
 
 
-# Agents
 class Agent(BaseModel):
     id: str
     age: int
@@ -94,4 +91,5 @@ class Adult(Agent):
     work_type: Optional[str] = None
     children: list[Child] = []
     needs_to_dropoff_children: bool = False
+
 

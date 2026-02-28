@@ -1,5 +1,5 @@
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History, Trash2 } from "lucide-react";
 import type { Scenario, Run } from "../../api/scenarios";
 import styles from "./sidebar.module.css";
 
@@ -9,6 +9,7 @@ interface SidebarProps {
   onSelectScenario: (id: string) => void;
   onCreateScenario: () => void;
   onOpenAgentConfig: (scenarioId: string) => void;
+  onDeleteScenario: (scenarioId: string) => void;
   runs: Run[];
   onSelectRun: (run: Run) => void;
 }
@@ -19,6 +20,7 @@ export function Sidebar({
   onSelectScenario,
   onCreateScenario,
   onOpenAgentConfig,
+  onDeleteScenario,
   runs,
   onSelectRun,
 }: SidebarProps) {
@@ -47,16 +49,28 @@ export function Sidebar({
                 >
                   <div className={styles.scenarioName}>{s.name}</div>
                   {s.id === activeScenarioId && (
-                    <button
-                      className={styles.iconBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenAgentConfig(s.id);
-                      }}
-                      title="Configure Agent Planner"
-                    >
-                      <Settings2 size={16} />
-                    </button>
+                    <div className={styles.scenarioActions}>
+                      <button
+                        className={styles.iconBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenAgentConfig(s.id);
+                        }}
+                        title="Configure Agent Planner"
+                      >
+                        <Settings2 size={16} />
+                      </button>
+                      <button
+                        className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteScenario(s.id);
+                        }}
+                        title="Delete Scenario"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   )}
                 </li>
               ))}

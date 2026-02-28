@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from "uuid";
 import type { Scenario, Run, AgentConfig } from "./types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 
-// Simple in-memory storage that resets on reload
 const mockScenarios: Scenario[] = [
   {
     id: "default-scenario",
@@ -54,6 +53,13 @@ async function updateScenario(
   return mockScenarios[index];
 }
 
+async function deleteScenario(id: string): Promise<void> {
+  await delay(100);
+  const index = mockScenarios.findIndex((s) => s.id === id);
+  if (index === -1) throw new Error("Scenario not found");
+  mockScenarios.splice(index, 1);
+}
+
 async function listRuns(scenarioId?: string): Promise<Run[]> {
   await delay(100);
   return scenarioId
@@ -65,5 +71,6 @@ export const scenariosApi = {
   listScenarios,
   createScenario,
   updateScenario,
+  deleteScenario,
   listRuns,
 };

@@ -16,11 +16,11 @@ export function safeQueryRenderedFeatures(
   if (!map) return [];
   
   const mapInstance = map.getMap();
-  const allLayersExist = layers.every(layerId => mapInstance.getLayer(layerId));
+  const existingLayers = layers.filter(layerId => mapInstance.getLayer(layerId));
   
-  if (!allLayersExist) return [];
+  if (existingLayers.length === 0) return [];
   
-  return mapInstance.queryRenderedFeatures(point, { layers });
+  return mapInstance.queryRenderedFeatures(point, { layers: existingLayers });
 }
 
 export function detectFeaturesAtPoint(
@@ -37,7 +37,7 @@ export function detectFeaturesAtPoint(
   const routes: TransportRoute[] = [];
 
   for (const feature of features) {
-    if (feature.layer?.id === NETWORK_LAYER_ID && feature.properties) {
+    if ((feature.layer?.id === NETWORK_LAYER_ID || feature.layer?.id === `static-${NETWORK_LAYER_ID}` || feature.layer?.id === `draft-${NETWORK_LAYER_ID}`) && feature.properties) {
       link = network.links.get(feature.properties.id);
     } else if (
       feature.layer?.id?.startsWith(TRANSPORT_LAYER_PREFIX) &&

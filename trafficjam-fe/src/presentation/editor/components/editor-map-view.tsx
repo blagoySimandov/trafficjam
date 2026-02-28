@@ -1,18 +1,17 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
+import { useHotkeys } from "react-hotkeys-hook";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../../../types";
-import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import {
-  DEFAULT_CENTER,
-  DEFAULT_ZOOM,
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
   MIN_EDIT_ZOOM,
+  type CityConfig,
 } from "../../../constants";
-import { useOSMImport } from "../../../hooks/use-osm-import";
+import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
@@ -23,13 +22,14 @@ import { TransportLayer } from "../../../components/layers/transport-layer";
 import { BuildingLayer } from "../../../components/layers/building-layer";
 import { NodeLayer } from "./layers/node-layer";
 import { CombinedTooltip } from "../../../components/combined-tooltip";
+import { getMaxBounds } from "../../../utils";
 
 interface EditorMapViewProps {
   network: Network | null;
-  onNetworkChange: (network: Network) => void;
+  city: CityConfig;
   onNetworkSave: (network: Network, message: string) => void;
   onStatusChange: (status: string) => void;
-  onLinkClick: (link: TrafficLink) => void;
+  onLinkClick: (link: TrafficLink, modKey: boolean) => void;
   onUndo: () => void;
   onClear: () => void;
   canUndo: boolean;
@@ -38,9 +38,9 @@ interface EditorMapViewProps {
 
 export function EditorMapView({
   network,
+  city,
   onStatusChange,
   onLinkClick,
-  onNetworkChange,
   onNetworkSave,
   onUndo,
   onClear,
@@ -53,15 +53,6 @@ export function EditorMapView({
 
   const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
-  const { loading, importData } = useOSMImport(mapRef, {
-    onStatusChange,
-    onNetworkChange: (network: Network | null) => {
-      if (network) {
-        onNetworkChange(network);
-      }
-    },
-  });
-
   const handleLinkClickLocal = useAddNodeOnLink({
     network,
     setNetwork: (updatedNetwork: Network | null) => {
@@ -69,7 +60,7 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Added node on link");
       }
     },
-    pushToUndoStack: () => {}, // No-op since Editor handles undo
+    pushToUndoStack: () => {},
     onStatusChange,
     editorMode,
     onLinkClick,
@@ -84,8 +75,9 @@ export function EditorMapView({
 
   const {
     isDragging,
-    displayNetwork: dragDisplayNetwork,
+    draftNetwork: dragDraftNetwork,
     draggedNodeId,
+    hiddenIds: dragHiddenIds,
     onMouseDown: nodeDragMouseDown,
     onMouseMove: nodeDragMouseMove,
     onMouseUp: nodeDragMouseUp,
@@ -98,12 +90,12 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Moved node");
       }
     },
-    onBeforeChange: () => {}, // No-op since Editor handles undo
+    onBeforeChange: () => {},
   });
 
   const {
     isAddingNode,
-    displayNetwork: addDisplayNetwork,
+    draftNetwork: addDraftNetwork,
     tempNodeId,
     onMouseDown: nodeAddMouseDown,
     onMouseMove: nodeAddMouseMove,
@@ -118,31 +110,19 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Added node");
       }
     },
-    onBeforeChange: () => {}, // No-op since Editor handles undo
+    onBeforeChange: () => {},
   });
 
-  // Merge display networks - prioritize addDisplayNetwork if adding, otherwise use dragDisplayNetwork
-  const displayNetwork = isAddingNode ? addDisplayNetwork : dragDisplayNetwork;
+  const baseNetwork = network;
 
-  // Keyboard shortcut for undo (Cmd+Z on Mac, Ctrl+Z on Windows/Linux)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        (event.metaKey || event.ctrlKey) &&
-        event.key === "z" &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
-
-        if (!canUndo) return;
-
-        onUndo();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onUndo, canUndo]);
+  useHotkeys(
+    "mod+z",
+    (e) => {
+      e.preventDefault();
+      if (canUndo) onUndo();
+    },
+    [onUndo, canUndo],
+  );
 
   const handleMapRef = useCallback((ref: MapRef | null) => {
     mapRef.current = ref;
@@ -192,10 +172,11 @@ export function EditorMapView({
     <Map
       ref={handleMapRef}
       initialViewState={{
-        longitude: DEFAULT_CENTER[0],
-        latitude: DEFAULT_CENTER[1],
-        zoom: DEFAULT_ZOOM,
+        longitude: city.center[0],
+        latitude: city.center[1],
+        zoom: city.zoom,
       }}
+      maxBounds={getMaxBounds(city)}
       style={{ width: "100%", height: "100%" }}
       mapStyle={MAP_STYLE}
       mapboxAccessToken={MAPBOX_TOKEN}
@@ -208,10 +189,8 @@ export function EditorMapView({
       onMouseLeave={onMouseLeave}
     >
       <EditorControls
-        onImport={importData}
         onClear={onClear}
         onExport={exportNetwork}
-        loading={loading}
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
         editorMode={editorMode}
@@ -219,32 +198,53 @@ export function EditorMapView({
         onUndo={onUndo}
         canUndo={canUndo}
       />
-      {displayNetwork && (
+      {baseNetwork && (
         <NetworkLayer
-          network={displayNetwork}
+          network={baseNetwork}
           hoverInfo={null}
           selectedLinkId={selectedLinkId}
+          idPrefix="static"
+          filterIds={isDragging ? dragHiddenIds : []}
         />
       )}
-      {displayNetwork && (
+      {baseNetwork && (
         <NodeLayer
-          network={displayNetwork}
+          network={baseNetwork}
           editorMode={editorMode}
           draggedNodeId={draggedNodeId}
           tempNodeId={isAddingNode ? tempNodeId : null}
+          idPrefix="static"
+          filterIds={isDragging ? dragHiddenIds : []}
         />
       )}
-      {displayNetwork?.transportRoutes &&
-        displayNetwork.transportRoutes.size > 0 && (
+      {(isDragging && dragDraftNetwork) || (isAddingNode && addDraftNetwork) ? (
+        <>
+          <NetworkLayer
+            network={(isDragging ? dragDraftNetwork : addDraftNetwork) as Network}
+            hoverInfo={null}
+            selectedLinkId={selectedLinkId}
+            idPrefix="draft"
+          />
+          <NodeLayer
+            network={(isDragging ? dragDraftNetwork : addDraftNetwork) as Network}
+            editorMode={editorMode}
+            draggedNodeId={draggedNodeId}
+            tempNodeId={isAddingNode ? tempNodeId : null}
+            idPrefix="draft"
+          />
+        </>
+      ) : null}
+      {baseNetwork?.transportRoutes &&
+        baseNetwork.transportRoutes.size > 0 && (
           <TransportLayer
-            routes={displayNetwork.transportRoutes}
+            routes={baseNetwork.transportRoutes}
             hoverInfo={null}
           />
         )}
       {showBuildings &&
-        displayNetwork?.buildings &&
-        displayNetwork.buildings.size > 0 && (
-          <BuildingLayer buildings={displayNetwork.buildings} />
+        baseNetwork?.buildings &&
+        baseNetwork.buildings.size > 0 && (
+          <BuildingLayer buildings={baseNetwork.buildings} />
         )}
       {hoverInfo && !editorMode && !isDragging && (
         <CombinedTooltip

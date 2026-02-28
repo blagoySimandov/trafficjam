@@ -35,7 +35,7 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
   const queryClient = useQueryClient();
   const { start } = useSimulation(activeScenario?.id || "default");
   const [error, setError] = useState<string | null>(null);
-  
+
   const { register, handleSubmit } = useForm<LaunchForm>({
     defaultValues: {
       iterations: 1,
@@ -49,15 +49,15 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
 
     try {
       const { networkFile, buildings, bounds } = prepareSimulationData(network);
-      
+
       start.mutate(
-        { 
-          scenarioId: activeScenario.id, 
-          networkFile, 
-          buildings, 
-          bounds, 
-          iterations: data.iterations, 
-          randomSeed: (data.randomSeed !== undefined && !isNaN(data.randomSeed)) ? data.randomSeed : undefined 
+        {
+          scenarioId: activeScenario.id,
+          networkFile,
+          buildings,
+          bounds,
+          iterations: data.iterations,
+          randomSeed: (data.randomSeed !== undefined && !isNaN(data.randomSeed)) ? data.randomSeed : undefined
         },
         {
           onSuccess: (responseData) => {
@@ -99,18 +99,18 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
   );
 
   return (
-    <Dialog 
-      title={dialogTitle} 
-      footer={dialogFooter} 
+    <Dialog
+      title={dialogTitle}
+      footer={dialogFooter}
       onClose={onClose}
       maxWidth={480}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className={styles.formGroup}>
           <label className={styles.label}>Run Note (optional)</label>
-          <input 
-            type="text" 
-            className={styles.input} 
+          <input
+            type="text"
+            className={styles.input}
             placeholder="e.g. Closed bridge experiment"
             {...register("note")}
           />
@@ -119,19 +119,19 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
         <div className={styles.row}>
           <div className={styles.formGroup}>
             <label className={styles.label}>Iterations</label>
-            <input 
-              type="number" 
-              className={styles.input} 
-              min={1} 
+            <input
+              type="number"
+              className={styles.input}
+              min={1}
               max={100}
               {...register("iterations", { valueAsNumber: true })}
             />
           </div>
           <div className={styles.formGroup}>
             <label className={styles.label}>Random Seed</label>
-            <input 
-              type="number" 
-              className={styles.input} 
+            <input
+              type="number"
+              className={styles.input}
               placeholder="Random"
               {...register("randomSeed", { valueAsNumber: true })}
             />

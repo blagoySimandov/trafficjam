@@ -39,10 +39,15 @@ export function useScenarioManager() {
     },
   });
 
-  // Helper getters
+  const deleteScenarioMutation = useMutation({
+    mutationFn: (id: string) => scenariosApi.deleteScenario(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scenarios"] });
+    },
+  });
+
   const activeScenario = scenarios.find(s => s.id === (activeScenarioId || scenarios[0]?.id)) || null;
 
-  // Actions
   const createScenario = useCallback((name: string, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
     return createScenarioMutation.mutateAsync({ name, config });
   }, [createScenarioMutation]);
@@ -51,12 +56,18 @@ export function useScenarioManager() {
     return updateScenarioMutation.mutateAsync({ id, updates });
   }, [updateScenarioMutation]);
 
+  const deleteScenario = useCallback((id: string) => {
+    if (activeScenarioId === id) setActiveScenarioId(null);
+    return deleteScenarioMutation.mutateAsync(id);
+  }, [deleteScenarioMutation, activeScenarioId]);
+
   return {
     scenarios,
     activeScenario,
     setActiveScenarioId: (id: string | null) => setActiveScenarioId(id),
     createScenario,
     updateScenario,
+    deleteScenario,
     runs,
     isLoading: isLoadingScenarios || isLoadingRuns
   };

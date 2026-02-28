@@ -9,9 +9,9 @@ export function useMultiSelect(selectedLinks: TrafficLink[]) {
     useHotkeys("mod", () => { held.current = false; }, { keydown: false, keyup: true });
 
     const handleLinkClick = useCallback(
-        (link: TrafficLink): TrafficLink[] => {
+        (link: TrafficLink, modKey: boolean): TrafficLink[] => {
             if (!held.current) return [link];
-
+            if (!modKey) return [link];
             const isSelected = selectedLinks.some((l) => l.id === link.id);
             if (isSelected) return selectedLinks.filter((l) => l.id !== link.id);
             return [...selectedLinks, link];

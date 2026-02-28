@@ -201,3 +201,128 @@
 .saveButton:hover {
   background: #2563eb;
 }
+
+.disableButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  color: #ef4444;
+}
+
+.disableButton:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.enableButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  color: #22c55e;
+}
+
+.enableButton:hover {
+  background: #22c55e;
+  color: white;
+}
+
+.disabledBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-top: 16px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #991b1b;
+  font-weight: 500;
+}
+
+.disabledMixedWarning {
+  padding: 10px 14px;
+  margin-top: 16px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.confirmDialog {
+  margin-top: 20px;
+  padding: 16px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+}
+
+.confirmText {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #991b1b;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirmCancel {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  cursor: pointer;
+  background: white;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.confirmCancel:hover {
+  background: #f5f5f5;
+}
+
+.confirmDisable {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #ef4444;
+  color: white;
+  transition: all 0.2s;
+}
+
+.confirmDisable:hover {
+  background: #dc2626;
+}

@@ -3,11 +3,12 @@ import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint, safeQueryRenderedFeatures } from "../utils/feature-detection";
 import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
+import { useRafState } from "./use-raf-state";
 
 interface UseMapInteractionsParams {
   network: Network | null;
   mapRef: React.RefObject<MapRef | null>;
-  onLinkClick?: (link: TrafficLink, coords?: { lng: number; lat: number }) => void;
+  onLinkClick?: (link: TrafficLink, coords?: { lng: number; lat: number }, modKey?: boolean) => void;
   editorMode?: boolean;
 }
 
@@ -18,8 +19,8 @@ export function useMapInteractions({
   mapRef,
   onLinkClick,
   editorMode,
-}: UseMapInteractionsParams) { 
-  const [hoverInfo, setHoverInfo] = useState<CombinedHoverInfo | null>(null);
+}: UseMapInteractionsParams) {
+  const [hoverInfo, setHoverInfo] = useRafState<CombinedHoverInfo | null>(null);
 
   const findNearbyLink = useCallback(
     (event: MapMouseEvent) => {
@@ -34,9 +35,7 @@ export function useMapInteractions({
         [x + 6, y + 6],
       ];
 
-      const features = map.queryRenderedFeatures(bbox, {
-        layers: [NETWORK_LAYER_ID],
-      });
+      const features = safeQueryRenderedFeatures(map, bbox, [NETWORK_LAYER_ID, `static-${NETWORK_LAYER_ID}`, `draft-${NETWORK_LAYER_ID}`]);
 
       for (const feature of features) {
         const id = feature.properties?.id;
@@ -71,10 +70,10 @@ export function useMapInteractions({
         });
         return true;
       } else if (link && onLinkClick) {
-        onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat });
+        onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat }, event.originalEvent.metaKey || event.originalEvent.ctrlKey);
         return true;
       }
-      
+
       return false;
     },
     [network, mapRef, onLinkClick, editorMode, findNearbyLink]
@@ -94,7 +93,7 @@ export function useMapInteractions({
       const detected = detectFeaturesAtPoint(event, network);
       const link = detected.link || (canEditAtZoom ? findNearbyLink(event) : undefined);
 
-      const isHoveringNode = safeQueryRenderedFeatures(map, event.point, [NODE_LAYER_ID]).length > 0;
+      const isHoveringNode = safeQueryRenderedFeatures(map, event.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]).length > 0;
 
       if (map) {
         if (link && canEditAtZoom && !isHoveringNode) {
