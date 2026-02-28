@@ -37,8 +37,10 @@ async def lifespan(app: FastAPI):
     app.state.nc = await nats_lib.connect(settings.nats_url)
     app.state.js = app.state.nc.jetstream()
     app.state.status_worker = asyncio.create_task(_monitor_all_statuses(app.state.js))
+    app.state.simwrapper_worker = asyncio.create_task(_monitor_simwrapper_ready(app.state.js))
     yield
     app.state.status_worker.cancel()
+    app.state.simwrapper_worker.cancel()
     await app.state.nc.drain()
     await engine.dispose()
 
@@ -68,6 +70,24 @@ async def _monitor_all_statuses(js):
                         await repo.update_status(parsed_run_id, new_status)
                 except Exception as e:
                     logger.error(f"Status update failed for {run_id}: {e}")
+        except Exception:
+            await asyncio.sleep(5)
+
+
+async def _monitor_simwrapper_ready(js):
+    consumer = EventConsumer(js, "*", "*")
+    while True:
+        try:
+            async for run_id, bucket_name in consumer.listen_simwrapper_ready():
+                if not bucket_name:
+                    continue
+                try:
+                    parsed_run_id = uuid.UUID(run_id)
+                    repo = RunRepository(async_session_factory)
+                    await repo.update_simwrapper_bucket(parsed_run_id, bucket_name)
+                    logger.info(f"Updated SimWrapper bucket {bucket_name} for run {run_id}")
+                except Exception as e:
+                    logger.error(f"SimWrapper bucket update failed for {run_id}: {e}")
         except Exception:
             await asyncio.sleep(5)
 

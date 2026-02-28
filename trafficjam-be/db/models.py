@@ -40,6 +40,7 @@ class Run(Base):
     scenario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("scenarios.id"), nullable=False, index=True)
     status: Mapped[RunStatus] = mapped_column(Enum(RunStatus), nullable=False, default=RunStatus.PENDING)
     nats_subject: Mapped[str | None] = mapped_column(Text, nullable=True)
+    simwrapper_bucket: Mapped[str | None] = mapped_column(Text, nullable=True)
     event_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
