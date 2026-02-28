@@ -4,6 +4,8 @@ export interface CityConfig {
   center: [number, number];
   zoom: number;
   bounds: { south: number; west: number; north: number; east: number };
+  population: number;
+  populationDensity: number;
 }
 
 export const CORK: CityConfig = {
@@ -12,6 +14,8 @@ export const CORK: CityConfig = {
   center: [-8.47, 51.9],
   zoom: 15,
   bounds: { south: 51.85, west: -8.55, north: 51.95, east: -8.38 },
+  population: 224004,
+  populationDensity: 1200,
 };
 
 export const DUBLIN: CityConfig = {
@@ -20,6 +24,8 @@ export const DUBLIN: CityConfig = {
   center: [-6.26, 53.35],
   zoom: 14,
   bounds: { south: 53.28, west: -6.42, north: 53.42, east: -6.1 },
+  population: 592713,
+  populationDensity: 5150,
 };
 
 export const CITIES: CityConfig[] = [CORK, DUBLIN];

@@ -3,12 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { scenariosApi } from "./client";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 import type { Scenario, AgentConfig } from "./types";
+import type { CityConfig } from "../../constants/cities";
 
 export function useScenarioManager() {
   const queryClient = useQueryClient();
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
 
-  // Queries
   const { data: scenarios = [], isLoading: isLoadingScenarios } = useQuery({
     queryKey: ["scenarios"],
     queryFn: () => scenariosApi.listScenarios(),
@@ -21,10 +21,9 @@ export function useScenarioManager() {
     staleTime: 5000,
   });
 
-  // Mutations
   const createScenarioMutation = useMutation({
-    mutationFn: ({ name, config }: { name: string; config: AgentConfig }) => 
-      scenariosApi.createScenario(name, config),
+    mutationFn: ({ city, config }: { city: CityConfig; config: AgentConfig }) =>
+      scenariosApi.createScenario(city, config),
     onSuccess: (newScenario) => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
       setActiveScenarioId(newScenario.id);
@@ -32,7 +31,7 @@ export function useScenarioManager() {
   });
 
   const updateScenarioMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) => 
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) =>
       scenariosApi.updateScenario(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
@@ -46,20 +45,57 @@ export function useScenarioManager() {
     },
   });
 
-  const activeScenario = scenarios.find(s => s.id === (activeScenarioId || scenarios[0]?.id)) || null;
+  const activeScenario =
+    scenarios.find((s) => s.id === (activeScenarioId || scenarios[0]?.id)) || null;
 
-  const createScenario = useCallback((name: string, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
-    return createScenarioMutation.mutateAsync({ name, config });
-  }, [createScenarioMutation]);
+  const createScenario = useCallback(
+    async (city: CityConfig, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
+      const planParams = {
+        population: city.population,
+        populationDensity: city.populationDensity,
+        ...config,
+      };
+      const sortedContent =
+        city.name +
+        JSON.stringify(
+          Object.fromEntries(
+            Object.keys(planParams)
+              .sort()
+              .map((k) => [k, planParams[k as keyof typeof planParams]]),
+          ),
+        );
+      const data = new TextEncoder().encode(sortedContent);
+      const buffer = await crypto.subtle.digest("SHA-256", data);
+      const hash = Array.from(new Uint8Array(buffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+        .slice(0, 6);
+      const expectedName = `${city.name} - ${hash}`;
 
-  const updateScenario = useCallback((id: string, updates: Partial<Scenario>) => {
-    return updateScenarioMutation.mutateAsync({ id, updates });
-  }, [updateScenarioMutation]);
+      const existing = scenarios.find((s) => s.name === expectedName);
+      if (existing) {
+        setActiveScenarioId(existing.id);
+        return existing;
+      }
 
-  const deleteScenario = useCallback((id: string) => {
-    if (activeScenarioId === id) setActiveScenarioId(null);
-    return deleteScenarioMutation.mutateAsync(id);
-  }, [deleteScenarioMutation, activeScenarioId]);
+      return createScenarioMutation.mutateAsync({ city, config });
+    },
+    [createScenarioMutation, scenarios],
+  );
+
+  const updateScenario = useCallback(
+    (id: string, updates: Partial<Scenario>) =>
+      updateScenarioMutation.mutateAsync({ id, updates }),
+    [updateScenarioMutation],
+  );
+
+  const deleteScenario = useCallback(
+    (id: string) => {
+      if (activeScenarioId === id) setActiveScenarioId(null);
+      return deleteScenarioMutation.mutateAsync(id);
+    },
+    [deleteScenarioMutation, activeScenarioId],
+  );
 
   return {
     scenarios,
@@ -69,6 +105,6 @@ export function useScenarioManager() {
     updateScenario,
     deleteScenario,
     runs,
-    isLoading: isLoadingScenarios || isLoadingRuns
+    isLoading: isLoadingScenarios || isLoadingRuns,
   };
 }

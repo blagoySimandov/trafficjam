@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_population_from_bounds(
-    bounds: dict[str, float], country_code: str, agent_config: AgentConfig
+    bounds: dict[str, float], agent_config: AgentConfig
 ) -> int:
     area_km2 = calculate_area_wgs84(bounds)
-    return estimate_population(area_km2, country_code, agent_config)
+    return estimate_population(area_km2, agent_config)
 
 
 def create_child(
@@ -123,7 +123,7 @@ def create_agents_from_network(
     max_agents: int = 1000,
 ) -> list[Agent]:
     cfg = agent_config or default_config
-    total_population = calculate_population_from_bounds(bounds, country_code, cfg)
+    total_population = calculate_population_from_bounds(bounds, cfg)
     total_population = min(total_population, max_agents)
     logger.info(f"Creating ~{total_population} agents for {country_code}")
 

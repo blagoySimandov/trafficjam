@@ -24,8 +24,6 @@ export default function App() {
   } = useScenarioManager();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-
   const [runInfo, setRunInfo] = useState<{
     scenarioId: string;
     runId: string;
@@ -50,9 +48,8 @@ export default function App() {
     setDeleteTarget(null);
   }, [deleteTarget, deleteScenario]);
 
-  const handleCreateScenario = useCallback((name: string) => {
-    createScenario(name);
-    setIsCreateOpen(false);
+  const handleCreateScenario = useCallback(() => {
+    createScenario(DEFAULT_CITY);
     setMode("editor");
   }, [createScenario]);
 
@@ -65,7 +62,7 @@ export default function App() {
           setActiveScenarioId(id);
           setMode("editor");
         }}
-        onCreateScenario={() => setIsCreateOpen(true)}
+        onCreateScenario={handleCreateScenario}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
         runs={runs}
@@ -86,18 +83,6 @@ export default function App() {
           />
         )}
       </main>
-
-      {isCreateOpen && (
-        <ConfirmDialog
-          title="New Scenario"
-          message="Enter a name for the new scenario."
-          confirmLabel="Create"
-          variant="primary"
-          input={{ placeholder: "Scenario name", defaultValue: "New Scenario" }}
-          onConfirm={handleCreateScenario}
-          onClose={() => setIsCreateOpen(false)}
-        />
-      )}
 
       {deleteTarget && (
         <ConfirmDialog

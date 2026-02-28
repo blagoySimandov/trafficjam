@@ -256,36 +256,6 @@ async def _submit_to_simengine(
     }
 
 
-@app.post("/plan_creation")
-async def plan_creation(request: PlanCreationRequest):
-    writer = MATSimXMLWriter()
-    writer.create_plans_document()
-
-    agents = create_agents_from_network(
-        bounds=request.bounds,
-        buildings=request.buildings,
-        transport_routes=[],
-        country_code=request.country_code,
-        config=request.config,
-    )
-
-    if len(agents) > MAX_AGENTS:
-        agents = agents[:MAX_AGENTS]
-
-    for agent in agents:
-        plan = generate_plan_for_agent(agent, request.buildings, request.config)
-        if plan:
-            writer.add_person_plan(agent.id, plan)
-
-    stream = StringIO()
-    writer.write_to_stream(stream)
-    xml_content = stream.getvalue()
-
-    with open("output/test.xml", "w", encoding="utf-8") as f:
-        f.write(xml_content)
-    return
-
-
 @app.get("/scenarios/{scenario_id}/runs/{run_id}/events/stream")
 async def stream_run_events(scenario_id: str, run_id: str, request: Request):
     try:
