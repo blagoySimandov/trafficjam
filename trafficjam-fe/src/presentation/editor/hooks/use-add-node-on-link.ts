@@ -11,7 +11,7 @@ interface UseAddNodeOnLinkParams {
   pushToUndoStack: (n: Network) => void;
   onStatusChange: (s: string) => void;
   editorMode: boolean;
-  onLinkClick?: (link: TrafficLink) => void;
+  onLinkClick?: (link: TrafficLink, modKey: boolean) => void;
 }
 
 function createNodeAtMidpoint(
@@ -67,7 +67,7 @@ export function useAddNodeOnLink({
   onLinkClick,
 }: UseAddNodeOnLinkParams) {
   return useCallback(
-    (link: TrafficLink, coords?: { lng: number; lat: number }) => {
+    (link: TrafficLink, coords?: { lng: number; lat: number }, modKey?: boolean) => {
       if (editorMode) {
         if (!network) {
           onStatusChange("No network loaded");
@@ -166,7 +166,7 @@ export function useAddNodeOnLink({
 
         onStatusChange(`Added node on ${link.id}`);
       } else {
-        if (onLinkClick) onLinkClick(link as TrafficLink);
+        if (onLinkClick) onLinkClick(link as TrafficLink, modKey ?? false);
       }
     },
     [editorMode, network, pushToUndoStack, setNetwork, onStatusChange, onLinkClick]

@@ -7,7 +7,7 @@ import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
 interface UseMapInteractionsParams {
   network: Network | null;
   mapRef: React.RefObject<MapRef | null>;
-  onLinkClick?: (link: TrafficLink, coords?: { lng: number; lat: number }) => void;
+  onLinkClick?: (link: TrafficLink, coords?: { lng: number; lat: number }, modKey?: boolean) => void;
   editorMode?: boolean;
 }
 
@@ -18,7 +18,7 @@ export function useMapInteractions({
   mapRef,
   onLinkClick,
   editorMode,
-}: UseMapInteractionsParams) { 
+}: UseMapInteractionsParams) {
   const [hoverInfo, setHoverInfo] = useState<CombinedHoverInfo | null>(null);
 
   const findNearbyLink = useCallback(
@@ -71,10 +71,10 @@ export function useMapInteractions({
         });
         return true;
       } else if (link && onLinkClick) {
-        onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat });
+        onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat }, event.originalEvent.metaKey || event.originalEvent.ctrlKey);
         return true;
       }
-      
+
       return false;
     },
     [network, mapRef, onLinkClick, editorMode, findNearbyLink]
