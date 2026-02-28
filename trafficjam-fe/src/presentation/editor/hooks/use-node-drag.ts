@@ -36,9 +36,8 @@ export function useNodeDrag({
 }: UseNodeDragParams) {
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [tempDragPosition, setTempDragPosition] = useRafState<LngLatTuple | null>(
-    null,
-  );
+  const [tempDragPosition, setTempDragPosition] =
+    useRafState<LngLatTuple | null>(null);
   const [connectedLinks, setConnectedLinks] = useState<ConnectedLinkInfo[]>([]);
 
   const isDraggingRef = useRef(false);
@@ -92,13 +91,22 @@ export function useNodeDrag({
         `static-${NODE_LAYER_ID}`,
         `draft-${NODE_LAYER_ID}`,
       ]);
-      if (!features?.length) return false;
+      
+      let nodeId: string | null = null;
+      if (features?.length) {
+        const feature = features[0];
+        nodeId = (feature.properties?.id || feature.id)?.toString() || null;
+      } else {
+        // Fallback to data-model snap check if visual query fails
+        const snapResult = findSnapPoint([e.lngLat.lat, e.lngLat.lng], network, []);
+        if (snapResult?.isNode && snapResult.nodeId) {
+          nodeId = snapResult.nodeId;
+        }
+      }
 
-      const feature = features[0];
-      const nodeId = feature.properties?.id || feature.id;
       if (!nodeId) return false;
 
-      const node = network.nodes.get(nodeId.toString());
+      const node = network.nodes.get(nodeId);
       if (!node) return false;
 
       const currentConnectedLinks: ConnectedLinkInfo[] = [];
@@ -140,7 +148,14 @@ export function useNodeDrag({
       e.originalEvent.stopPropagation();
       return true;
     },
-    [editorMode, network, mapRef, setTempDragPosition, setConnectedLinks, setDraggedNodeId],
+    [
+      editorMode,
+      network,
+      mapRef,
+      setTempDragPosition,
+      setConnectedLinks,
+      setDraggedNodeId,
+    ],
   );
 
   const handleMouseMove = useCallback(

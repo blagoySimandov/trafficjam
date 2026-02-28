@@ -66,6 +66,10 @@ export function useNodeAdd({
     const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]);
     if (features && features.length > 0) return false;
 
+    // Also check data-model snap to avoid creating duplicate nodes when visual check fails
+    const snapResult = findSnapPoint([e.lngLat.lat, e.lngLat.lng], network, []);
+    if (snapResult?.isNode) return false;
+
     const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
     setTempNodePosition(newPosition);
     setTempLinkEndPosition(newPosition);

@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint, safeQueryRenderedFeatures } from "../utils/feature-detection";
+import { findSnapPoint } from "../utils/snap-to-network";
 import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
 import { useRafState } from "./use-raf-state";
 
@@ -57,6 +58,14 @@ export function useMapInteractions({
       const canEditAtZoom = !!(editorMode && map && map.getZoom() >= MIN_NODE_ZOOM);
 
       if (editorMode && !canEditAtZoom) return false;
+
+      // If we're on or near a node, don't handle as a link click
+      const isHoveringNode = map ? safeQueryRenderedFeatures(map, event.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]).length > 0 : false;
+      if (isHoveringNode) return false;
+
+      // Also check data-model snap fallback
+      const snapResult = findSnapPoint([event.lngLat.lat, event.lngLat.lng], network, []);
+      if (snapResult?.isNode) return false;
 
       const detected = detectFeaturesAtPoint(event, network);
       const link = detected.link || (editorMode ? findNearbyLink(event) : undefined);

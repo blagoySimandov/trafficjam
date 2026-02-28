@@ -5,9 +5,9 @@ import { nodeToGeoJSON } from "../../../utils";
 import { NODE_CIRCLE_LAYER, COLORS } from "../../../constants";
 
 export function useNodeLayerStyle(
-  network: Network, 
+  network: Network,
   draggedNodeId: string | null,
-  tempNodeId?: string | null
+  tempNodeId?: string | null,
 ) {
   const geojson = useMemo(() => nodeToGeoJSON(network), [network]);
 
