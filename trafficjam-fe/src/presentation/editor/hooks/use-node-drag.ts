@@ -51,7 +51,7 @@ export function useNodeDrag({
     if (!network) return index;
 
     for (const node of network.nodes.values()) {
-      const key = `${node.position[0]},${node.position[1]}`; // simple string key
+      const key = `${node.position[0].toFixed(6)},${node.position[1].toFixed(6)}`;
       index.set(key, node);
     }
     return index;
@@ -80,17 +80,10 @@ export function useNodeDrag({
       nodes.set(draggedNodeId, { ...draggedNode, position: tempDragPosition });
     }
 
-    const positionIndex = new Map<string, TrafficNode>();
-    for (const node of network.nodes.values()) {
-      const key = `${node.position[0].toFixed(6)},${node.position[1].toFixed(6)}`;
-      positionIndex.set(key, node);
-    }
-
     for (const { linkId, indicesToUpdate } of connectedLinks) {
       const link = network.links.get(linkId);
       if (!link) continue;
 
-      // Copy geometry and apply temporary drag position
       const geometry = [...link.geometry];
       for (const idx of indicesToUpdate) {
         geometry[idx] = tempDragPosition;
@@ -98,7 +91,6 @@ export function useNodeDrag({
 
       links.set(linkId, { ...link, geometry });
 
-      // 4️⃣ Add all nodes along this link's geometry using the position index
       for (const coord of geometry) {
         const key = `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`;
         const node = positionIndex.get(key);
@@ -109,7 +101,14 @@ export function useNodeDrag({
     }
 
     return { nodes, links } as Network;
-  }, [isDragging, draggedNodeId, tempDragPosition, network, connectedLinks]);
+  }, [
+    isDragging,
+    draggedNodeId,
+    tempDragPosition,
+    network,
+    connectedLinks,
+    positionIndex,
+  ]);
 
   const handleMouseDown = useCallback(
     (e: MapMouseEvent): boolean => {
