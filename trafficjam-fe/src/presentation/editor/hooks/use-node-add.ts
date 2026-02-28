@@ -4,6 +4,7 @@ import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../ty
 import { NODE_LAYER_ID } from "../../../constants";
 import { findSnapPoint } from "../../../utils/snap-to-network";
 import { safeQueryRenderedFeatures } from "../../../utils/feature-detection";
+import { useRafState } from "../../../hooks/use-raf-state";
 
 interface UseNodeAddParams {
   network: Network | null;
@@ -23,8 +24,8 @@ export function useNodeAdd({
   onBeforeChange,
 }: UseNodeAddParams) {
   const [isAddingNode, setIsAddingNode] = useState(false);
-  const [tempNodePosition, setTempNodePosition] = useState<LngLatTuple | null>(null);
-  const [tempLinkEndPosition, setTempLinkEndPosition] = useState<LngLatTuple | null>(null);
+  const [tempNodePosition, setTempNodePosition] = useRafState<LngLatTuple | null>(null);
+  const [tempLinkEndPosition, setTempLinkEndPosition] = useRafState<LngLatTuple | null>(null);
   const tempNodeId = "temp-new-node";
   const isAddingRef = useRef(false);
 

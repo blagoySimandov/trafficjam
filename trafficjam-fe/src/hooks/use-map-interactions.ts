@@ -3,6 +3,7 @@ import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint, safeQueryRenderedFeatures } from "../utils/feature-detection";
 import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
+import { useRafState } from "./use-raf-state";
 
 interface UseMapInteractionsParams {
   network: Network | null;
@@ -19,7 +20,7 @@ export function useMapInteractions({
   onLinkClick,
   editorMode,
 }: UseMapInteractionsParams) {
-  const [hoverInfo, setHoverInfo] = useState<CombinedHoverInfo | null>(null);
+  const [hoverInfo, setHoverInfo] = useRafState<CombinedHoverInfo | null>(null);
 
   const findNearbyLink = useCallback(
     (event: MapMouseEvent) => {
