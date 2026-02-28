@@ -1,53 +1,110 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.card {
-  background: rgba(15, 15, 20, 0.9);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  color: #fff;
-  padding: 32px 40px;
-  min-width: 340px;
-  text-align: center;
-}
-
-.title {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0 0 16px;
+.scenarioBadge {
+  font-size: 0.75rem;
+  background-color: #333;
+  color: #aaa;
+  padding: 0.25rem 0.6rem;
+  border-radius: 1rem;
+  border: 1px solid #444;
+  font-weight: 500;
 }
 
 .stats {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.65);
-  margin: 0 0 28px;
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  color: #fff;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #333;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.cancelButton {
+  background: none;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cancelButton:hover {
+  background: #2a2a2a;
+  color: #fff;
 }
 
 .launchButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 36px;
-  background: #fff;
-  color: #0f0f14;
-  font-size: 15px;
-  font-weight: 600;
+  background: #2563eb;
+  color: white;
   border: none;
-  border-radius: 12px;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.launchButton:hover {
-  opacity: 0.9;
+.launchButton:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.launchButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .launchButton:disabled {

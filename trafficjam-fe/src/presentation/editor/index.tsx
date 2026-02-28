@@ -7,21 +7,23 @@ import { StatusBar } from "../../components/status-bar";
 import { useUndoStack } from "./hooks/use-undo-stack";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import type { TrafficLink, Network } from "../../types";
+import type { Scenario } from "../../api/scenarios";
 
 interface EditorProps {
+  activeScenario: Scenario | null;
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
 }
 
-function remapSelectedLinks(
-  selectedLinks: TrafficLink[],
-  network: Network,
-): TrafficLink[] {
-  return selectedLinks
-    .map((link) => network.links.get(link.id))
-    .filter((link): link is TrafficLink => link !== undefined);
-}
+export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
+  function remapSelectedLinks(
+    selectedLinks: TrafficLink[],
+    network: Network,
+  ): TrafficLink[] {
+    return selectedLinks
+      .map((link) => network.links.get(link.id))
+      .filter((link): link is TrafficLink => link !== undefined);
+  }
 
-export function Editor({ onRunSimulation }: EditorProps) {
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
   const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
@@ -71,7 +73,6 @@ export function Editor({ onRunSimulation }: EditorProps) {
     setSelectedLinks([]);
   }, []);
 
-
   const handleLaunch = useCallback(
     (info: { scenarioId: string; runId: string }) => {
       setDialogOpen(false);
@@ -79,7 +80,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
     },
     [onRunSimulation],
   );
-  
+
   const handleSelectAllWithSameName = useCallback(
     (streetName: string) => {
       if (!network) return;
@@ -91,7 +92,6 @@ export function Editor({ onRunSimulation }: EditorProps) {
     },
     [network],
   );
-
 
   return (
     <>
@@ -120,6 +120,7 @@ export function Editor({ onRunSimulation }: EditorProps) {
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
       {dialogOpen && (
         <LaunchDialog
+          activeScenario={activeScenario}
           network={network}
           onLaunch={handleLaunch}
           onClose={() => setDialogOpen(false)}
