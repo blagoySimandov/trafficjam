@@ -131,6 +131,9 @@ def create_agents_from_network(
     ]
     if not residential_buildings:
         residential_buildings = buildings
+    if not residential_buildings:
+        logger.warning("No buildings available for agent placement, skipping agent creation")
+        return []
 
     schools, kindergartens = get_schools_from_buildings(buildings)
     has_transport = len(transport_routes) > 0
