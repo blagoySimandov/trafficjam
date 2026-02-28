@@ -46,6 +46,19 @@ export function useNodeDrag({
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const hasMoved = useRef(false);
 
+  //Compute a map of position -> node
+  //We need this to find all nodes along a link's geometry when dragging...
+  const positionIndex = useMemo(() => {
+    const index = new Map<string, TrafficNode>();
+    if (!network) return index;
+
+    for (const node of network.nodes.values()) {
+      const key = `${node.position[0]},${node.position[1]}`; // simple string key
+      index.set(key, node);
+    }
+    return index;
+  }, [network]);
+
   const { snapNodeToNetwork } = useNodeSnap({
     network,
     onNetworkChange,
@@ -62,25 +75,43 @@ export function useNodeDrag({
       return null;
 
     const nodes = new Map<string, TrafficNode>();
+    const links = new Map<string, TrafficLink>();
+
     const draggedNode = network.nodes.get(draggedNodeId);
     if (draggedNode) {
       nodes.set(draggedNodeId, { ...draggedNode, position: tempDragPosition });
     }
 
-    const links = new Map<string, TrafficLink>();
     for (const { linkId, indicesToUpdate } of connectedLinks) {
       const link = network.links.get(linkId);
-      if (link) {
-        const geometry = [...link.geometry];
-        for (const idx of indicesToUpdate) {
-          geometry[idx] = tempDragPosition;
+      if (!link) continue;
+
+      const geometry = [...link.geometry];
+      for (const idx of indicesToUpdate) {
+        geometry[idx] = tempDragPosition;
+      }
+
+      links.set(linkId, { ...link, geometry });
+
+      // Add all nodes along this link's geometry using the position index
+      for (const coord of geometry) {
+        const key = `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`;
+        const node = positionIndex.get(key);
+        if (node && !nodes.has(node.id)) {
+          nodes.set(node.id, node);
         }
-        links.set(linkId, { ...link, geometry });
       }
     }
 
-    return { ...network, nodes, links } as Network;
-  }, [isDragging, draggedNodeId, tempDragPosition, network, connectedLinks]);
+    return { nodes, links } as Network;
+  }, [
+    isDragging,
+    draggedNodeId,
+    tempDragPosition,
+    network,
+    connectedLinks,
+    positionIndex,
+  ]);
 
   const handleMouseDown = useCallback(
     (e: MapMouseEvent): boolean => {
@@ -91,14 +122,18 @@ export function useNodeDrag({
         `static-${NODE_LAYER_ID}`,
         `draft-${NODE_LAYER_ID}`,
       ]);
-      
+
       let nodeId: string | null = null;
       if (features?.length) {
         const feature = features[0];
         nodeId = (feature.properties?.id || feature.id)?.toString() || null;
       } else {
         // Fallback to data-model snap check if visual query fails
-        const snapResult = findSnapPoint([e.lngLat.lat, e.lngLat.lng], network, []);
+        const snapResult = findSnapPoint(
+          [e.lngLat.lat, e.lngLat.lng],
+          network,
+          [],
+        );
         if (snapResult?.isNode && snapResult.nodeId) {
           nodeId = snapResult.nodeId;
         }
