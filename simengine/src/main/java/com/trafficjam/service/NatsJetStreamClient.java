@@ -7,9 +7,12 @@ import io.nats.client.JetStream;
 import io.nats.client.JetStreamManagement;
 import io.nats.client.Nats;
 import io.nats.client.Options;
+import io.nats.client.api.ObjectStoreConfiguration;
 import io.nats.client.api.RetentionPolicy;
 import io.nats.client.api.StreamConfiguration;
 import io.nats.client.api.StorageType;
+import io.nats.client.ObjectStore;
+import io.nats.client.ObjectStoreManagement;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -20,6 +23,9 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 @Component
 public class NatsJetStreamClient {
@@ -55,8 +61,7 @@ public class NatsJetStreamClient {
                 .server(natsUrl)
                 .maxReconnects(MAX_RECONNECTS)
                 .reconnectWait(RECONNECT_WAIT)
-                .connectionListener((conn, type) ->
-                        logger.info("NATS connection event: {}", type))
+                .connectionListener((conn, type) -> logger.info("NATS connection event: {}", type))
                 .errorListener(new io.nats.client.ErrorListener() {
                     @Override
                     public void errorOccurred(Connection conn, String error) {
@@ -122,6 +127,47 @@ public class NatsJetStreamClient {
 
     private String buildSubject(String scenarioId, String runId, String type) {
         return "sim." + scenarioId + "." + runId + "." + type;
+    }
+
+    public void publishSimWrapperReady(String runId, String bucketName) {
+        if (!isConnected()) {
+            logger.warn("JetStream not connected, dropping simwrapper ready event");
+            return;
+        }
+        try {
+            Map<String, String> payloadMap = Map.of("run_id", runId, "bucket_name", bucketName);
+            byte[] payload = objectMapper.writeValueAsBytes(payloadMap);
+            jetStream.publish("simulation." + runId + ".simwrapper.ready", payload);
+        } catch (Exception e) {
+            logger.error("Failed to publish SimWrapper ready event: {}", e.getMessage());
+        }
+    }
+
+    public void uploadToObjectStore(String bucketName, String objectName, File file) {
+        if (connection == null || connection.getStatus() != Connection.Status.CONNECTED) {
+            logger.warn("NATS not connected, cannot upload to object store");
+            return;
+        }
+        try {
+            ObjectStoreManagement osm = connection.objectStoreManagement();
+            try {
+                osm.getStatus(bucketName);
+            } catch (Exception e) {
+                // Bucket doesn't exist, create it
+                ObjectStoreConfiguration osc = ObjectStoreConfiguration.builder(bucketName)
+                        .storageType(StorageType.File)
+                        .build();
+                osm.create(osc);
+            }
+
+            ObjectStore os = connection.objectStore(bucketName);
+            try (InputStream in = new FileInputStream(file)) {
+                os.put(objectName, in);
+            }
+            logger.debug("Successfully uploaded {} to bucket {}", objectName, bucketName);
+        } catch (Exception e) {
+            logger.error("Failed to upload {} to bucket {}: {}", objectName, bucketName, e.getMessage());
+        }
     }
 
     @PreDestroy
