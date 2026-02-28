@@ -34,6 +34,12 @@
             <name>MATSim Maven repository</name>
             <url>https://repo.matsim.org/repository/matsim/</url>
         </repository>
+        <!-- necessary for lint error - simwrapper depends on something that depends on topobyte, so lint is unhappy because it wants topobyte explicitly defined ig -->
+        <repository>
+            <id>topobyte</id>
+            <name>Topobyte repository</name>
+            <url>https://mvn.topobyte.de</url>
+        </repository>
     </repositories>
 
     <dependencies>
