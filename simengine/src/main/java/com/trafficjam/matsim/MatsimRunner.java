@@ -10,8 +10,6 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.matsim.simwrapper.SimWrapperModule;
-
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -79,12 +77,6 @@ public class MatsimRunner {
             return;
         }
 
-        Throwable cause = e;
-        while (cause != null) {
-            logger.error("CAUSE: {}: {}", cause.getClass().getName(), cause.getMessage());
-            cause = cause.getCause();
-        }
-
         logger.error("Simulation {} FAILED: {}", simulationId, e.getMessage(), e);
         SimulationInfo info = activeSimulations.get(simulationId);
         if (info != null) {
@@ -120,9 +112,6 @@ public class MatsimRunner {
     }
 
     private void registerEventHandlers(Controler controler, EventCallback eventCallback, Scenario scenario) {
-        // Add SimWrapper module — generates dashboards automatically after simulation
-        controler.addOverridingModule(new SimWrapperModule());
-
         if (eventCallback == null) return;
 
         controler.addOverridingModule(new org.matsim.core.controler.AbstractModule() {
