@@ -18,8 +18,8 @@
 	<module name="controller">
 		<param name="outputDirectory" value="{{OUTPUT_DIR}}" />  <!-- DYNAMIC: User-specified or default ./output -->
 		<param name="lastIteration" value="{{ITERATIONS}}" />  <!-- DYNAMIC: User-specified or default 10 -->
-		<param name="writeEventsInterval" value="1" />  <!-- STATIC: Write events every iteration -->
-		<param name="writePlansInterval" value="1" />  <!-- STATIC: Write plans every iteration -->
+		<param name="writeEventsInterval" value="0" />  <!-- STATIC: Write events every iteration -->
+		<param name="writePlansInterval" value="0" />  <!-- STATIC: Write plans every iteration -->
 	</module>
 
 	<module name="scoring">
