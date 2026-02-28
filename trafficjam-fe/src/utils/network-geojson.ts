@@ -30,9 +30,13 @@ export function networkToGeoJSON(
 
   for (const link of network.links.values()) {
     const isSelected = selectedIds.has(link.id);
+    const isDisabled = link.disabled ?? false;
     const style = ROAD_STYLES[link.tags.highway] || DEFAULT_STYLE;
     const lanes = link.tags.lanes || 1;
     const weight = calculateWeight(style.baseWeight, lanes);
+
+    const color = isSelected ? "#3b82f6" : isDisabled ? "#ef4444" : style.color;
+    const casingColor = isSelected ? "#1e40af" : isDisabled ? "#991b1b" : style.casingColor;
 
     features.push({
       type: "Feature",
@@ -42,8 +46,8 @@ export function networkToGeoJSON(
         highway: link.tags.highway,
         lanes,
         oneway: link.tags.oneway || false,
-        color: isSelected ? "#3b82f6" : style.color,
-        casingColor: isSelected ? "#1e40af" : style.casingColor,
+        color,
+        casingColor,
         weight: isSelected ? weight * 1.5 : weight,
         zIndex: isSelected ? 1000 : style.zIndex,
         hasGlow: isSelected ? true : (style.glow || false),
