@@ -39,11 +39,11 @@ export function useNodeDrag({
   const [tempDragPosition, setTempDragPosition] = useRafState<LngLatTuple | null>(
     null,
   );
+  const [connectedLinks, setConnectedLinks] = useState<ConnectedLinkInfo[]>([]);
 
   const isDraggingRef = useRef(false);
   const draggedNodeIdRef = useRef<string | null>(null);
   const tempDragPositionRef = useRef<LngLatTuple | null>(null);
-  const connectedLinksRef = useRef<ConnectedLinkInfo[]>([]);
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const hasMoved = useRef(false);
 
@@ -55,8 +55,8 @@ export function useNodeDrag({
 
   const hiddenIds = useMemo(() => {
     if (!isDragging || !draggedNodeId) return [];
-    return [draggedNodeId, ...connectedLinksRef.current.map((l) => l.linkId)];
-  }, [isDragging, draggedNodeId]);
+    return [draggedNodeId, ...connectedLinks.map((l) => l.linkId)];
+  }, [isDragging, draggedNodeId, connectedLinks]);
 
   const draftNetwork = useMemo(() => {
     if (!isDragging || !draggedNodeId || !tempDragPosition || !network)
@@ -69,7 +69,7 @@ export function useNodeDrag({
     }
 
     const links = new Map<string, TrafficLink>();
-    for (const { linkId, indicesToUpdate } of connectedLinksRef.current) {
+    for (const { linkId, indicesToUpdate } of connectedLinks) {
       const link = network.links.get(linkId);
       if (link) {
         const geometry = [...link.geometry];
@@ -81,7 +81,7 @@ export function useNodeDrag({
     }
 
     return { ...network, nodes, links } as Network;
-  }, [isDragging, draggedNodeId, tempDragPosition, network]);
+  }, [isDragging, draggedNodeId, tempDragPosition, network, connectedLinks]);
 
   const handleMouseDown = useCallback(
     (e: MapMouseEvent): boolean => {
@@ -101,7 +101,7 @@ export function useNodeDrag({
       const node = network.nodes.get(nodeId.toString());
       if (!node) return false;
 
-      const connectedLinks: ConnectedLinkInfo[] = [];
+      const currentConnectedLinks: ConnectedLinkInfo[] = [];
       for (const [linkId, link] of network.links.entries()) {
         const indices: number[] = [];
         if (link.from === nodeId) indices.push(0);
@@ -118,11 +118,11 @@ export function useNodeDrag({
           }
         }
         if (indices.length > 0) {
-          connectedLinks.push({ linkId, indicesToUpdate: indices });
+          currentConnectedLinks.push({ linkId, indicesToUpdate: indices });
         }
       }
 
-      connectedLinksRef.current = connectedLinks;
+      setConnectedLinks(currentConnectedLinks);
       draggedNodeIdRef.current = nodeId.toString();
       isDraggingRef.current = true;
       dragStartPos.current = { x: e.point.x, y: e.point.y };
@@ -140,7 +140,7 @@ export function useNodeDrag({
       e.originalEvent.stopPropagation();
       return true;
     },
-    [editorMode, network, mapRef, setTempDragPosition],
+    [editorMode, network, mapRef, setTempDragPosition, setConnectedLinks, setDraggedNodeId],
   );
 
   const handleMouseMove = useCallback(
@@ -165,7 +165,7 @@ export function useNodeDrag({
 
       return true;
     },
-    [network, setTempDragPosition],
+    [network, setTempDragPosition, setIsDragging],
   );
 
   const handleMouseUp = useCallback((): boolean => {
@@ -201,7 +201,7 @@ export function useNodeDrag({
         }
 
         const updatedLinks = new Map(network.links);
-        for (const { linkId, indicesToUpdate } of connectedLinksRef.current) {
+        for (const { linkId, indicesToUpdate } of connectedLinks) {
           const link = updatedLinks.get(linkId);
           if (link) {
             const geometry = [...link.geometry];
@@ -225,7 +225,7 @@ export function useNodeDrag({
     setTempDragPosition(null);
     draggedNodeIdRef.current = null;
     tempDragPositionRef.current = null;
-    connectedLinksRef.current = [];
+    setConnectedLinks([]);
     dragStartPos.current = null;
     hasMoved.current = false;
 
@@ -241,6 +241,10 @@ export function useNodeDrag({
     onBeforeChange,
     snapNodeToNetwork,
     setTempDragPosition,
+    connectedLinks,
+    setConnectedLinks,
+    setIsDragging,
+    setDraggedNodeId,
   ]);
 
   return {

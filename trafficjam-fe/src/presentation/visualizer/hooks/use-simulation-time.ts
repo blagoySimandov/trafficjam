@@ -51,7 +51,7 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
     setSpeedState(s);
   }, []);
 
-  const seekTo = useCallback((t: number) => setTime(t), []);
+  const seekTo = useCallback((t: number) => setTime(t), [setTime]);
 
   useEffect(() => {
     let prev = performance.now();
@@ -67,7 +67,7 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
       id = requestAnimationFrame(tick);
     });
     return () => cancelAnimationFrame(id);
-  }, [range]);
+  }, [range, setTime]);
 
   return {
     time,

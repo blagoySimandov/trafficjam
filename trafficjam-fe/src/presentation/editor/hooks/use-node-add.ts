@@ -78,7 +78,7 @@ export function useNodeAdd({
     }
 
     return true; 
-  }, [editorMode, network, mapRef, minZoom]);
+  }, [editorMode, network, mapRef, minZoom, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
 
   const handleMouseMove = useCallback(
     (e: MapMouseEvent): boolean => {
@@ -89,7 +89,7 @@ export function useNodeAdd({
       
       return true;
     },
-    [tempNodePosition],
+    [tempNodePosition, setTempLinkEndPosition],
   );
    
   const handleMouseUp = useCallback((e: MapMouseEvent): boolean => {
@@ -156,7 +156,7 @@ export function useNodeAdd({
     }
     
     return true;
-  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef]);
+  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
 
   return {
     isAddingNode,

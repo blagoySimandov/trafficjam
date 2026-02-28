@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { MapMouseEvent } from "react-map-gl";
 import type { MapRef } from "react-map-gl";
 import type { Network, TrafficLink } from "../types";
@@ -63,7 +63,7 @@ export function useNetworkInteraction(
       }
       return false;
     },
-    [linksById, mapRef]
+    [linksById, mapRef, setHoverInfo]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -72,7 +72,7 @@ export function useNetworkInteraction(
       map.getCanvas().style.cursor = "";
     }
     setHoverInfo(null);
-  }, [mapRef]);
+  }, [mapRef, setHoverInfo]);
 
   return {
     hoverInfo,

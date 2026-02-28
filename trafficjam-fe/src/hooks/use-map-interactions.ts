@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
 import { detectFeaturesAtPoint, safeQueryRenderedFeatures } from "../utils/feature-detection";
@@ -76,7 +76,7 @@ export function useMapInteractions({
 
       return false;
     },
-    [network, mapRef, onLinkClick, editorMode, findNearbyLink]
+    [network, mapRef, onLinkClick, editorMode, findNearbyLink, setHoverInfo]
   );
 
   const handleMouseMove = useCallback(
@@ -118,14 +118,14 @@ export function useMapInteractions({
         return false;
       }
     },
-    [network, mapRef, editorMode, findNearbyLink]
+    [network, mapRef, editorMode, findNearbyLink, setHoverInfo]
   );
 
   const handleMouseLeave = useCallback(() => {
     const map = mapRef.current;
     if (map) map.getCanvas().style.cursor = "";
     setHoverInfo(null);
-  }, [mapRef]);
+  }, [mapRef, setHoverInfo]);
 
   return {
     hoverInfo,
