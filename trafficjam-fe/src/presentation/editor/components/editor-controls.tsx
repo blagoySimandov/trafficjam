@@ -1,7 +1,6 @@
 import {
-  Download,
-  Trash2,
   Upload,
+  Trash2,
   Building2,
   Building,
   Pencil,
@@ -42,10 +41,8 @@ function ControlButton({
 }
 
 interface EditorControlsProps {
-  onImport: () => void;
   onClear: () => void;
   onExport: () => void;
-  loading: boolean;
   showBuildings: boolean;
   onToggleBuildings: () => void;
   editorMode?: boolean;
@@ -55,10 +52,8 @@ interface EditorControlsProps {
 }
 
 export function EditorControls({
-  onImport,
   onClear,
   onExport,
-  loading,
   showBuildings,
   onToggleBuildings,
   editorMode,
@@ -68,12 +63,6 @@ export function EditorControls({
 }: EditorControlsProps) {
   return (
     <div className="map-controls">
-      <ControlButton
-        title="Import OSM data"
-        icon={<Download size={18} />}
-        onClick={onImport}
-        disabled={loading}
-      />
       <ControlButton
         title="Export network"
         icon={<Upload size={18} />}

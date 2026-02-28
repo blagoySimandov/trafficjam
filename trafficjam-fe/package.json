@@ -49,6 +49,7 @@
     "react-hotkeys-hook": "^5.2.4",
     "react-map-gl": "^7.1.9",
     "react-router-dom": "^7.13.1",
+    "react-use": "^17.6.0",
     "uuid": "^13.0.0"
   }
 }

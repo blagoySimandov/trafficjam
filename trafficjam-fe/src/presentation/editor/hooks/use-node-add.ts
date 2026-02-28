@@ -4,6 +4,7 @@ import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../ty
 import { NODE_LAYER_ID } from "../../../constants";
 import { findSnapPoint } from "../../../utils/snap-to-network";
 import { safeQueryRenderedFeatures } from "../../../utils/feature-detection";
+import { useRafState } from "../../../hooks/use-raf-state";
 
 interface UseNodeAddParams {
   network: Network | null;
@@ -23,50 +24,35 @@ export function useNodeAdd({
   onBeforeChange,
 }: UseNodeAddParams) {
   const [isAddingNode, setIsAddingNode] = useState(false);
-  const [tempNodePosition, setTempNodePosition] = useState<LngLatTuple | null>(null);
-  const [tempLinkEndPosition, setTempLinkEndPosition] = useState<LngLatTuple | null>(null);
+  const [tempNodePosition, setTempNodePosition] = useRafState<LngLatTuple | null>(null);
+  const [tempLinkEndPosition, setTempLinkEndPosition] = useRafState<LngLatTuple | null>(null);
   const tempNodeId = "temp-new-node";
   const isAddingRef = useRef(false);
 
-  // Create a temporary network with the new node and connecting link
-  const displayNetwork = useMemo(() => {
-    return isAddingNode && tempNodePosition && network
-      ? (() => {
-          const updatedNodes = new Map(network.nodes);
-          
-          // Add temporary node
-          const tempNode: TrafficNode = {
-            id: tempNodeId,
-            position: tempNodePosition,
-            connectionCount: 0,
-          };
-          updatedNodes.set(tempNodeId, tempNode);
+  // Create a tiny temporary network with ONLY the new node and connecting link
+  const draftNetwork = useMemo(() => {
+    if (!isAddingNode || !tempNodePosition) return null;
 
-          const updatedLinks = new Map(network.links);
-          
-          // Add temporary link if dragging
-          if (tempLinkEndPosition) {
-            const tempLink: TrafficLink = {
-              id: "temp-new-link",
-              from: tempNodeId,
-              to: "temp",
-              geometry: [tempNodePosition, tempLinkEndPosition],
-              tags: {
-                highway: "unclassified",
-              },
-            };
-            updatedLinks.set("temp-new-link", tempLink);
-          }
+    const nodes = new Map<string, TrafficNode>();
+    nodes.set(tempNodeId, {
+      id: tempNodeId,
+      position: tempNodePosition,
+      connectionCount: 0,
+    });
 
-          return {
-            ...network,
-            nodes: updatedNodes,
-            links: updatedLinks,
-          };
-        })()
-      : network;
+    const links = new Map<string, TrafficLink>();
+    if (tempLinkEndPosition) {
+      links.set("temp-new-link", {
+        id: "temp-new-link",
+        from: tempNodeId,
+        to: "temp",
+        geometry: [tempNodePosition, tempLinkEndPosition],
+        tags: { highway: "unclassified" },
+      });
+    }
+
+    return { ...network, nodes, links } as Network;
   }, [isAddingNode, tempNodePosition, tempLinkEndPosition, network]);
-
 
   const handleMouseDown = useCallback((e: MapMouseEvent): boolean => {
     if (!editorMode || !network) return false;
@@ -77,9 +63,12 @@ export function useNodeAdd({
     const zoom = map.getZoom();
     if (zoom < minZoom) return false;
 
-    // Check if clicking on an existing node - if so, don't add a new one
-    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID]);
+    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]);
     if (features && features.length > 0) return false;
+
+    // Also check data-model snap to avoid creating duplicate nodes when visual check fails
+    const snapResult = findSnapPoint([e.lngLat.lat, e.lngLat.lng], network, []);
+    if (snapResult?.isNode) return false;
 
     const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
     setTempNodePosition(newPosition);
@@ -92,8 +81,8 @@ export function useNodeAdd({
       map.dragPan.disable();
     }
 
-    return true; // Event consumed
-  }, [editorMode, network, mapRef, minZoom]);
+    return true; 
+  }, [editorMode, network, mapRef, minZoom, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
 
   const handleMouseMove = useCallback(
     (e: MapMouseEvent): boolean => {
@@ -102,9 +91,9 @@ export function useNodeAdd({
       const currentPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
       setTempLinkEndPosition(currentPosition);
       
-      return true; // Event consumed
+      return true;
     },
-    [tempNodePosition],
+    [tempNodePosition, setTempLinkEndPosition],
   );
    
   const handleMouseUp = useCallback((e: MapMouseEvent): boolean => {
@@ -170,12 +159,12 @@ export function useNodeAdd({
       map.dragPan.enable();
     }
     
-    return true; // Event consumed
-  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef]);
+    return true;
+  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
 
   return {
     isAddingNode,
-    displayNetwork,
+    draftNetwork,
     tempNodeId,
     onMouseDown: handleMouseDown,
     onMouseMove: handleMouseMove,

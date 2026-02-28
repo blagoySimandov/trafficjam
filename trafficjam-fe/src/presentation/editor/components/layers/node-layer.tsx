@@ -1,12 +1,16 @@
-import { Source, Layer } from "react-map-gl";
+import { useMemo } from "react";
+import { Source, Layer, type LayerProps } from "react-map-gl";
 import type { Network } from "../../../../types";
 import { useNodeLayerStyle } from "../../hooks/use-node-layer-style";
+import { mergeFilters } from "../../../../utils";
 
 interface NodeLayerProps {
   network: Network;
   editorMode: boolean;
   draggedNodeId: string | null;
   tempNodeId?: string | null;
+  idPrefix?: string;
+  filterIds?: string[];
 }
 
 export function NodeLayer({
@@ -14,6 +18,8 @@ export function NodeLayer({
   editorMode,
   draggedNodeId,
   tempNodeId,
+  idPrefix = "static",
+  filterIds,
 }: NodeLayerProps) {
   const { geojson, layerStyle } = useNodeLayerStyle(
     network,
@@ -21,12 +27,22 @@ export function NodeLayer({
     tempNodeId,
   );
 
+  const layerProps = useMemo(() => {
+    const filter = mergeFilters(layerStyle.filter as unknown[], filterIds);
+    return {
+      ...layerStyle,
+      id: `${idPrefix}-${layerStyle.id}`,
+      ...(filter ? { filter } : {}),
+    } as LayerProps;
+  }, [layerStyle, idPrefix, filterIds]);
+
   if (!editorMode) return null;
 
+  const sourceId = `${idPrefix}-nodes`;
+
   return (
-    <Source id="nodes" type="geojson" data={geojson}>
-      <Layer {...layerStyle} />
-      <Layer {...layerStyle} />
+    <Source id={sourceId} type="geojson" data={geojson}>
+      <Layer {...layerProps} />
     </Source>
   );
 }

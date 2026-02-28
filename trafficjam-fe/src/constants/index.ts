@@ -5,3 +5,4 @@ export * from "./map";
 export * from "./road-styles";
 export * from "./transport-layers";
 export * from "./node-layers";
+export * from "./cities";

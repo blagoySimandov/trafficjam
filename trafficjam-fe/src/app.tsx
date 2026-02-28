@@ -5,6 +5,7 @@ import { Sidebar } from "./components/sidebar/sidebar";
 import { ConfirmDialog } from "./components/confirm-dialog";
 import { AgentConfigModal } from "./presentation/editor/components/agent-config-modal/agent-config-modal";
 import { useScenarioManager } from "./api/scenarios";
+import { DEFAULT_CITY } from "./constants/cities";
 import type { Run } from "./api/scenarios";
 
 type Mode = "editor" | "visualizer";
@@ -73,6 +74,7 @@ export default function App() {
       <main style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         {mode === "editor" ? (
           <Editor
+            city={DEFAULT_CITY}
             activeScenario={activeScenario}
             onRunSimulation={handleRunSimulation}
           />
