@@ -1,0 +1,12 @@
+FROM oven/bun:1-alpine
+
+WORKDIR /app
+
+COPY trafficjam-fe/package.json trafficjam-fe/bun.lock* ./
+RUN bun install --frozen-lockfile
+
+COPY trafficjam-fe/ .
+
+EXPOSE 5173
+
+CMD ["bun", "dev", "--host", "0.0.0.0"]
