@@ -75,6 +75,13 @@
             <version>${matsim.version}</version>
         </dependency>
 
+        <!-- MatSim SimWrapper -->
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>simwrapper</artifactId>
+            <version>${matsim.version}</version>
+        </dependency>
+
         <!-- SpringDoc OpenAPI -->
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -91,6 +98,7 @@
     </dependencies>
 
     <build>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
