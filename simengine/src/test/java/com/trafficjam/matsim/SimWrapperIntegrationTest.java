@@ -21,8 +21,8 @@ public class SimWrapperIntegrationTest {
     @Test
     void testSimWrapperDashboardsGeneratedAfterSimulation() throws Exception {
         // Locate test resources
-        Path networkFile = Path.of("src/test/resources/cork_network.xml");
-        Path plansFile = Path.of("src/test/resources/cork_city_plans_WORKING.xml");
+        Path networkFile = Path.of("src/test/resources/cork_network_integration_test.xml");
+        Path plansFile = Path.of("src/test/resources/cork_city_plans_integration_test.xml");
 
         assertTrue(Files.exists(networkFile), "Network file not found");
         assertTrue(Files.exists(plansFile), "Plans file not found");
