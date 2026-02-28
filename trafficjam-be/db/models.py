@@ -30,7 +30,7 @@ class Scenario(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    runs: Mapped[list["Run"]] = relationship("Run", back_populates="scenario")
+    runs: Mapped[list["Run"]] = relationship("Run", back_populates="scenario", cascade="all, delete-orphan")
 
 
 class Run(Base):

@@ -13,12 +13,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
 
 from pydantic import BaseModel
-from agents.models import PlanCreationRequest, Building as AgentBuilding
+from agents.models import PlanCreationRequest, Building as AgentBuilding, PlannerConfig
 from agents.plans import generate_plan_for_agent, MATSimXMLWriter
 from agents.agent_creation import create_agents_from_network
 from config import get_settings
 from consumers import EventConsumer
-from db import engine, async_session_factory, RunRepository, RunStatus
+from db import engine, async_session_factory, Base, RunRepository, RunStatus
 from api.scenarios import router as scenarios_router
 
 MAX_AGENTS = 1000
@@ -34,6 +34,8 @@ class StatusMessage(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     app.state.nc = await nats_lib.connect(settings.nats_url)
     app.state.js = app.state.nc.jetstream()
     app.state.status_worker = asyncio.create_task(_monitor_all_statuses(app.state.js))
@@ -104,13 +106,14 @@ def _generate_plans_xml(bounds: dict, buildings: List[AgentBuilding]) -> str:
         buildings=buildings,
         transport_routes=[],
         country_code="IRL",
+        config=PlannerConfig(),
     )
 
     if len(agents) > MAX_AGENTS:
         agents = agents[:MAX_AGENTS]
 
     for agent in agents:
-        plan = generate_plan_for_agent(agent, buildings)
+        plan = generate_plan_for_agent(agent, buildings, PlannerConfig())
         if plan:
             writer.add_person_plan(agent.id, plan)
 

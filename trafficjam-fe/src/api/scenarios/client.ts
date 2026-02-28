@@ -1,70 +1,67 @@
-import { v4 as uuidv4 } from "uuid";
 import type { Scenario, Run, AgentConfig } from "./types";
-import { DEFAULT_AGENT_CONFIG } from "./constants";
 
-const mockScenarios: Scenario[] = [
-  {
-    id: "default-scenario",
-    name: "Default Scenario",
-    agentConfig: DEFAULT_AGENT_CONFIG,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+const BASE_URL =
+  import.meta.env.VITE_TRAFFICJAM_BE_URL || "http://localhost:8001";
 
-const mockRuns: Run[] = [];
+function assertOk(response: Response) {
+  if (!response.ok) throw new Error(`Backend error: ${response.status}`);
+}
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+function toScenario(raw: Record<string, unknown>): Scenario {
+  let agentConfig: AgentConfig | undefined;
+  try {
+    agentConfig = JSON.parse(raw.plan_params as string);
+  } catch {
+    agentConfig = undefined as unknown as AgentConfig;
+  }
+  return {
+    id: raw.id as string,
+    name: raw.name as string,
+    description: raw.description as string | undefined,
+    agentConfig,
+    createdAt: raw.created_at as string,
+    updatedAt: raw.updated_at as string,
+  };
+}
 
 async function listScenarios(): Promise<Scenario[]> {
-  await delay(100);
-  return [...mockScenarios];
+  const res = await fetch(`${BASE_URL}/scenarios`);
+  assertOk(res);
+  const data = await res.json();
+  return data.map(toScenario);
 }
 
-async function createScenario(
-  name: string,
-  config: AgentConfig,
-): Promise<Scenario> {
-  await delay(100);
-  const newScenario: Scenario = {
-    id: uuidv4(),
-    name,
-    agentConfig: config,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  mockScenarios.push(newScenario);
-  return newScenario;
+async function createScenario(name: string, config: AgentConfig): Promise<Scenario> {
+  const res = await fetch(`${BASE_URL}/scenarios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, network_config: "{}", plan_params: JSON.stringify(config) }),
+  });
+  assertOk(res);
+  return toScenario(await res.json());
 }
 
-async function updateScenario(
-  id: string,
-  updates: Partial<Scenario>,
-): Promise<Scenario> {
-  await delay(100);
-  const index = mockScenarios.findIndex((s) => s.id === id);
-  if (index === -1) throw new Error("Scenario not found");
-
-  mockScenarios[index] = {
-    ...mockScenarios[index],
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
-  return mockScenarios[index];
+async function updateScenario(id: string, updates: Partial<Scenario>): Promise<Scenario> {
+  const body: Record<string, unknown> = {};
+  if (updates.name) body.name = updates.name;
+  if (updates.description) body.description = updates.description;
+  if (updates.agentConfig) body.plan_params = JSON.stringify(updates.agentConfig);
+  const res = await fetch(`${BASE_URL}/scenarios/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  assertOk(res);
+  return toScenario(await res.json());
 }
 
 async function deleteScenario(id: string): Promise<void> {
-  await delay(100);
-  const index = mockScenarios.findIndex((s) => s.id === id);
-  if (index === -1) throw new Error("Scenario not found");
-  mockScenarios.splice(index, 1);
+  const res = await fetch(`${BASE_URL}/scenarios/${id}`, { method: "DELETE" });
+  assertOk(res);
 }
 
-async function listRuns(scenarioId?: string): Promise<Run[]> {
-  await delay(100);
-  return scenarioId
-    ? mockRuns.filter((r) => r.scenarioId === scenarioId)
-    : [...mockRuns];
+async function listRuns(_scenarioId?: string): Promise<Run[]> {
+  return [];
 }
 
 export const scenariosApi = {
