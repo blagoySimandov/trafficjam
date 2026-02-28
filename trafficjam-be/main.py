@@ -92,7 +92,11 @@ async def create_run(scenario_id: str, run_id: str | None = None):
     parsed_scenario_id = uuid.UUID(scenario_id)
     parsed_id = uuid.UUID(run_id) if run_id else None
     run = await repo.create_run(parsed_scenario_id, parsed_id)
-    return {"scenario_id": str(run.scenario_id), "run_id": str(run.id), "status": run.status}
+    return {
+        "scenario_id": str(run.scenario_id),
+        "run_id": str(run.id),
+        "status": run.status,
+    }
 
 
 def _generate_plans_xml(bounds: dict, buildings: List[AgentBuilding]) -> str:
@@ -150,24 +154,44 @@ async def start_run(
 
     try:
         buildings_list, bounds_dict = _parse_buildings_and_bounds(buildings, bounds)
-        plans_xml = await asyncio.to_thread(_generate_plans_xml, bounds_dict, buildings_list)
+        plans_xml = await asyncio.to_thread(
+            _generate_plans_xml, bounds_dict, buildings_list
+        )
     except Exception as e:
         logger.error(f"Failed to generate plans: {e}")
         await repo.update_status(run.id, RunStatus.FAILED)
         raise HTTPException(status_code=500, detail=f"Plan generation failed: {e}")
 
     return await _submit_to_simengine(
-        settings, repo, run, scenario_id, run_id,
-        networkFile, plans_xml, iterations, randomSeed,
+        settings,
+        repo,
+        run,
+        scenario_id,
+        run_id,
+        networkFile,
+        plans_xml,
+        iterations,
+        randomSeed,
     )
 
 
 async def _submit_to_simengine(
-    settings, repo, run, scenario_id, run_id,
-    networkFile, plans_xml, iterations, randomSeed,
+    settings,
+    repo,
+    run,
+    scenario_id,
+    run_id,
+    networkFile,
+    plans_xml,
+    iterations,
+    randomSeed,
 ):
     files = {
-        "networkFile": (networkFile.filename, await networkFile.read(), networkFile.content_type),
+        "networkFile": (
+            networkFile.filename,
+            await networkFile.read(),
+            networkFile.content_type,
+        ),
         "plansFile": ("plans.xml", plans_xml, "application/xml"),
     }
     data = {"iterations": iterations, "scenarioId": scenario_id, "runId": run_id}
@@ -187,7 +211,9 @@ async def _submit_to_simengine(
     except Exception as e:
         logger.error(f"SimEngine request failed: {e}")
         await repo.update_status(run.id, RunStatus.FAILED)
-        raise HTTPException(status_code=500, detail=f"Failed to start simulation in SimEngine: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to start simulation in SimEngine: {e}"
+        )
 
     return {
         "scenario_id": scenario_id,

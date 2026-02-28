@@ -3,16 +3,14 @@ import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Network, TrafficLink } from "../../../types";
+import type { CityConfig } from "../../../constants/cities";
 import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import {
-  DEFAULT_CENTER,
-  DEFAULT_ZOOM,
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
   MIN_EDIT_ZOOM,
 } from "../../../constants";
-import { useOSMImport } from "../../../hooks/use-osm-import";
 import { useMapInteractions } from "../../../hooks/use-map-interactions";
 import { useNetworkExport } from "../hooks/use-network-export";
 import { useNodeDrag } from "../hooks/use-node-drag";
@@ -26,7 +24,7 @@ import { CombinedTooltip } from "../../../components/combined-tooltip";
 
 interface EditorMapViewProps {
   network: Network | null;
-  onNetworkChange: (network: Network) => void;
+  city: CityConfig;
   onNetworkSave: (network: Network, message: string) => void;
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink, modKey: boolean) => void;
@@ -38,9 +36,9 @@ interface EditorMapViewProps {
 
 export function EditorMapView({
   network,
+  city,
   onStatusChange,
   onLinkClick,
-  onNetworkChange,
   onNetworkSave,
   onUndo,
   onClear,
@@ -53,15 +51,6 @@ export function EditorMapView({
 
   const { exportNetwork } = useNetworkExport(network, { onStatusChange });
 
-  const { loading, importData } = useOSMImport(mapRef, {
-    onStatusChange,
-    onNetworkChange: (network: Network | null) => {
-      if (network) {
-        onNetworkChange(network);
-      }
-    },
-  });
-
   const handleLinkClickLocal = useAddNodeOnLink({
     network,
     setNetwork: (updatedNetwork: Network | null) => {
@@ -69,7 +58,7 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Added node on link");
       }
     },
-    pushToUndoStack: () => {}, // No-op since Editor handles undo
+    pushToUndoStack: () => {},
     onStatusChange,
     editorMode,
     onLinkClick,
@@ -98,7 +87,7 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Moved node");
       }
     },
-    onBeforeChange: () => {}, // No-op since Editor handles undo
+    onBeforeChange: () => {},
   });
 
   const {
@@ -118,13 +107,11 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Added node");
       }
     },
-    onBeforeChange: () => {}, // No-op since Editor handles undo
+    onBeforeChange: () => {},
   });
 
-  // Merge display networks - prioritize addDisplayNetwork if adding, otherwise use dragDisplayNetwork
   const displayNetwork = isAddingNode ? addDisplayNetwork : dragDisplayNetwork;
 
-  // Keyboard shortcut for undo (Cmd+Z on Mac, Ctrl+Z on Windows/Linux)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -133,9 +120,7 @@ export function EditorMapView({
         !event.shiftKey
       ) {
         event.preventDefault();
-
         if (!canUndo) return;
-
         onUndo();
       }
     };
@@ -188,14 +173,20 @@ export function EditorMapView({
     [nodeDragMouseMove, nodeAddMouseMove, onMouseMove],
   );
 
+  const maxBounds: [[number, number], [number, number]] = [
+    [city.bounds.west, city.bounds.south],
+    [city.bounds.east, city.bounds.north],
+  ];
+
   return (
     <Map
       ref={handleMapRef}
       initialViewState={{
-        longitude: DEFAULT_CENTER[0],
-        latitude: DEFAULT_CENTER[1],
-        zoom: DEFAULT_ZOOM,
+        longitude: city.center[0],
+        latitude: city.center[1],
+        zoom: city.zoom,
       }}
+      maxBounds={maxBounds}
       style={{ width: "100%", height: "100%" }}
       mapStyle={MAP_STYLE}
       mapboxAccessToken={MAPBOX_TOKEN}
@@ -208,10 +199,8 @@ export function EditorMapView({
       onMouseLeave={onMouseLeave}
     >
       <EditorControls
-        onImport={importData}
         onClear={onClear}
         onExport={exportNetwork}
-        loading={loading}
         showBuildings={showBuildings}
         onToggleBuildings={toggleBuildings}
         editorMode={editorMode}
