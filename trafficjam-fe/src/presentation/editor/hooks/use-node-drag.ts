@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
 import { NODE_LAYER_ID } from "../../../constants";
@@ -16,58 +16,9 @@ interface UseNodeDragParams {
 
 const DRAG_THRESHOLD = 5;
 
-function updateNodeAndLinks(
-  network: Network,
-  nodeId: string,
-  newPosition: LngLatTuple,
-  oldPosition?: LngLatTuple
-): { updatedNodes: Map<string, TrafficNode>; updatedLinks: Map<string, TrafficLink> } {
-  const updatedNodes = new Map(network.nodes);
-  const node = updatedNodes.get(nodeId);
-  if (!node) {
-    return { updatedNodes: network.nodes, updatedLinks: network.links };
-  }
-
-  const updatedNode: TrafficNode = {
-    ...node,
-    position: newPosition,
-  };
-  updatedNodes.set(nodeId, updatedNode);
-
-  const updatedLinks = new Map(network.links);
-  for (const [linkId, link] of network.links.entries()) {
-    let shouldUpdate = false;
-    const geometry = [...link.geometry];
-
-    if (link.from === nodeId) {
-      geometry[0] = newPosition;
-      shouldUpdate = true;
-    }
-    if (link.to === nodeId) {
-      geometry[geometry.length - 1] = newPosition;
-      shouldUpdate = true;
-    }
-
-    if (!shouldUpdate && oldPosition) {
-      for (let i = 0; i < geometry.length; i++) {
-        const [lat, lng] = geometry[i];
-        const isOldNodePosition =
-          Math.abs(lat - oldPosition[0]) < 0.000001 &&
-          Math.abs(lng - oldPosition[1]) < 0.000001;
-
-        if (isOldNodePosition) {
-          geometry[i] = newPosition;
-          shouldUpdate = true;
-        }
-      }
-    }
-
-    if (shouldUpdate) {
-      updatedLinks.set(linkId, { ...link, geometry });
-    }
-  }
-
-  return { updatedNodes, updatedLinks };
+interface ConnectedLinkInfo {
+  linkId: string;
+  indicesToUpdate: number[];
 }
 
 export function useNodeDrag({
@@ -80,137 +31,181 @@ export function useNodeDrag({
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [tempDragPosition, setTempDragPosition] = useState<LngLatTuple | null>(null);
-  const [originalNodePosition, setOriginalNodePosition] = useState<LngLatTuple | null>(null);
+
   const isDraggingRef = useRef(false);
+  const draggedNodeIdRef = useRef<string | null>(null);
+  const tempDragPositionRef = useRef<LngLatTuple | null>(null);
+  const connectedLinksRef = useRef<ConnectedLinkInfo[]>([]);
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const hasMoved = useRef(false);
+  const rAFRef = useRef<number | null>(null);
 
-  const { snapNodeToNetwork } = useNodeSnap({
-    network,
-    onNetworkChange,
-    onBeforeChange,
-  });
+  const { snapNodeToNetwork } = useNodeSnap({ network, onNetworkChange, onBeforeChange });
 
-  // Create a temporary network with the dragged node at its temporary position
-  const displayNetwork = useMemo(
-  () => {
-    if (isDragging && draggedNodeId && tempDragPosition && network) {
-      const { updatedNodes, updatedLinks } = updateNodeAndLinks(
-        network,
-        draggedNodeId,
-        tempDragPosition,
-        originalNodePosition || undefined
-      );
+  useEffect(() => {
+    return () => {
+      if (rAFRef.current) cancelAnimationFrame(rAFRef.current);
+    };
+  }, []);
 
-      return {
-        ...network,
-        nodes: updatedNodes,
-        links: updatedLinks,
-      };
-    }
-    return network;
-  },
-  [isDragging, draggedNodeId, tempDragPosition, network, originalNodePosition]
-);
+  const staticNetwork = useMemo(() => {
+    if (!network) return null;
+    if (!isDragging || !draggedNodeId) return network;
 
-  const handleMouseDown = useCallback((e: MapMouseEvent): boolean => {
-    if (!editorMode || !network) return false;
+    const nodes = new Map(network.nodes);
+    nodes.delete(draggedNodeId);
 
-    const map = mapRef.current;
-    if (!map) return false;
-
-    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID]);
-
-    if (!features || features.length === 0) return false;
-
-    const feature = features[0];
-    if (!feature || !feature.properties) return false;
-
-    const nodeId = feature.properties.id;
-    const node = network.nodes.get(nodeId);
-    if (!node) return false;
-
-    setDraggedNodeId(nodeId);
-    isDraggingRef.current = true;
-    setOriginalNodePosition(node.position);
-
-    dragStartPos.current = { x: e.point.x, y: e.point.y };
-    hasMoved.current = false;
-    setTempDragPosition(null);
-
-    if (map.dragPan) {
-      map.getMap().getCanvas().style.cursor = "grabbing";
-      map.dragPan.disable();
+    const links = new Map(network.links);
+    for (const { linkId } of connectedLinksRef.current) {
+      links.delete(linkId);
     }
 
-    e.originalEvent.preventDefault();
-    e.originalEvent.stopPropagation();
+    return { ...network, nodes, links } as Network;
+  }, [isDragging, draggedNodeId, network]);
 
-    return true;
-  }, [editorMode, network, mapRef]);
+  const draftNetwork = useMemo(() => {
+    if (!isDragging || !draggedNodeId || !tempDragPosition || !network) return null;
 
-  const handleMouseMove = useCallback((e: MapMouseEvent): boolean => {
-    if (!isDraggingRef.current || !draggedNodeId || !network) return false;
+    const nodes = new Map<string, TrafficNode>();
+    const draggedNode = network.nodes.get(draggedNodeId);
+    if (draggedNode) {
+      nodes.set(draggedNodeId, { ...draggedNode, position: tempDragPosition });
+    }
 
-    if (dragStartPos.current && !hasMoved.current) {
-      const dx = e.point.x - dragStartPos.current.x;
-      const dy = e.point.y - dragStartPos.current.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance > DRAG_THRESHOLD) {
-        hasMoved.current = true;
-        setIsDragging(true);
-      } else {
-        return true;
+    const links = new Map<string, TrafficLink>();
+    for (const { linkId, indicesToUpdate } of connectedLinksRef.current) {
+      const link = network.links.get(linkId);
+      if (link) {
+        const geometry = [...link.geometry];
+        for (const idx of indicesToUpdate) {
+          geometry[idx] = tempDragPosition;
+        }
+        links.set(linkId, { ...link, geometry });
       }
     }
 
-    const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
-    setTempDragPosition(newPosition);
-    return true;
-  }, [draggedNodeId, network]);
+    return { ...network, nodes, links } as Network;
+  }, [isDragging, draggedNodeId, tempDragPosition, network]);
+
+  const handleMouseDown = useCallback(
+    (e: MapMouseEvent): boolean => {
+      if (!editorMode || !network || !mapRef.current) return false;
+      const map = mapRef.current;
+      const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]);
+      if (!features?.length) return false;
+
+      const feature = features[0];
+      const nodeId = feature.properties?.id || feature.id;
+      
+      if (!nodeId) return false;
+      
+      const node = network.nodes.get(nodeId.toString());
+      if (!node) return false;
+
+      const connectedLinks: ConnectedLinkInfo[] = [];
+      for (const [linkId, link] of network.links.entries()) {
+        const indices: number[] = [];
+        if (link.from === nodeId) indices.push(0);
+        if (link.to === nodeId) indices.push(link.geometry.length - 1);
+
+        for (let i = 0; i < link.geometry.length; i++) {
+          if (indices.includes(i)) continue;
+          const [lat, lng] = link.geometry[i];
+          if (
+            Math.abs(lat - node.position[0]) < 0.000001 &&
+            Math.abs(lng - node.position[1]) < 0.000001
+          ) {
+            indices.push(i);
+          }
+        }
+        if (indices.length > 0) {
+          connectedLinks.push({ linkId, indicesToUpdate: indices });
+        }
+      }
+
+      connectedLinksRef.current = connectedLinks;
+      draggedNodeIdRef.current = nodeId;
+      isDraggingRef.current = true;
+      dragStartPos.current = { x: e.point.x, y: e.point.y };
+      hasMoved.current = false;
+      tempDragPositionRef.current = null;
+
+      setDraggedNodeId(nodeId);
+      setTempDragPosition(null);
+
+      if (map.dragPan) {
+        map.getMap().getCanvas().style.cursor = "grabbing";
+        map.dragPan.disable();
+      }
+      e.originalEvent.preventDefault();
+      e.originalEvent.stopPropagation();
+      return true;
+    },
+    [editorMode, network, mapRef]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MapMouseEvent): boolean => {
+      if (!isDraggingRef.current || !draggedNodeIdRef.current || !network) return false;
+
+      if (dragStartPos.current && !hasMoved.current) {
+        const dx = e.point.x - dragStartPos.current.x;
+        const dy = e.point.y - dragStartPos.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+          hasMoved.current = true;
+          setIsDragging(true);
+        } else {
+          return true;
+        }
+      }
+
+      const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
+      tempDragPositionRef.current = newPosition;
+
+      if (rAFRef.current) cancelAnimationFrame(rAFRef.current);
+      rAFRef.current = requestAnimationFrame(() => setTempDragPosition(newPosition));
+      return true;
+    },
+    [network]
+  );
 
   const handleMouseUp = useCallback((): boolean => {
     if (!isDraggingRef.current) return false;
-
     const map = mapRef.current;
 
-    if (
-      hasMoved.current &&
-      tempDragPosition &&
-      draggedNodeId &&
-      network
-    ) {
-      const node = network.nodes.get(draggedNodeId);
-      if (!node) return false;
+    if (hasMoved.current && tempDragPositionRef.current && draggedNodeIdRef.current && network) {
+      const nodeId = draggedNodeIdRef.current;
+      const finalPos = tempDragPositionRef.current;
 
-      const filteredNetwork: Network = {
+      const filteredNetwork = {
         ...network,
-        nodes: new Map(
-          [...network.nodes.entries()].filter(([id]) => id !== draggedNodeId)
-        ),
+        nodes: new Map([...network.nodes.entries()].filter(([id]) => id !== nodeId)),
       };
-      
-      const snapResult = findSnapPoint(tempDragPosition, filteredNetwork, []);
-      
-      if (snapResult?.isNode && snapResult.nodeId) {
-        snapNodeToNetwork(draggedNodeId, tempDragPosition);
-      } else {
-        if (onBeforeChange) {
-          onBeforeChange(network);
-        }
-        const { updatedNodes, updatedLinks } = updateNodeAndLinks(
-          network,
-          draggedNodeId,
-          tempDragPosition,
-          originalNodePosition || undefined
-        );
 
-        onNetworkChange({
-          ...network,
-          nodes: updatedNodes,
-          links: updatedLinks,
-        });
+      const snapResult = findSnapPoint(finalPos, filteredNetwork, []);
+      if (snapResult?.isNode && snapResult.nodeId) {
+        snapNodeToNetwork(nodeId, finalPos);
+      } else {
+        if (onBeforeChange) onBeforeChange(network);
+
+        const updatedNodes = new Map(network.nodes);
+        const nodeToUpdate = updatedNodes.get(nodeId);
+        if (nodeToUpdate) {
+          updatedNodes.set(nodeId, { ...nodeToUpdate, position: finalPos });
+        }
+
+        const updatedLinks = new Map(network.links);
+        for (const { linkId, indicesToUpdate } of connectedLinksRef.current) {
+          const link = updatedLinks.get(linkId);
+          if (link) {
+            const geometry = [...link.geometry];
+            for (const idx of indicesToUpdate) {
+              geometry[idx] = finalPos;
+            }
+            updatedLinks.set(linkId, { ...link, geometry });
+          }
+        }
+        onNetworkChange({ ...network, nodes: updatedNodes, links: updatedLinks });
       }
     }
 
@@ -218,22 +213,24 @@ export function useNodeDrag({
     setIsDragging(false);
     setDraggedNodeId(null);
     setTempDragPosition(null);
+    draggedNodeIdRef.current = null;
+    tempDragPositionRef.current = null;
+    connectedLinksRef.current = [];
     dragStartPos.current = null;
     hasMoved.current = false;
-    setOriginalNodePosition(null);
 
     if (map && map.dragPan) {
       map.getMap().getCanvas().style.cursor = "";
       map.dragPan.enable();
     }
-
     return true;
-  }, [network, mapRef, onNetworkChange, onBeforeChange, draggedNodeId, tempDragPosition, originalNodePosition, snapNodeToNetwork]);
+  }, [network, mapRef, onNetworkChange, onBeforeChange, snapNodeToNetwork]);
 
   return {
     isDragging,
     draggedNodeId,
-    displayNetwork,
+    staticNetwork,
+    draftNetwork,
     onMouseDown: handleMouseDown,
     onMouseMove: handleMouseMove,
     onMouseUp: handleMouseUp,

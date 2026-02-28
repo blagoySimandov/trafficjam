@@ -78,7 +78,7 @@ export function useNodeAdd({
     if (zoom < minZoom) return false;
 
     // Check if clicking on an existing node - if so, don't add a new one
-    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID]);
+    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]);
     if (features && features.length > 0) return false;
 
     const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];

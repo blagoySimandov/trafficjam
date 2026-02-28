@@ -8,6 +8,8 @@ export const MAP_STYLE = "mapbox://styles/mapbox/light-v11";
 export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
 export const INTERACTIVE_LAYER_IDS = [
   NETWORK_LAYER_ID,
+  `static-${NETWORK_LAYER_ID}`,
+  `draft-${NETWORK_LAYER_ID}`,
   TRANSPORT_LAYER_IDS.SUBWAY,
   TRANSPORT_LAYER_IDS.BUS,
   TRANSPORT_LAYER_IDS.TRAM,
@@ -15,4 +17,6 @@ export const INTERACTIVE_LAYER_IDS = [
   TRANSPORT_LAYER_IDS.LIGHT_RAIL,
   BUILDING_LAYER_ID,
   NODE_LAYER_ID,
+  `static-${NODE_LAYER_ID}`,
+  `draft-${NODE_LAYER_ID}`,
 ];

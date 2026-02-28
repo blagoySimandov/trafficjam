@@ -7,6 +7,7 @@ interface NodeLayerProps {
   editorMode: boolean;
   draggedNodeId: string | null;
   tempNodeId?: string | null;
+  idPrefix?: string;
 }
 
 export function NodeLayer({
@@ -14,6 +15,7 @@ export function NodeLayer({
   editorMode,
   draggedNodeId,
   tempNodeId,
+  idPrefix = "static",
 }: NodeLayerProps) {
   const { geojson, layerStyle } = useNodeLayerStyle(
     network,
@@ -23,10 +25,14 @@ export function NodeLayer({
 
   if (!editorMode) return null;
 
+  const sourceId = `${idPrefix}-nodes`;
+
   return (
-    <Source id="nodes" type="geojson" data={geojson}>
-      <Layer {...layerStyle} />
-      <Layer {...layerStyle} />
+    <Source id={sourceId} type="geojson" data={geojson}>
+      <Layer
+        {...layerStyle}
+        id={`${idPrefix}-${layerStyle.id}`}
+      />
     </Source>
   );
 }

@@ -73,7 +73,8 @@ export function EditorMapView({
 
   const {
     isDragging,
-    displayNetwork: dragDisplayNetwork,
+    staticNetwork,
+    draftNetwork,
     draggedNodeId,
     onMouseDown: nodeDragMouseDown,
     onMouseMove: nodeDragMouseMove,
@@ -110,7 +111,7 @@ export function EditorMapView({
     onBeforeChange: () => {},
   });
 
-  const displayNetwork = isAddingNode ? addDisplayNetwork : dragDisplayNetwork;
+  const baseNetwork = isAddingNode ? addDisplayNetwork : staticNetwork;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -208,32 +209,50 @@ export function EditorMapView({
         onUndo={onUndo}
         canUndo={canUndo}
       />
-      {displayNetwork && (
+      {baseNetwork && (
         <NetworkLayer
-          network={displayNetwork}
+          network={baseNetwork}
           hoverInfo={null}
           selectedLinkId={selectedLinkId}
+          idPrefix="static"
         />
       )}
-      {displayNetwork && (
+      {baseNetwork && (
         <NodeLayer
-          network={displayNetwork}
+          network={baseNetwork}
           editorMode={editorMode}
           draggedNodeId={draggedNodeId}
           tempNodeId={isAddingNode ? tempNodeId : null}
+          idPrefix="static"
         />
       )}
-      {displayNetwork?.transportRoutes &&
-        displayNetwork.transportRoutes.size > 0 && (
+      {isDragging && draftNetwork && (
+        <>
+          <NetworkLayer
+            network={draftNetwork}
+            hoverInfo={null}
+            selectedLinkId={selectedLinkId}
+            idPrefix="draft"
+          />
+          <NodeLayer
+            network={draftNetwork}
+            editorMode={editorMode}
+            draggedNodeId={draggedNodeId}
+            idPrefix="draft"
+          />
+        </>
+      )}
+      {baseNetwork?.transportRoutes &&
+        baseNetwork.transportRoutes.size > 0 && (
           <TransportLayer
-            routes={displayNetwork.transportRoutes}
+            routes={baseNetwork.transportRoutes}
             hoverInfo={null}
           />
         )}
       {showBuildings &&
-        displayNetwork?.buildings &&
-        displayNetwork.buildings.size > 0 && (
-          <BuildingLayer buildings={displayNetwork.buildings} />
+        baseNetwork?.buildings &&
+        baseNetwork.buildings.size > 0 && (
+          <BuildingLayer buildings={baseNetwork.buildings} />
         )}
       {hoverInfo && !editorMode && !isDragging && (
         <CombinedTooltip

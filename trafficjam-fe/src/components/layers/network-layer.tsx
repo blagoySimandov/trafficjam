@@ -13,20 +13,39 @@ interface NetworkLayerProps {
   network: Network;
   hoverInfo: CombinedHoverInfo | null;
   selectedLinkId?: string[];
+  idPrefix?: string;
 }
 
-export function NetworkLayer({ network, selectedLinkId }: NetworkLayerProps) {
+export function NetworkLayer({
+  network,
+  selectedLinkId,
+  idPrefix = "static",
+}: NetworkLayerProps) {
   const geojson = useMemo(
     () => networkToGeoJSON(network, selectedLinkId),
     [network, selectedLinkId],
   );
 
+  const sourceId = `${idPrefix}-network`;
+
   return (
-    <Source id="network" type="geojson" data={geojson}>
-      <Layer {...glowLayer} />
-      <Layer {...casingLayer} />
-      <Layer {...mainLayer} />
-      <Layer {...dividersLayer} />
+    <Source id={sourceId} type="geojson" data={geojson}>
+      <Layer
+        {...glowLayer}
+        id={`${idPrefix}-${glowLayer.id}`}
+      />
+      <Layer
+        {...casingLayer}
+        id={`${idPrefix}-${casingLayer.id}`}
+      />
+      <Layer
+        {...mainLayer}
+        id={`${idPrefix}-${mainLayer.id}`}
+      />
+      <Layer
+        {...dividersLayer}
+        id={`${idPrefix}-${dividersLayer.id}`}
+      />
     </Source>
   );
 }

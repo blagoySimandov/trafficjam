@@ -34,9 +34,7 @@ export function useMapInteractions({
         [x + 6, y + 6],
       ];
 
-      const features = map.queryRenderedFeatures(bbox, {
-        layers: [NETWORK_LAYER_ID],
-      });
+      const features = safeQueryRenderedFeatures(map, bbox, [NETWORK_LAYER_ID, `static-${NETWORK_LAYER_ID}`, `draft-${NETWORK_LAYER_ID}`]);
 
       for (const feature of features) {
         const id = feature.properties?.id;
@@ -94,7 +92,7 @@ export function useMapInteractions({
       const detected = detectFeaturesAtPoint(event, network);
       const link = detected.link || (canEditAtZoom ? findNearbyLink(event) : undefined);
 
-      const isHoveringNode = safeQueryRenderedFeatures(map, event.point, [NODE_LAYER_ID]).length > 0;
+      const isHoveringNode = safeQueryRenderedFeatures(map, event.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]).length > 0;
 
       if (map) {
         if (link && canEditAtZoom && !isHoveringNode) {
