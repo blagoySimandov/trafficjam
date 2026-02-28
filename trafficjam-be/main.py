@@ -76,6 +76,9 @@ async def _monitor_all_statuses(js):
 
 async def _monitor_simwrapper_ready(js):
     consumer = EventConsumer(js, "*", "*")
+    error_count = 0
+    max_errors = 5
+    
     while True:
         try:
             async for run_id, bucket_name in consumer.listen_simwrapper_ready():
@@ -86,9 +89,23 @@ async def _monitor_simwrapper_ready(js):
                     repo = RunRepository(async_session_factory)
                     await repo.update_simwrapper_bucket(parsed_run_id, bucket_name)
                     logger.info(f"Updated SimWrapper bucket {bucket_name} for run {run_id}")
+                    
+                    # Reset error count on successful processing
+                    error_count = 0
                 except Exception as e:
                     logger.error(f"SimWrapper bucket update failed for {run_id}: {e}")
-        except Exception:
+            
+            # If the async for loop exits normally
+            error_count = 0
+            
+        except Exception as e:
+            error_count += 1
+            if error_count >= max_errors:
+                # Print a bright red error message directly to the running terminal
+                print(f"\033[91m\n[CRITICAL FAILURE] SimWrapper NATS Consumer crashed {max_errors} times in a row! Shutting down listener.\nLast Error: {e}\033[0m")
+                break
+                
+            logger.warning(f"SimWrapper listener error (Attempt {error_count}/{max_errors}): {e}")
             await asyncio.sleep(5)
 
 
