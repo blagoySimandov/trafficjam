@@ -49,6 +49,13 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- Test dependencies bundled (JUnit 5 and some other stuff)-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
         
         <!-- Add Log4j2 for Spring Boot (required by MatSim) -->
         <dependency>
@@ -117,6 +124,14 @@
                     <xmlOutput>true</xmlOutput>
                 </configuration>
             </plugin>
+
+            <!-- Surefire3 is required to run JUnit 5 Tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+
         </plugins>
     </build>
 </project>
