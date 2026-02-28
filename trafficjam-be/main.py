@@ -18,8 +18,7 @@ from agents.plans import generate_plan_for_agent, MATSimXMLWriter
 from agents.agent_creation import create_agents_from_network
 from config import get_settings
 from consumers import EventConsumer
-from db import engine, async_session_factory, RunRepository, RunStatus
-from api.scenarios import router as scenarios_router
+from db import engine, async_session_factory, Base, RunRepository, RunStatus
 
 MAX_AGENTS = 1000
 
@@ -34,6 +33,8 @@ class StatusMessage(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     app.state.nc = await nats_lib.connect(settings.nats_url)
     app.state.js = app.state.nc.jetstream()
     app.state.status_worker = asyncio.create_task(_monitor_all_statuses(app.state.js))
@@ -44,7 +45,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(scenarios_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -89,10 +89,9 @@ def root():
 @app.post("/scenarios/{scenario_id}/runs")
 async def create_run(scenario_id: str, run_id: str | None = None):
     repo = RunRepository(async_session_factory)
-    parsed_scenario_id = uuid.UUID(scenario_id)
     parsed_id = uuid.UUID(run_id) if run_id else None
-    run = await repo.create_run(parsed_scenario_id, parsed_id)
-    return {"scenario_id": str(run.scenario_id), "run_id": str(run.id), "status": run.status}
+    run = await repo.create_run(scenario_id, parsed_id)
+    return {"scenario_id": run.scenario_id, "run_id": str(run.id), "status": run.status}
 
 
 def _generate_plans_xml(bounds: dict, buildings: List[AgentBuilding]) -> str:
@@ -138,8 +137,7 @@ async def start_run(
 ):
     settings = get_settings()
     repo = RunRepository(async_session_factory)
-    parsed_scenario_id = uuid.UUID(scenario_id)
-    run = await repo.create_run(parsed_scenario_id)
+    run = await repo.create_run(scenario_id)
     run_id = str(run.id)
 
     if not buildings or not bounds:
@@ -235,8 +233,7 @@ async def stream_run_events(scenario_id: str, run_id: str, request: Request):
         raise HTTPException(400, "Invalid run ID")
 
     repo = RunRepository(async_session_factory)
-    parsed_scenario_id = uuid.UUID(scenario_id)
-    run = await repo.get_run_by_scenario(parsed_scenario_id, parsed_id)
+    run = await repo.get_run_by_scenario(scenario_id, parsed_id)
     if not run:
         raise HTTPException(404, "Run not found")
 
