@@ -8,6 +8,7 @@ trafficjam-be/plans
 package-lock.json
 map-data-service/.env
 map-data-service/*.json
+.env
 #simengine temp files
 temp
 
