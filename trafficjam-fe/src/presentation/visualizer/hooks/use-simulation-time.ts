@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { getTimeRange } from "../../../event-processing";
 import type { Trip } from "../../../event-processing";
-import { useRafState } from "../../../hooks/use-raf-state";
 
 export const SPEED_OPTIONS = [30, 60, 120, 300, 600] as const;
 export const DEFAULT_SPEED = 60;
@@ -24,7 +23,7 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
     [trips],
   );
 
-  const [time, setTime] = useRafState(0);
+  const [time, setTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeedState] = useState(DEFAULT_SPEED);
 

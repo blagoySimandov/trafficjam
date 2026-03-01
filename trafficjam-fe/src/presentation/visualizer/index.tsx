@@ -45,15 +45,9 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
 }
 
 export function Visualizer({ scenarioId, runId, onBack }: VisualizerProps) {
-  const { data: staticTrips = [] } = useQuery({
-    queryKey: ["trips"],
-    queryFn: loadTrips,
-    enabled: !runId,
-  });
+  const { trips: liveTrips, isLive: _ } = useLiveSimulation(scenarioId, runId);
 
-  const { trips: liveTrips, isLive } = useLiveSimulation(scenarioId, runId);
-
-  const trips = isLive ? liveTrips : staticTrips;
+  const trips = liveTrips;
 
   const simulation = useSimulationTime(trips);
   const layers = useLayers(trips, simulation);
