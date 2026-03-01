@@ -1,4 +1,4 @@
-import { NETWORK_LAYER_ID, TRANSPORT_LAYER_IDS } from "./transport-layers";
+import { NETWORK_LAYER_ID, NETWORK_CASING_LAYER_ID, TRANSPORT_LAYER_IDS } from "./transport-layers";
 import { BUILDING_LAYER_ID } from "./building";
 import { NODE_LAYER_ID } from "./node-layers";
 
@@ -15,6 +15,9 @@ export const INTERACTIVE_LAYER_IDS = [
   NETWORK_LAYER_ID,
   `static-${NETWORK_LAYER_ID}`,
   `draft-${NETWORK_LAYER_ID}`,
+  NETWORK_CASING_LAYER_ID,
+  `static-${NETWORK_CASING_LAYER_ID}`,
+  `draft-${NETWORK_CASING_LAYER_ID}`,
   TRANSPORT_LAYER_IDS.SUBWAY,
   TRANSPORT_LAYER_IDS.BUS,
   TRANSPORT_LAYER_IDS.TRAM,

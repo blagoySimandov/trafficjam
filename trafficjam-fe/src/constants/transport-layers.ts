@@ -2,6 +2,7 @@ import type { LayerProps } from "react-map-gl";
 
 export const TRANSPORT_SOURCE_ID = "transport";
 export const NETWORK_LAYER_ID = "network-main";
+export const NETWORK_CASING_LAYER_ID = "network-casing";
 export const TRANSPORT_LAYER_PREFIX = "transport-";
 
 export const TRANSPORT_LAYER_IDS = {

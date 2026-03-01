@@ -1,6 +1,6 @@
 import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, TransportRoute, Building } from "../types";
-import { NETWORK_LAYER_ID, TRANSPORT_LAYER_PREFIX, BUILDING_LAYER_ID } from "../constants";
+import { NETWORK_LAYER_ID, NETWORK_CASING_LAYER_ID, TRANSPORT_LAYER_PREFIX, BUILDING_LAYER_ID } from "../constants";
 
 interface DetectedFeatures {
   link?: TrafficLink;
@@ -37,7 +37,11 @@ export function detectFeaturesAtPoint(
   const routes: TransportRoute[] = [];
 
   for (const feature of features) {
-    if ((feature.layer?.id === NETWORK_LAYER_ID || feature.layer?.id === `static-${NETWORK_LAYER_ID}` || feature.layer?.id === `draft-${NETWORK_LAYER_ID}`) && feature.properties) {
+    const layerId = feature.layer?.id;
+    const isNetworkLayer = [NETWORK_LAYER_ID, NETWORK_CASING_LAYER_ID].some(
+      (id) => layerId === id || layerId === `static-${id}` || layerId === `draft-${id}`,
+    );
+    if (isNetworkLayer && feature.properties) {
       link = network.links.get(feature.properties.id);
     } else if (
       feature.layer?.id?.startsWith(TRANSPORT_LAYER_PREFIX) &&
