@@ -10,6 +10,14 @@ class RunRepository:
     def __init__(self, session_factory: async_sessionmaker):
         self.session_factory = session_factory
 
+    async def list_runs(self, scenario_id: uuid.UUID | None = None) -> list[Run]:
+        async with self.session_factory() as session:
+            stmt = select(Run).order_by(Run.created_at.desc())
+            if scenario_id:
+                stmt = stmt.where(Run.scenario_id == scenario_id)
+            result = await session.execute(stmt)
+            return list(result.scalars().all())
+
     async def get_run(self, run_id: uuid.UUID) -> Run | None:
         async with self.session_factory() as session:
             return await session.get(Run, run_id)
@@ -43,13 +51,24 @@ class RunRepository:
             await session.refresh(run)
             return run
 
-    async def create_run(self, scenario_id: uuid.UUID, run_id: uuid.UUID | None = None, nats_subject: str | None = None) -> Run:
+    async def create_run(
+        self,
+        scenario_id: uuid.UUID,
+        run_id: uuid.UUID | None = None,
+        nats_subject: str | None = None,
+        iterations: int = 1,
+        random_seed: int | None = None,
+        note: str | None = None,
+    ) -> Run:
         async with self.session_factory() as session:
             run = Run(
                 id=run_id or uuid.uuid4(),
                 scenario_id=scenario_id,
                 status=RunStatus.PENDING,
                 nats_subject=nats_subject,
+                iterations=iterations,
+                random_seed=random_seed,
+                note=note,
             )
             session.add(run)
             await session.commit()

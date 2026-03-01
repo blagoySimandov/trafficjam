@@ -16,9 +16,11 @@ export function useScenarioManager() {
   });
 
   const { data: runs = [], isLoading: isLoadingRuns } = useQuery({
-    queryKey: ["runs"],
-    queryFn: () => scenariosApi.listRuns(),
+    queryKey: ["runs", activeScenarioId],
+    queryFn: () => scenariosApi.listRuns(activeScenarioId!),
+    enabled: !!activeScenarioId,
     staleTime: 5000,
+    refetchInterval: 5000,
   });
 
   // Mutations

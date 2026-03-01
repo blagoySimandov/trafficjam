@@ -1,5 +1,5 @@
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History, Trash2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History, Trash2, RotateCcw, Clock } from "lucide-react";
 import type { Scenario, Run } from "../../api/scenarios";
 import styles from "./sidebar.module.css";
 
@@ -12,6 +12,7 @@ interface SidebarProps {
   onDeleteScenario: (scenarioId: string) => void;
   runs: Run[];
   onSelectRun: (run: Run) => void;
+  onRerunRun: (run: Run) => void;
 }
 
 export function Sidebar({
@@ -23,6 +24,7 @@ export function Sidebar({
   onDeleteScenario,
   runs,
   onSelectRun,
+  onRerunRun,
 }: SidebarProps) {
   const activeScenario = scenarios.find((s) => s.id === activeScenarioId);
   const activeRuns = runs.filter((r) => r.scenarioId === activeScenarioId);
@@ -92,6 +94,7 @@ export function Sidebar({
                   activeRuns.map((r) => (
                     <li key={r.id} className={styles.runItem} onClick={() => onSelectRun(r)}>
                       <div className={styles.runStatus}>
+                        {r.status === "pending" && <Clock size={14} className={styles.pending} />}
                         {r.status === "running" && <Loader2 size={14} className={styles.spinner} />}
                         {r.status === "completed" && <CheckCircle2 size={14} className={styles.success} />}
                         {r.status === "failed" && <XCircle size={14} className={styles.error} />}
@@ -102,6 +105,18 @@ export function Sidebar({
                           {new Date(r.createdAt).toLocaleTimeString()} • {r.iterations} iter
                         </div>
                       </div>
+                      {(r.status === "completed" || r.status === "failed") && (
+                        <button
+                          className={styles.iconBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRerunRun(r);
+                          }}
+                          title="Re-run"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
                     </li>
                   ))
                 )}

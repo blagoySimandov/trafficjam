@@ -9,16 +9,18 @@ import { useUndoStack } from "./hooks/use-undo-stack";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
 import type { TrafficLink, Network } from "../../types";
-import type { Scenario } from "../../api/scenarios";
+import type { Scenario, Run } from "../../api/scenarios";
 import type { CityConfig } from "../../constants/cities";
 
 interface EditorProps {
   city: CityConfig;
   activeScenario: Scenario | null;
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
+  rerunSource?: Run | null;
+  onClearRerun?: () => void;
 }
 
-export function Editor({ city, activeScenario, onRunSimulation }: EditorProps) {
+export function Editor({ city, activeScenario, onRunSimulation, rerunSource, onClearRerun }: EditorProps) {
   function remapSelectedLinks(
     selectedLinks: TrafficLink[],
     network: Network,
@@ -34,6 +36,15 @@ export function Editor({ city, activeScenario, onRunSimulation }: EditorProps) {
   const [network, setNetwork] = useState<Network | null>(null);
   const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const rerunInitialValues = useMemo(() => {
+    if (!rerunSource) return undefined;
+    return {
+      iterations: rerunSource.iterations,
+      randomSeed: rerunSource.randomSeed,
+      note: rerunSource.note,
+    };
+  }, [rerunSource]);
 
   const activeNetwork = useMemo(
     () => network ?? autoNetwork ?? null,
@@ -90,10 +101,18 @@ export function Editor({ city, activeScenario, onRunSimulation }: EditorProps) {
   const handleLaunch = useCallback(
     (info: { scenarioId: string; runId: string }) => {
       setDialogOpen(false);
+      onClearRerun?.();
       onRunSimulation(info);
     },
-    [onRunSimulation],
+    [onRunSimulation, onClearRerun],
   );
+
+  const handleCloseDialog = useCallback(() => {
+    setDialogOpen(false);
+    onClearRerun?.();
+  }, [onClearRerun]);
+
+  const showDialog = dialogOpen || !!rerunSource;
 
   const handleSelectAllWithSameName = useCallback(
     (streetName: string) => {
@@ -136,12 +155,13 @@ export function Editor({ city, activeScenario, onRunSimulation }: EditorProps) {
       )}
       {status && <StatusBar message={status} />}
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
-      {dialogOpen && (
+      {showDialog && (
         <LaunchDialog
           activeScenario={activeScenario}
           network={activeNetwork}
           onLaunch={handleLaunch}
-          onClose={() => setDialogOpen(false)}
+          onClose={handleCloseDialog}
+          initialValues={rerunInitialValues}
         />
       )}
     </>

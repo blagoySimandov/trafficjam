@@ -30,6 +30,7 @@ export default function App() {
     scenarioId: string;
     runId: string;
   } | null>(null);
+  const [rerunSource, setRerunSource] = useState<Run | null>(null);
 
   const handleRunSimulation = useCallback((info: { scenarioId: string; runId: string }) => {
     setRunInfo(info);
@@ -42,6 +43,11 @@ export default function App() {
   }, []);
 
   const handleBackToEditor = useCallback(() => {
+    setMode("editor");
+  }, []);
+
+  const handleRerunRun = useCallback((run: Run) => {
+    setRerunSource(run);
     setMode("editor");
   }, []);
 
@@ -70,6 +76,7 @@ export default function App() {
         onDeleteScenario={setDeleteTarget}
         runs={runs}
         onSelectRun={handleSelectRun}
+        onRerunRun={handleRerunRun}
       />
       <main style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         {mode === "editor" ? (
@@ -77,6 +84,8 @@ export default function App() {
             city={DEFAULT_CITY}
             activeScenario={activeScenario}
             onRunSimulation={handleRunSimulation}
+            rerunSource={rerunSource}
+            onClearRerun={() => setRerunSource(null)}
           />
         ) : (
           <Visualizer

@@ -78,13 +78,17 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
     const lanes = getLanes(l);
     const capacity = calculateCapacity(l);
     const modes = l.disabled ? "walk" : "car";
-    const oneway = l.tags.oneway ? "1" : "2";
+    const attrs = `length="${length.toFixed(2)}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
 
     linksXml.push(
-      `    <link id="${l.id}" from="${l.from}" to="${l.to}" length="${length.toFixed(
-        2
-      )}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" oneway="${oneway}" modes="${modes}" />`
+      `    <link id="${l.id}" from="${l.from}" to="${l.to}" ${attrs} />`
     );
+
+    if (!l.tags.oneway) {
+      linksXml.push(
+        `    <link id="${l.id}_rev" from="${l.to}" to="${l.from}" ${attrs} />`
+      );
+    }
   }
   linksXml.push("  </links>");
 
