@@ -56,7 +56,7 @@ services:
       dockerfile: docker/Dockerfile.fe
     container_name: trafficjam-fe
     env_file:
-      - trafficjam-fe/.env.prod
+      - trafficjam-fe/.env.production
     ports:
       - "5173:5173"
     depends_on:
