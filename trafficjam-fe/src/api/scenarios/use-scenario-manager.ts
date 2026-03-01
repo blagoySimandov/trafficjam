@@ -16,14 +16,16 @@ export function useScenarioManager() {
   });
 
   const { data: runs = [], isLoading: isLoadingRuns } = useQuery({
-    queryKey: ["runs"],
-    queryFn: () => scenariosApi.listRuns(),
+    queryKey: ["runs", activeScenarioId],
+    queryFn: () => scenariosApi.listRuns(activeScenarioId!),
+    enabled: !!activeScenarioId,
     staleTime: 5000,
+    refetchInterval: 5000,
   });
 
   const createScenarioMutation = useMutation({
-    mutationFn: ({ city, config }: { city: CityConfig; config: AgentConfig }) =>
-      scenariosApi.createScenario(city, config),
+    mutationFn: ({ name, config }: { name: string; config: AgentConfig }) =>
+      scenariosApi.createScenario(name, config),
     onSuccess: (newScenario) => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
       setActiveScenarioId(newScenario.id);
@@ -46,7 +48,8 @@ export function useScenarioManager() {
   });
 
   const activeScenario =
-    scenarios.find((s) => s.id === (activeScenarioId || scenarios[0]?.id)) || null;
+    scenarios.find((s) => s.id === (activeScenarioId || scenarios[0]?.id)) ||
+    null;
 
   const createScenario = useCallback(
     async (city: CityConfig, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
@@ -78,15 +81,16 @@ export function useScenarioManager() {
         return { scenario: existing, created: false };
       }
 
-      const scenario = await createScenarioMutation.mutateAsync({ city, config });
+      const scenario = await createScenarioMutation.mutateAsync({ name: expectedName, config });
       return { scenario, created: true };
     },
     [createScenarioMutation, scenarios],
   );
 
   const updateScenario = useCallback(
-    (id: string, updates: Partial<Scenario>) =>
-      updateScenarioMutation.mutateAsync({ id, updates }),
+    (id: string, updates: Partial<Scenario>) => {
+      return updateScenarioMutation.mutateAsync({ id, updates });
+    },
     [updateScenarioMutation],
   );
 

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Source, Layer } from "react-map-gl";
+import { Source, Layer, type LayerProps } from "react-map-gl";
 import type { Network } from "../../../../types";
 import { useNodeLayerStyle } from "../../hooks/use-node-layer-style";
 import { mergeFilters } from "../../../../utils";
@@ -28,12 +28,12 @@ export function NodeLayer({
   );
 
   const layerProps = useMemo(() => {
-    const filter = mergeFilters(layerStyle.filter as any[], filterIds);
+    const filter = mergeFilters(layerStyle.filter as unknown[], filterIds);
     return {
       ...layerStyle,
       id: `${idPrefix}-${layerStyle.id}`,
       ...(filter ? { filter } : {}),
-    };
+    } as LayerProps;
   }, [layerStyle, idPrefix, filterIds]);
 
   if (!editorMode) return null;

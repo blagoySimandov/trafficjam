@@ -10,11 +10,18 @@ import type { Network } from "../../../../../types";
 import type { Scenario } from "../../../../../api/scenarios";
 import styles from "./launch-dialog.module.css";
 
+interface LaunchInitialValues {
+  iterations: number;
+  randomSeed?: number;
+  note?: string;
+}
+
 interface LaunchDialogProps {
   activeScenario: Scenario | null;
   network: Network | null;
   onLaunch: (info: { scenarioId: string; runId: string }) => void;
   onClose: () => void;
+  initialValues?: LaunchInitialValues;
 }
 
 interface LaunchForm {
@@ -31,16 +38,17 @@ function prepareSimulationData(network: Network) {
   return { networkFile, buildings, bounds };
 }
 
-export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: LaunchDialogProps) {
+export function LaunchDialog({ activeScenario, network, onLaunch, onClose, initialValues }: LaunchDialogProps) {
   const queryClient = useQueryClient();
   const { start } = useSimulation(activeScenario?.id || "default");
   const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit } = useForm<LaunchForm>({
     defaultValues: {
-      iterations: 1,
-      note: ""
-    }
+      iterations: initialValues?.iterations ?? 1,
+      randomSeed: initialValues?.randomSeed,
+      note: initialValues?.note ?? "",
+    },
   });
 
   const onSubmit = useCallback((data: LaunchForm) => {
@@ -57,7 +65,8 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
           buildings,
           bounds,
           iterations: data.iterations,
-          randomSeed: (data.randomSeed !== undefined && !isNaN(data.randomSeed)) ? data.randomSeed : undefined
+          randomSeed: (data.randomSeed !== undefined && !isNaN(data.randomSeed)) ? data.randomSeed : undefined,
+          note: data.note || undefined,
         },
         {
           onSuccess: (responseData) => {
@@ -124,7 +133,7 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose }: Lau
               className={styles.input}
               min={1}
               max={100}
-              {...register("iterations", { valueAsNumber: true })}
+              {...register("iterations", { valueAsNumber: true, min: 1 })}
             />
           </div>
           <div className={styles.formGroup}>

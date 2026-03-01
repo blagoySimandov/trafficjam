@@ -36,16 +36,26 @@ export function useNodeDrag({
 }: UseNodeDragParams) {
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [tempDragPosition, setTempDragPosition] = useRafState<LngLatTuple | null>(
-    null,
-  );
+  const [tempDragPosition, setTempDragPosition] =
+    useRafState<LngLatTuple | null>(null);
+  const [connectedLinks, setConnectedLinks] = useState<ConnectedLinkInfo[]>([]);
 
   const isDraggingRef = useRef(false);
   const draggedNodeIdRef = useRef<string | null>(null);
   const tempDragPositionRef = useRef<LngLatTuple | null>(null);
-  const connectedLinksRef = useRef<ConnectedLinkInfo[]>([]);
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const hasMoved = useRef(false);
+
+  const positionIndex = useMemo(() => {
+    const index = new Map<string, TrafficNode>();
+    if (!network) return index;
+
+    for (const node of network.nodes.values()) {
+      const key = `${node.position[0].toFixed(6)},${node.position[1].toFixed(6)}`;
+      index.set(key, node);
+    }
+    return index;
+  }, [network]);
 
   const { snapNodeToNetwork } = useNodeSnap({
     network,
@@ -55,33 +65,51 @@ export function useNodeDrag({
 
   const hiddenIds = useMemo(() => {
     if (!isDragging || !draggedNodeId) return [];
-    return [draggedNodeId, ...connectedLinksRef.current.map((l) => l.linkId)];
-  }, [isDragging, draggedNodeId]);
+    return [draggedNodeId, ...connectedLinks.map((l) => l.linkId)];
+  }, [isDragging, draggedNodeId, connectedLinks]);
 
   const draftNetwork = useMemo(() => {
     if (!isDragging || !draggedNodeId || !tempDragPosition || !network)
       return null;
 
     const nodes = new Map<string, TrafficNode>();
+    const links = new Map<string, TrafficLink>();
+
+
     const draggedNode = network.nodes.get(draggedNodeId);
     if (draggedNode) {
       nodes.set(draggedNodeId, { ...draggedNode, position: tempDragPosition });
     }
 
-    const links = new Map<string, TrafficLink>();
-    for (const { linkId, indicesToUpdate } of connectedLinksRef.current) {
+    for (const { linkId, indicesToUpdate } of connectedLinks) {
       const link = network.links.get(linkId);
-      if (link) {
-        const geometry = [...link.geometry];
-        for (const idx of indicesToUpdate) {
-          geometry[idx] = tempDragPosition;
+      if (!link) continue;
+
+      const geometry = [...link.geometry];
+      for (const idx of indicesToUpdate) {
+        geometry[idx] = tempDragPosition;
+      }
+
+      links.set(linkId, { ...link, geometry });
+
+      for (const coord of geometry) {
+        const key = `${coord[0].toFixed(6)},${coord[1].toFixed(6)}`;
+        const node = positionIndex.get(key);
+        if (node && !nodes.has(node.id)) {
+          nodes.set(node.id, node);
         }
-        links.set(linkId, { ...link, geometry });
       }
     }
 
-    return { ...network, nodes, links } as Network;
-  }, [isDragging, draggedNodeId, tempDragPosition, network]);
+    return { nodes, links } as Network;
+  }, [
+    isDragging,
+    draggedNodeId,
+    tempDragPosition,
+    network,
+    connectedLinks,
+    positionIndex,
+  ]);
 
   const handleMouseDown = useCallback(
     (e: MapMouseEvent): boolean => {
@@ -92,16 +120,28 @@ export function useNodeDrag({
         `static-${NODE_LAYER_ID}`,
         `draft-${NODE_LAYER_ID}`,
       ]);
-      if (!features?.length) return false;
 
-      const feature = features[0];
-      const nodeId = feature.properties?.id || feature.id;
+      let nodeId: string | null = null;
+      if (features?.length) {
+        const feature = features[0];
+        nodeId = (feature.properties?.id || feature.id)?.toString() || null;
+      } else {
+        const snapResult = findSnapPoint(
+          [e.lngLat.lat, e.lngLat.lng],
+          network,
+          [],
+        );
+        if (snapResult?.isNode && snapResult.nodeId) {
+          nodeId = snapResult.nodeId;
+        }
+      }
+
       if (!nodeId) return false;
 
-      const node = network.nodes.get(nodeId.toString());
+      const node = network.nodes.get(nodeId);
       if (!node) return false;
 
-      const connectedLinks: ConnectedLinkInfo[] = [];
+      const currentConnectedLinks: ConnectedLinkInfo[] = [];
       for (const [linkId, link] of network.links.entries()) {
         const indices: number[] = [];
         if (link.from === nodeId) indices.push(0);
@@ -118,11 +158,11 @@ export function useNodeDrag({
           }
         }
         if (indices.length > 0) {
-          connectedLinks.push({ linkId, indicesToUpdate: indices });
+          currentConnectedLinks.push({ linkId, indicesToUpdate: indices });
         }
       }
 
-      connectedLinksRef.current = connectedLinks;
+      setConnectedLinks(currentConnectedLinks);
       draggedNodeIdRef.current = nodeId.toString();
       isDraggingRef.current = true;
       dragStartPos.current = { x: e.point.x, y: e.point.y };
@@ -140,7 +180,14 @@ export function useNodeDrag({
       e.originalEvent.stopPropagation();
       return true;
     },
-    [editorMode, network, mapRef, setTempDragPosition],
+    [
+      editorMode,
+      network,
+      mapRef,
+      setTempDragPosition,
+      setConnectedLinks,
+      setDraggedNodeId,
+    ],
   );
 
   const handleMouseMove = useCallback(
@@ -165,7 +212,7 @@ export function useNodeDrag({
 
       return true;
     },
-    [network, setTempDragPosition],
+    [network, setTempDragPosition, setIsDragging],
   );
 
   const handleMouseUp = useCallback((): boolean => {
@@ -201,7 +248,7 @@ export function useNodeDrag({
         }
 
         const updatedLinks = new Map(network.links);
-        for (const { linkId, indicesToUpdate } of connectedLinksRef.current) {
+        for (const { linkId, indicesToUpdate } of connectedLinks) {
           const link = updatedLinks.get(linkId);
           if (link) {
             const geometry = [...link.geometry];
@@ -225,7 +272,7 @@ export function useNodeDrag({
     setTempDragPosition(null);
     draggedNodeIdRef.current = null;
     tempDragPositionRef.current = null;
-    connectedLinksRef.current = [];
+    setConnectedLinks([]);
     dragStartPos.current = null;
     hasMoved.current = false;
 
@@ -241,6 +288,10 @@ export function useNodeDrag({
     onBeforeChange,
     snapNodeToNetwork,
     setTempDragPosition,
+    connectedLinks,
+    setConnectedLinks,
+    setIsDragging,
+    setDraggedNodeId,
   ]);
 
   return {

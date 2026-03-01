@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("network_config", sa.Text(), nullable=False),
+        sa.Column("network_config", postgresql.JSONB(), nullable=True),
         sa.Column("plan_params", postgresql.JSONB(), nullable=False),
         sa.Column("matsim_config", postgresql.JSONB(), nullable=True),
         sa.Column(

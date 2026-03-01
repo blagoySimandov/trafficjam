@@ -10,8 +10,8 @@ class ScenarioRepository:
     async def create_scenario(
         self,
         name: str,
-        network_config: str,
         plan_params: dict,
+        network_config: dict | None = None,
         description: str | None = None,
         matsim_config: dict | None = None,
     ) -> Scenario:
@@ -42,7 +42,7 @@ class ScenarioRepository:
         scenario_id: uuid.UUID,
         name: str | None = None,
         description: str | None = None,
-        network_config: str | None = None,
+        network_config: dict | None = None,
         plan_params: dict | None = None,
         matsim_config: dict | None = None,
     ) -> Scenario | None:

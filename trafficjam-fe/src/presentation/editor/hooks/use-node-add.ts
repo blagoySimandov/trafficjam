@@ -66,6 +66,10 @@ export function useNodeAdd({
     const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]);
     if (features && features.length > 0) return false;
 
+    // Also check data-model snap to avoid creating duplicate nodes when visual check fails
+    const snapResult = findSnapPoint([e.lngLat.lat, e.lngLat.lng], network, []);
+    if (snapResult?.isNode) return false;
+
     const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
     setTempNodePosition(newPosition);
     setTempLinkEndPosition(newPosition);
@@ -77,8 +81,8 @@ export function useNodeAdd({
       map.dragPan.disable();
     }
 
-    return true; 
-  }, [editorMode, network, mapRef, minZoom]);
+    return true;
+  }, [editorMode, network, mapRef, minZoom, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
 
   const handleMouseMove = useCallback(
     (e: MapMouseEvent): boolean => {
@@ -89,7 +93,7 @@ export function useNodeAdd({
       
       return true;
     },
-    [tempNodePosition],
+    [tempNodePosition, setTempLinkEndPosition],
   );
    
   const handleMouseUp = useCallback((e: MapMouseEvent): boolean => {
@@ -156,7 +160,7 @@ export function useNodeAdd({
     }
     
     return true;
-  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef]);
+  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
 
   return {
     isAddingNode,

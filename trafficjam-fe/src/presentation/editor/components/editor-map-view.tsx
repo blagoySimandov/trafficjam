@@ -167,7 +167,6 @@ export function EditorMapView({
     },
     [nodeDragMouseMove, nodeAddMouseMove, onMouseMove],
   );
-
   return (
     <Map
       ref={handleMapRef}
@@ -220,13 +219,17 @@ export function EditorMapView({
       {(isDragging && dragDraftNetwork) || (isAddingNode && addDraftNetwork) ? (
         <>
           <NetworkLayer
-            network={(isDragging ? dragDraftNetwork : addDraftNetwork) as Network}
+            network={
+              (isDragging ? dragDraftNetwork : addDraftNetwork) as Network
+            }
             hoverInfo={null}
             selectedLinkId={selectedLinkId}
             idPrefix="draft"
           />
           <NodeLayer
-            network={(isDragging ? dragDraftNetwork : addDraftNetwork) as Network}
+            network={
+              (isDragging ? dragDraftNetwork : addDraftNetwork) as Network
+            }
             editorMode={editorMode}
             draggedNodeId={draggedNodeId}
             tempNodeId={isAddingNode ? tempNodeId : null}
@@ -234,13 +237,9 @@ export function EditorMapView({
           />
         </>
       ) : null}
-      {baseNetwork?.transportRoutes &&
-        baseNetwork.transportRoutes.size > 0 && (
-          <TransportLayer
-            routes={baseNetwork.transportRoutes}
-            hoverInfo={null}
-          />
-        )}
+      {baseNetwork?.transportRoutes && baseNetwork.transportRoutes.size > 0 && (
+        <TransportLayer routes={baseNetwork.transportRoutes} hoverInfo={null} />
+      )}
       {showBuildings &&
         baseNetwork?.buildings &&
         baseNetwork.buildings.size > 0 && (

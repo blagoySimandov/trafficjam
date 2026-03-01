@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { LayerProps } from "react-map-gl";
 import {
   glowLayer,
   casingLayer,
@@ -27,12 +28,12 @@ export function useMapEditorLayers({
       { base: mainLayer, id: `${idPrefix}-${mainLayer.id}` },
       { base: dividersLayer, id: `${idPrefix}-${dividersLayer.id}` },
     ].map((layerDef) => {
-      const filter = mergeFilters(layerDef.base.filter as any[], filterIds);
+      const filter = mergeFilters(layerDef.base.filter as unknown[], filterIds);
       return {
         ...layerDef.base,
         id: layerDef.id,
         ...(filter ? { filter } : {}),
-      };
+      } as LayerProps;
     });
   }, [idPrefix, filterIds]);
 }

@@ -5,8 +5,7 @@ import { Sidebar } from "./components/sidebar/sidebar";
 import { ConfirmDialog } from "./components/confirm-dialog";
 import { Dialog } from "./components/dialog";
 import { AgentConfigModal } from "./presentation/editor/components/agent-config-modal/agent-config-modal";
-import { useScenarioManager } from "./api/scenarios";
-import { DEFAULT_AGENT_CONFIG } from "./api/scenarios";
+import { useScenarioManager, DEFAULT_AGENT_CONFIG } from "./api/scenarios";
 import { DEFAULT_CITY } from "./constants/cities";
 import type { Run, AgentConfig } from "./api/scenarios";
 
@@ -32,6 +31,7 @@ export default function App() {
     scenarioId: string;
     runId: string;
   } | null>(null);
+  const [rerunSource, setRerunSource] = useState<Run | null>(null);
 
   const handleRunSimulation = useCallback((info: { scenarioId: string; runId: string }) => {
     setRunInfo(info);
@@ -46,6 +46,15 @@ export default function App() {
   const handleBackToEditor = useCallback(() => {
     setMode("editor");
   }, []);
+
+  const handleRerunRun = useCallback((run: Run) => {
+    setRerunSource(run);
+    setMode("editor");
+  }, []);
+
+  const handleRenameScenario = useCallback((id: string, newName: string) => {
+    updateScenario(id, { name: newName });
+  }, [updateScenario]);
 
   const handleConfirmDelete = useCallback(() => {
     if (deleteTarget) deleteScenario(deleteTarget);
@@ -78,8 +87,10 @@ export default function App() {
         onCreateScenario={handleCreateScenario}
         onOpenAgentConfig={(_id) => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
+        onRenameScenario={handleRenameScenario}
         runs={runs}
         onSelectRun={handleSelectRun}
+        onRerunRun={handleRerunRun}
       />
       <main style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         {mode === "editor" ? (
@@ -87,6 +98,9 @@ export default function App() {
             city={DEFAULT_CITY}
             activeScenario={activeScenario}
             onRunSimulation={handleRunSimulation}
+            onSaveScenario={updateScenario}
+            rerunSource={rerunSource}
+            onClearRerun={() => setRerunSource(null)}
           />
         ) : (
           <Visualizer

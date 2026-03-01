@@ -32,4 +32,5 @@ export interface StartRunParams {
   bounds?: { north: number; south: number; east: number; west: number };
   iterations?: number;
   randomSeed?: number;
+  note?: string;
 }

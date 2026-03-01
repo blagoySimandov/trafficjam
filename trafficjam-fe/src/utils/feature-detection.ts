@@ -1,6 +1,6 @@
 import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, TransportRoute, Building } from "../types";
-import { NETWORK_LAYER_ID, TRANSPORT_LAYER_PREFIX, BUILDING_LAYER_ID } from "../constants";
+import { NETWORK_LAYER_ID, NETWORK_CASING_LAYER_ID, TRANSPORT_LAYER_PREFIX, BUILDING_LAYER_ID } from "../constants";
 
 interface DetectedFeatures {
   link?: TrafficLink;
@@ -10,7 +10,7 @@ interface DetectedFeatures {
 
 export function safeQueryRenderedFeatures(
   map: MapRef | null,
-  point: mapboxgl.PointLike,
+  point: mapboxgl.PointLike | [mapboxgl.PointLike, mapboxgl.PointLike],
   layers: string[]
 ) {
   if (!map) return [];
@@ -34,10 +34,14 @@ export function detectFeaturesAtPoint(
   const features = event.features || [];
   let link: TrafficLink | undefined;
   let building: Building | undefined;
-  const routes: TransportRoute[] = [];
+  const routeMap = new Map<string, TransportRoute>();
 
   for (const feature of features) {
-    if ((feature.layer?.id === NETWORK_LAYER_ID || feature.layer?.id === `static-${NETWORK_LAYER_ID}` || feature.layer?.id === `draft-${NETWORK_LAYER_ID}`) && feature.properties) {
+    const layerId = feature.layer?.id;
+    const isNetworkLayer = [NETWORK_LAYER_ID, NETWORK_CASING_LAYER_ID].some(
+      (id) => layerId === id || layerId === `static-${id}` || layerId === `draft-${id}`,
+    );
+    if (isNetworkLayer && feature.properties) {
       link = network.links.get(feature.properties.id);
     } else if (
       feature.layer?.id?.startsWith(TRANSPORT_LAYER_PREFIX) &&
@@ -46,7 +50,7 @@ export function detectFeaturesAtPoint(
     ) {
       const route = network.transportRoutes.get(feature.properties.id);
       if (route) {
-        routes.push(route);
+        routeMap.set(route.id, route);
       }
     } else if (
       feature.layer?.id === BUILDING_LAYER_ID &&
@@ -57,5 +61,5 @@ export function detectFeaturesAtPoint(
     }
   }
 
-  return { link, routes, building };
+  return { link, routes: [...routeMap.values()], building };
 }

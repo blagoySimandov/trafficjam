@@ -1,14 +1,26 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import type { MapMouseEvent, MapRef } from "react-map-gl";
 import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
-import { detectFeaturesAtPoint, safeQueryRenderedFeatures } from "../utils/feature-detection";
-import { NETWORK_LAYER_ID, NODE_LAYER_ID } from "../constants";
+import {
+  detectFeaturesAtPoint,
+  safeQueryRenderedFeatures,
+} from "../utils/feature-detection";
+import { findSnapPoint } from "../utils/snap-to-network";
+import {
+  NETWORK_LAYER_ID,
+  NETWORK_CASING_LAYER_ID,
+  NODE_LAYER_ID,
+} from "../constants";
 import { useRafState } from "./use-raf-state";
 
 interface UseMapInteractionsParams {
   network: Network | null;
   mapRef: React.RefObject<MapRef | null>;
-  onLinkClick?: (link: TrafficLink, coords?: { lng: number; lat: number }, modKey?: boolean) => void;
+  onLinkClick?: (
+    link: TrafficLink,
+    coords?: { lng: number; lat: number },
+    modKey?: boolean,
+  ) => void;
   editorMode?: boolean;
 }
 
@@ -35,7 +47,10 @@ export function useMapInteractions({
         [x + 6, y + 6],
       ];
 
-      const features = safeQueryRenderedFeatures(map, bbox, [NETWORK_LAYER_ID, `static-${NETWORK_LAYER_ID}`, `draft-${NETWORK_LAYER_ID}`]);
+      const networkLayers = [NETWORK_LAYER_ID, NETWORK_CASING_LAYER_ID].flatMap(
+        (id) => [id, `static-${id}`, `draft-${id}`],
+      );
+      const features = safeQueryRenderedFeatures(map, bbox, networkLayers);
 
       for (const feature of features) {
         const id = feature.properties?.id;
@@ -47,19 +62,43 @@ export function useMapInteractions({
 
       return undefined;
     },
-    [mapRef, network]
+    [mapRef, network],
   );
 
   const handleClick = useCallback(
     (event: MapMouseEvent): boolean => {
       if (!network) return false;
       const map = mapRef.current;
-      const canEditAtZoom = !!(editorMode && map && map.getZoom() >= MIN_NODE_ZOOM);
+      const canEditAtZoom = !!(
+        editorMode &&
+        map &&
+        map.getZoom() >= MIN_NODE_ZOOM
+      );
 
       if (editorMode && !canEditAtZoom) return false;
 
+      // If we're on or near a node, don't handle as a link click
+      const isHoveringNode = map
+        ? safeQueryRenderedFeatures(map, event.point, [
+            NODE_LAYER_ID,
+            `static-${NODE_LAYER_ID}`,
+            `draft-${NODE_LAYER_ID}`,
+          ]).length > 0
+        : false;
+      if (isHoveringNode) return false;
+
+      if (canEditAtZoom) {
+        const snapResult = findSnapPoint(
+          [event.lngLat.lat, event.lngLat.lng],
+          network,
+          [],
+        );
+        if (snapResult?.isNode) return false;
+      }
+
       const detected = detectFeaturesAtPoint(event, network);
-      const link = detected.link || (editorMode ? findNearbyLink(event) : undefined);
+      const link =
+        detected.link || (editorMode ? findNearbyLink(event) : undefined);
 
       if (detected.building) {
         setHoverInfo({
@@ -70,20 +109,28 @@ export function useMapInteractions({
         });
         return true;
       } else if (link && onLinkClick) {
-        onLinkClick(link, { lng: event.lngLat.lng, lat: event.lngLat.lat }, event.originalEvent.metaKey || event.originalEvent.ctrlKey);
+        onLinkClick(
+          link,
+          { lng: event.lngLat.lng, lat: event.lngLat.lat },
+          event.originalEvent.metaKey || event.originalEvent.ctrlKey,
+        );
         return true;
       }
 
       return false;
     },
-    [network, mapRef, onLinkClick, editorMode, findNearbyLink]
+    [network, mapRef, onLinkClick, editorMode, findNearbyLink, setHoverInfo],
   );
 
   const handleMouseMove = useCallback(
     (event: MapMouseEvent): boolean => {
       const map = mapRef.current;
       const features = event.features || [];
-      const canEditAtZoom = !!(editorMode && map && map.getZoom() >= MIN_NODE_ZOOM);
+      const canEditAtZoom = !!(
+        editorMode &&
+        map &&
+        map.getZoom() >= MIN_NODE_ZOOM
+      );
 
       if (features.length === 0 && !editorMode) {
         if (map) map.getCanvas().style.cursor = "";
@@ -91,9 +138,15 @@ export function useMapInteractions({
       }
 
       const detected = detectFeaturesAtPoint(event, network);
-      const link = detected.link || (canEditAtZoom ? findNearbyLink(event) : undefined);
+      const link =
+        detected.link || (canEditAtZoom ? findNearbyLink(event) : undefined);
 
-      const isHoveringNode = safeQueryRenderedFeatures(map, event.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]).length > 0;
+      const isHoveringNode =
+        safeQueryRenderedFeatures(map, event.point, [
+          NODE_LAYER_ID,
+          `static-${NODE_LAYER_ID}`,
+          `draft-${NODE_LAYER_ID}`,
+        ]).length > 0;
 
       if (map) {
         if (link && canEditAtZoom && !isHoveringNode) {
@@ -118,14 +171,14 @@ export function useMapInteractions({
         return false;
       }
     },
-    [network, mapRef, editorMode, findNearbyLink]
+    [network, mapRef, editorMode, findNearbyLink, setHoverInfo],
   );
 
   const handleMouseLeave = useCallback(() => {
     const map = mapRef.current;
     if (map) map.getCanvas().style.cursor = "";
     setHoverInfo(null);
-  }, [mapRef]);
+  }, [mapRef, setHoverInfo]);
 
   return {
     hoverInfo,

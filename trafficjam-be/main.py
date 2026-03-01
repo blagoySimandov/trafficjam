@@ -93,6 +93,28 @@ def root():
     return {"message": "Hello World! This is the main page."}
 
 
+@app.get("/scenarios/{scenario_id}/runs")
+async def list_runs(scenario_id: str):
+    repo = RunRepository(async_session_factory)
+    try:
+        parsed_scenario_id = uuid.UUID(scenario_id)
+    except ValueError:
+        raise HTTPException(400, "Invalid scenario ID")
+    runs = await repo.list_runs(parsed_scenario_id)
+    return [
+        {
+            "id": str(r.id),
+            "scenarioId": str(r.scenario_id),
+            "status": r.status,
+            "iterations": r.iterations,
+            "randomSeed": r.random_seed,
+            "note": r.note,
+            "createdAt": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in runs
+    ]
+
+
 @app.post("/scenarios/{scenario_id}/runs")
 async def create_run(scenario_id: str, run_id: str | None = None):
     repo = RunRepository(async_session_factory)
@@ -166,11 +188,20 @@ async def start_run(
     bounds: Optional[str] = Form(None),
     iterations: int = Form(1),
     randomSeed: int | None = Form(None),
+    note: str | None = Form(None),
 ):
     settings = get_settings()
     repo = RunRepository(async_session_factory)
-    parsed_scenario_id = uuid.UUID(scenario_id)
-    run = await repo.create_run(parsed_scenario_id)
+    try:
+        parsed_scenario_id = uuid.UUID(scenario_id)
+    except ValueError:
+        raise HTTPException(400, "Invalid scenario ID")
+    run = await repo.create_run(
+        parsed_scenario_id,
+        iterations=iterations,
+        random_seed=randomSeed,
+        note=note,
+    )
     run_id = str(run.id)
 
     if not buildings or not bounds:

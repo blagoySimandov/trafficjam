@@ -4,12 +4,12 @@
  * while they are being actively manipulated in the draft layer.
  */
 export function mergeFilters(
-  baseFilter: any[] | undefined,
+  baseFilter: unknown[] | undefined,
   filterOutIds: string[] | undefined,
-): any[] | undefined {
+): unknown[] | undefined {
   if (!filterOutIds || filterOutIds.length === 0) return baseFilter;
 
-  const idFilter = ["!", ["in", ["get", "id"], ["literal", filterOutIds]]];
+  const idFilter: unknown[] = ["!", ["in", ["get", "id"], ["literal", filterOutIds]]];
 
   if (!baseFilter) return idFilter;
 

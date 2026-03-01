@@ -93,8 +93,8 @@
   margin-bottom: 0.25rem;
   cursor: pointer;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 4px;
   transition: background-color 0.2s;
   background-color: transparent;
 }
@@ -114,12 +114,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 130px;
 }
 
 .scenarioActions {
   display: flex;
   gap: 2px;
   align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .deleteBtn:hover {
@@ -197,9 +200,26 @@
   color: #ef4444;
 }
 
+.pending {
+  color: #f59e0b;
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.renameInput {
+  background: #2a2a2a;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  outline: none;
+  width: 100%;
+  min-width: 0;
 }
 
 .emptyMsg {
