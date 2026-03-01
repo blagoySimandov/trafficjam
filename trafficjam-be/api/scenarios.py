@@ -37,20 +37,26 @@ async def create_scenario(body: ScenarioCreate):
     )
 
 
-@router.put("/{scenario_id}", response_model=ScenarioResponse)
+@router.put("/{scenario_id}", response_model=ScenarioSummary)
 async def update_scenario(scenario_id: uuid.UUID, body: ScenarioUpdate):
     repo = ScenarioRepository(async_session_factory)
     scenario = await repo.update_scenario(
         scenario_id=scenario_id,
         name=body.name,
         description=body.description,
-        network_config=body.network_config,
         plan_params=body.plan_params,
-        matsim_config=body.matsim_config,
     )
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
     return scenario
+
+
+@router.put("/{scenario_id}/network", status_code=204)
+async def update_network(scenario_id: uuid.UUID, body: dict):
+    repo = ScenarioRepository(async_session_factory)
+    scenario = await repo.update_scenario(scenario_id, network_config=body)
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
 
 
 async def _purge_nats_messages(js, scenario_id: uuid.UUID):

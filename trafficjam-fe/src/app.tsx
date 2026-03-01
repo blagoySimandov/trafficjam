@@ -15,6 +15,7 @@ export default function App() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const {
     scenarios,
+    activeScenarioId,
     activeScenario,
     setActiveScenarioId,
     createScenario,
@@ -22,6 +23,7 @@ export default function App() {
     deleteScenario,
     runs,
     isLoadingScenarios,
+    isSwitchingScenario,
   } = useScenarioManager();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export default function App() {
     <div style={{ display: "flex", width: "100vw", height: "100vh", overflow: "hidden" }}>
       <Sidebar
         scenarios={scenarios}
-        activeScenarioId={activeScenario?.id || null}
+        activeScenarioId={activeScenarioId}
         isLoadingScenarios={isLoadingScenarios}
         onSelectScenario={(id) => {
           setActiveScenarioId(id);
@@ -90,8 +92,8 @@ export default function App() {
           <Editor
             city={DEFAULT_CITY}
             activeScenario={activeScenario}
+            isSwitchingScenario={isSwitchingScenario}
             onRunSimulation={handleRunSimulation}
-            onSaveScenario={updateScenario}
             rerunSource={rerunSource}
             onClearRerun={() => setRerunSource(null)}
           />

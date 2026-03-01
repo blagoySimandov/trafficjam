@@ -17,13 +17,13 @@ import type { CityConfig } from "../../constants/cities";
 interface EditorProps {
   city: CityConfig;
   activeScenario: Scenario | null;
+  isSwitchingScenario?: boolean;
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
-  onSaveScenario: (id: string, updates: Partial<Scenario>) => Promise<unknown>;
   rerunSource?: Run | null;
   onClearRerun?: () => void;
 }
 
-export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, rerunSource, onClearRerun }: EditorProps) {
+export function Editor({ city, activeScenario, isSwitchingScenario, onRunSimulation, rerunSource, onClearRerun }: EditorProps) {
   function remapSelectedLinks(
     selectedLinks: TrafficLink[],
     network: Network,
@@ -66,7 +66,6 @@ export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, 
   const { isDirty, isSaving, showSaved, markDirty } = useNetworkPersistence({
     activeScenario,
     network: activeNetwork,
-    onSave: onSaveScenario,
   });
   const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
@@ -145,6 +144,10 @@ export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, 
 
   if (isLoading) {
     return <LoadingScreen cityName={city.name} />;
+  }
+
+  if (isSwitchingScenario) {
+    return <LoadingScreen message="Loading scenario..." />;
   }
 
   return (

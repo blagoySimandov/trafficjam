@@ -1,4 +1,5 @@
 import type { Scenario, Run, AgentConfig } from "./types";
+import type { Network } from "../../types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 import {
   serializeNetwork,
@@ -62,8 +63,8 @@ async function listScenarios(): Promise<Scenario[]> {
   return data.map(toScenarioSummary);
 }
 
-async function getScenario(id: string): Promise<Scenario> {
-  const response = await fetch(`${BASE_URL}/scenarios/${id}`);
+async function getScenario(id: string, signal?: AbortSignal): Promise<Scenario> {
+  const response = await fetch(`${BASE_URL}/scenarios/${id}`, { signal });
   await assertOk(response);
   return toFullScenario(await response.json());
 }
@@ -88,14 +89,12 @@ async function createScenario(
 async function updateScenario(
   id: string,
   updates: Partial<Scenario>,
-): Promise<Scenario> {
+): Promise<void> {
   const body: Record<string, unknown> = {};
   if (updates.name !== undefined) body.name = updates.name;
   if (updates.description !== undefined) body.description = updates.description;
   if (updates.agentConfig !== undefined)
     body.plan_params = JSON.stringify(updates.agentConfig);
-  if (updates.networkData !== undefined)
-    body.network_config = serializeNetwork(updates.networkData);
 
   const response = await fetch(`${BASE_URL}/scenarios/${id}`, {
     method: "PUT",
@@ -103,7 +102,15 @@ async function updateScenario(
     body: JSON.stringify(body),
   });
   await assertOk(response);
-  return toFullScenario(await response.json());
+}
+
+async function saveNetwork(id: string, network: Network): Promise<void> {
+  const response = await fetch(`${BASE_URL}/scenarios/${id}/network`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(serializeNetwork(network)),
+  });
+  await assertOk(response);
 }
 
 async function deleteScenario(id: string): Promise<void> {
@@ -125,6 +132,7 @@ export const scenariosApi = {
   getScenario,
   createScenario,
   updateScenario,
+  saveNetwork,
   deleteScenario,
   listRuns,
 };
