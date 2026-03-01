@@ -61,7 +61,6 @@ class RunRepository:
             await session.refresh(run)
             return run
 
-    async def create_run(self, scenario_id: uuid.UUID, run_id: uuid.UUID | None = None, nats_subject: str | None = None) -> Run:
     async def create_run(
         self,
         scenario_id: uuid.UUID,
