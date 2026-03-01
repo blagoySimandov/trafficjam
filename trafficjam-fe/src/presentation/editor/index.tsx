@@ -10,6 +10,7 @@ import { useUndoStack } from "./hooks/use-undo-stack";
 import { useNetworkPersistence } from "./hooks/use-network-persistence";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
+import { applyLinksDiff } from "../../api/scenarios/network-serializer";
 import type { TrafficLink, Network } from "../../types";
 import type { Scenario, Run } from "../../api/scenarios";
 import type { CityConfig } from "../../constants/cities";
@@ -56,9 +57,14 @@ export function Editor({ city, activeScenario, isSwitchingScenario, onRunSimulat
     };
   }, [rerunSource]);
 
+  const scenarioNetwork = useMemo(() => {
+    if (!autoNetwork || !activeScenario?.linksDiff) return null;
+    return applyLinksDiff(autoNetwork, activeScenario.linksDiff);
+  }, [autoNetwork, activeScenario?.linksDiff]);
+
   const activeNetwork = useMemo(
-    () => network ?? activeScenario?.networkData ?? autoNetwork ?? null,
-    [network, activeScenario?.networkData, autoNetwork],
+    () => network ?? scenarioNetwork ?? autoNetwork ?? null,
+    [network, scenarioNetwork, autoNetwork],
   );
 
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
@@ -66,6 +72,7 @@ export function Editor({ city, activeScenario, isSwitchingScenario, onRunSimulat
   const { isDirty, isSaving, showSaved, markDirty } = useNetworkPersistence({
     activeScenario,
     network: activeNetwork,
+    baseNetwork: autoNetwork ?? null,
   });
   const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 

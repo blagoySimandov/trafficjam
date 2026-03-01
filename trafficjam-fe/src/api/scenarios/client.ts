@@ -1,10 +1,9 @@
 import type { Scenario, Run, AgentConfig } from "./types";
-import type { Network } from "../../types";
+import type { Network, TrafficLink } from "../../types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 import {
-  serializeNetwork,
-  deserializeNetwork,
   isNonEmptyNetworkConfig,
+  computeLinksDiff,
 } from "./network-serializer";
 
 const BASE_URL =
@@ -44,8 +43,8 @@ function toScenarioSummary(s: BackendScenarioSummary): Scenario {
 function toFullScenario(s: BackendScenario): Scenario {
   return {
     ...toScenarioSummary(s),
-    networkData: isNonEmptyNetworkConfig(s.network_config)
-      ? deserializeNetwork(s.network_config!)
+    linksDiff: isNonEmptyNetworkConfig(s.network_config)
+      ? (s.network_config!.links as Record<string, TrafficLink>) ?? {}
       : undefined,
   };
 }
@@ -104,11 +103,12 @@ async function updateScenario(
   await assertOk(response);
 }
 
-async function saveNetwork(id: string, network: Network): Promise<void> {
+async function saveNetwork(id: string, base: Network, edited: Network): Promise<void> {
+  const diff = computeLinksDiff(base, edited);
   const response = await fetch(`${BASE_URL}/scenarios/${id}/network`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(serializeNetwork(network)),
+    body: JSON.stringify({ links: diff }),
   });
   await assertOk(response);
 }

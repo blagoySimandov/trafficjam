@@ -51,7 +51,17 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Encoding"],
 )
+
+
+@app.middleware("http")
+async def decompress_gzip_request(request: Request, call_next):
+    if request.headers.get("content-encoding") == "gzip":
+        import gzip
+        body = await request.body()
+        request._body = gzip.decompress(body)
+    return await call_next(request)
 
 
 async def _monitor_all_statuses(js):
