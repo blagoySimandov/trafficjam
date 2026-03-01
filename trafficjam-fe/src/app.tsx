@@ -85,7 +85,7 @@ export default function App() {
           setMode("editor");
         }}
         onCreateScenario={handleCreateScenario}
-        onOpenAgentConfig={(_id) => setIsConfigOpen(true)}
+        onOpenAgentConfig={() => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
         onRenameScenario={handleRenameScenario}
         runs={runs}
