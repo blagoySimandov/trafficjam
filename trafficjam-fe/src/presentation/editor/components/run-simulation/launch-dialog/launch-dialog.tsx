@@ -133,7 +133,7 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose, initi
               className={styles.input}
               min={1}
               max={100}
-              {...register("iterations", { valueAsNumber: true })}
+              {...register("iterations", { valueAsNumber: true, min: 1 })}
             />
           </div>
           <div className={styles.formGroup}>
