@@ -12,29 +12,14 @@ function haversineMeters(a: [number, number], b: [number, number]) {
   const c =
     2 *
     Math.atan2(
-      Math.sqrt(
-        sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon,
-      ),
-      Math.sqrt(
-        1 -
-        (sinDLat * sinDLat +
-          Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
-      ),
+      Math.sqrt(sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
+      Math.sqrt(1 - (sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon)),
     );
   return R * c;
 }
 
-function estimateLengthMeters(link: TrafficLink) {
-  const geom = link.geometry;
-  if (geom.length < 2) return 100;
-  const a = geom[0];
-  const b = geom[geom.length - 1];
-  return haversineMeters([a[0], a[1]], [b[0], b[1]]);
-}
-
 function getFreespeedMs(link: TrafficLink) {
-  const kph = link.tags.maxspeed ?? 50;
-  return Number(kph) / 3.6;
+  return (link.tags.maxspeed ?? 50) / 3.6;
 }
 
 function getLanes(link: TrafficLink) {
@@ -42,9 +27,54 @@ function getLanes(link: TrafficLink) {
 }
 
 function calculateCapacity(link: TrafficLink) {
+  return Math.round(1200 * getLanes(link));
+}
+
+function buildGeomNodes(link: TrafficLink) {
+  return link.geometry.slice(1, -1).map(([lat, lng], i) => ({
+    id: `${link.id}_g${i}`,
+    x: lng,
+    y: lat,
+  }));
+}
+
+function buildSubLinks(link: TrafficLink, allIds: string[]): string[] {
+  const freespeed = getFreespeedMs(link).toFixed(2);
+  const capacity = calculateCapacity(link);
+  const modes = link.disabled ? "walk" : "car";
   const lanes = getLanes(link);
-  const perLane = 1200;
-  return Math.round(perLane * lanes);
+  return allIds.slice(0, -1).map((fromId, i) => {
+    const length = haversineMeters(link.geometry[i], link.geometry[i + 1]).toFixed(2);
+    const linkAttrs = `length="${length}" freespeed="${freespeed}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
+    return `    <link id="${link.id}_${i}" from="${fromId}" to="${allIds[i + 1]}" ${linkAttrs} />`;
+  });
+}
+
+function buildRevSubLinks(link: TrafficLink, allIds: string[]): string[] {
+  const freespeed = getFreespeedMs(link).toFixed(2);
+  const capacity = calculateCapacity(link);
+  const modes = link.disabled ? "walk" : "car";
+  const lanes = getLanes(link);
+  const reversed = [...allIds].reverse();
+  const reversedGeom = [...link.geometry].reverse();
+  return reversed.slice(0, -1).map((fromId, i) => {
+    const length = haversineMeters(reversedGeom[i], reversedGeom[i + 1]).toFixed(2);
+    const linkAttrs = `length="${length}" freespeed="${freespeed}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
+    return `    <link id="${link.id}_rev_${i}" from="${fromId}" to="${reversed[i + 1]}" ${linkAttrs} />`;
+  });
+}
+
+function expandLink(l: TrafficLink, network: Network, nodesXml: string[], linksXml: string[]) {
+  if (!network.nodes.has(l.from) || !network.nodes.has(l.to)) return;
+  const geomNodes = buildGeomNodes(l);
+  for (const gn of geomNodes) {
+    nodesXml.push(`    <node id="${gn.id}" x="${gn.x.toFixed(6)}" y="${gn.y.toFixed(6)}" />`);
+  }
+  const allIds = [l.from, ...geomNodes.map((n) => n.id), l.to];
+  for (const sl of buildSubLinks(l, allIds)) linksXml.push(sl);
+  if (!l.tags.oneway) {
+    for (const sl of buildRevSubLinks(l, allIds)) linksXml.push(sl);
+  }
 }
 
 export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
@@ -52,47 +82,23 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
   const linksArr = Array.from(network.links.values());
 
   const header = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE network SYSTEM "http://www.matsim.org/files/dtd/network_v2.dtd">\n`;
-  const attrs = `<network name="exported-network">\n  <attributes>\n    <attribute name="coordinateReferenceSystem" class="java.lang.String">${crs}</attribute>\n  </attributes>\n`;
+  const networkAttrs = `<network name="exported-network">\n  <attributes>\n    <attribute name="coordinateReferenceSystem" class="java.lang.String">${crs}</attribute>\n  </attributes>\n`;
 
   const nodesXml = ["  <nodes>"];
   for (const n of nodesArr) {
-    // note: MATSim expects x=lon, y=lat commonly when using EPSG:4326
-    nodesXml.push(
-      `    <node id="${n.id}" x="${n.position[1].toFixed(6)}" y="${n.position[0].toFixed(6)}" />`,
-    );
+    const x = n.position[1];
+    const y = n.position[0];
+    nodesXml.push(`    <node id="${n.id}" x="${x.toFixed(6)}" y="${y.toFixed(6)}" />`);
   }
-  nodesXml.push("  </nodes>");
 
   const linksXml = ["  <links>"];
   for (const l of linksArr) {
-    // Ensure both from and to nodes exist in the network
-    if (!network.nodes.has(l.from) || !network.nodes.has(l.to)) {
-      console.warn(
-        `Skipping link ${l.id} because it references missing nodes: from=${l.from}, to=${l.to}`,
-      );
-      continue;
-    }
-
-    const length = estimateLengthMeters(l);
-    const freespeed = getFreespeedMs(l);
-    const lanes = getLanes(l);
-    const capacity = calculateCapacity(l);
-    const modes = l.disabled ? "walk" : "car";
-    const attrs = `length="${length.toFixed(2)}" freespeed="${freespeed.toFixed(2)}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
-
-    linksXml.push(
-      `    <link id="${l.id}" from="${l.from}" to="${l.to}" ${attrs} />`
-    );
-
-    if (!l.tags.oneway) {
-      linksXml.push(
-        `    <link id="${l.id}_rev" from="${l.to}" to="${l.from}" ${attrs} />`
-      );
-    }
+    expandLink(l, network, nodesXml, linksXml);
   }
+
+  nodesXml.push("  </nodes>");
   linksXml.push("  </links>");
 
-  const body = [attrs, ...nodesXml, ...linksXml, "</network>"].join("\n");
+  const body = [networkAttrs, ...nodesXml, ...linksXml, "</network>"].join("\n");
   return header + body;
 }
-
