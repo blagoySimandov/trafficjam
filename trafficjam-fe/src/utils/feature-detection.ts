@@ -34,7 +34,7 @@ export function detectFeaturesAtPoint(
   const features = event.features || [];
   let link: TrafficLink | undefined;
   let building: Building | undefined;
-  const routes: TransportRoute[] = [];
+  const routeMap = new Map<string, TransportRoute>();
 
   for (const feature of features) {
     if ((feature.layer?.id === NETWORK_LAYER_ID || feature.layer?.id === `static-${NETWORK_LAYER_ID}` || feature.layer?.id === `draft-${NETWORK_LAYER_ID}`) && feature.properties) {
@@ -46,7 +46,7 @@ export function detectFeaturesAtPoint(
     ) {
       const route = network.transportRoutes.get(feature.properties.id);
       if (route) {
-        routes.push(route);
+        routeMap.set(route.id, route);
       }
     } else if (
       feature.layer?.id === BUILDING_LAYER_ID &&
@@ -57,5 +57,5 @@ export function detectFeaturesAtPoint(
     }
   }
 
-  return { link, routes, building };
+  return { link, routes: [...routeMap.values()], building };
 }
