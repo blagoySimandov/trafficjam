@@ -1,5 +1,6 @@
 import type { Scenario, Run, AgentConfig } from "./types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
+import { serializeNetwork, deserializeNetwork, isNonEmptyNetworkConfig } from "./network-serializer";
 
 const BASE_URL =
   import.meta.env.VITE_TRAFFICJAM_BE_URL || "http://localhost:8001";
@@ -8,7 +9,7 @@ interface BackendScenario {
   id: string;
   name: string;
   description: string | null;
-  network_config: string;
+  network_config: Record<string, unknown> | null;
   plan_params: string;
   matsim_config: Record<string, unknown> | null;
   created_at: string;
@@ -24,6 +25,9 @@ function toFrontendScenario(s: BackendScenario): Scenario {
     name: s.name,
     description: s.description ?? undefined,
     agentConfig,
+    networkData: isNonEmptyNetworkConfig(s.network_config)
+      ? deserializeNetwork(s.network_config!)
+      : undefined,
     createdAt: s.created_at,
     updatedAt: s.updated_at,
   };
@@ -52,7 +56,7 @@ async function createScenario(
     body: JSON.stringify({
       name,
       plan_params: JSON.stringify(config),
-      network_config: "{}",
+      network_config: {},
     }),
   });
   await assertOk(response);
@@ -68,6 +72,8 @@ async function updateScenario(
   if (updates.description !== undefined) body.description = updates.description;
   if (updates.agentConfig !== undefined)
     body.plan_params = JSON.stringify(updates.agentConfig);
+  if (updates.networkData !== undefined)
+    body.network_config = serializeNetwork(updates.networkData);
 
   const response = await fetch(`${BASE_URL}/scenarios/${id}`, {
     method: "PUT",

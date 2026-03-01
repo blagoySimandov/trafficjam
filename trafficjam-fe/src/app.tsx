@@ -51,6 +51,10 @@ export default function App() {
     setMode("editor");
   }, []);
 
+  const handleRenameScenario = useCallback((id: string, newName: string) => {
+    updateScenario(id, { name: newName });
+  }, [updateScenario]);
+
   const handleConfirmDelete = useCallback(() => {
     if (deleteTarget) deleteScenario(deleteTarget);
     setDeleteTarget(null);
@@ -74,6 +78,7 @@ export default function App() {
         onCreateScenario={() => setIsCreateOpen(true)}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
+        onRenameScenario={handleRenameScenario}
         runs={runs}
         onSelectRun={handleSelectRun}
         onRerunRun={handleRerunRun}
@@ -84,6 +89,7 @@ export default function App() {
             city={DEFAULT_CITY}
             activeScenario={activeScenario}
             onRunSimulation={handleRunSimulation}
+            onSaveScenario={updateScenario}
             rerunSource={rerunSource}
             onClearRerun={() => setRerunSource(null)}
           />

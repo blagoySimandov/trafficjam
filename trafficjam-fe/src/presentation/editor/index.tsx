@@ -1,11 +1,13 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { EditorMapView } from "./components/editor-map-view";
 import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
 import { LinkAttributePanel } from "../link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
+import { SaveIndicator } from "../../components/save-indicator/save-indicator";
 import { LoadingScreen } from "../../components/loading-screen";
 import { useUndoStack } from "./hooks/use-undo-stack";
+import { useNetworkPersistence } from "./hooks/use-network-persistence";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
 import type { TrafficLink, Network } from "../../types";
@@ -16,11 +18,12 @@ interface EditorProps {
   city: CityConfig;
   activeScenario: Scenario | null;
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
+  onSaveScenario: (id: string, updates: Partial<Scenario>) => Promise<unknown>;
   rerunSource?: Run | null;
   onClearRerun?: () => void;
 }
 
-export function Editor({ city, activeScenario, onRunSimulation, rerunSource, onClearRerun }: EditorProps) {
+export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, rerunSource, onClearRerun }: EditorProps) {
   function remapSelectedLinks(
     selectedLinks: TrafficLink[],
     network: Network,
@@ -31,11 +34,18 @@ export function Editor({ city, activeScenario, onRunSimulation, rerunSource, onC
   }
 
   const { data: autoNetwork, isLoading } = useAutoLoadMap(city);
+  const prevScenarioIdRef = useRef(activeScenario?.id);
 
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
   const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  if (prevScenarioIdRef.current !== activeScenario?.id) {
+    prevScenarioIdRef.current = activeScenario?.id;
+    setNetwork(null);
+    setSelectedLinks([]);
+  }
 
   const rerunInitialValues = useMemo(() => {
     if (!rerunSource) return undefined;
@@ -47,11 +57,17 @@ export function Editor({ city, activeScenario, onRunSimulation, rerunSource, onC
   }, [rerunSource]);
 
   const activeNetwork = useMemo(
-    () => network ?? autoNetwork ?? null,
-    [network, autoNetwork],
+    () => network ?? activeScenario?.networkData ?? autoNetwork ?? null,
+    [network, activeScenario?.networkData, autoNetwork],
   );
 
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
+
+  const { isDirty, isSaving, showSaved, markDirty } = useNetworkPersistence({
+    activeScenario,
+    network: activeNetwork,
+    onSave: onSaveScenario,
+  });
   const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
   const handleLinkClick = useCallback(
@@ -68,12 +84,13 @@ export function Editor({ city, activeScenario, onRunSimulation, rerunSource, onC
       }
       setNetwork(updatedNetwork);
       setStatus(message);
+      markDirty();
 
       if (selectedLinks.length > 0) {
         setSelectedLinks(remapSelectedLinks(selectedLinks, updatedNetwork));
       }
     },
-    [activeNetwork, selectedLinks, pushToUndoStack],
+    [activeNetwork, selectedLinks, pushToUndoStack, markDirty],
   );
 
   const handleUndo = useCallback(() => {
@@ -153,7 +170,10 @@ export function Editor({ city, activeScenario, onRunSimulation, rerunSource, onC
           onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
-      {status && <StatusBar message={status} />}
+      <SaveIndicator isDirty={isDirty} isSaving={isSaving} showSaved={showSaved} />
+      {status && !isDirty && !isSaving && !showSaved && (
+        <StatusBar message={status} />
+      )}
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
       {showDialog && (
         <LaunchDialog

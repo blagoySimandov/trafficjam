@@ -1,3 +1,5 @@
+import type { Network } from "../../types";
+
 export interface AgentConfig {
   populationDensity: number;
   shoppingProbability: number;
@@ -30,6 +32,7 @@ export interface Scenario {
   name: string;
   description?: string;
   agentConfig: AgentConfig;
+  networkData?: Network;
   createdAt: string;
   updatedAt: string;
 }

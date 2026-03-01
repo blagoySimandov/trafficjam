@@ -1,11 +1,13 @@
+import logging
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from db import async_session_factory, ScenarioRepository
 from schemas import ScenarioCreate, ScenarioUpdate, ScenarioResponse
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=list[ScenarioResponse])
@@ -51,8 +53,16 @@ async def update_scenario(scenario_id: uuid.UUID, body: ScenarioUpdate):
     return scenario
 
 
+async def _purge_nats_messages(js, scenario_id: uuid.UUID):
+    try:
+        await js.purge_stream("SIMULATIONS", subject=f"sim.{scenario_id}.>")
+    except Exception as e:
+        logger.warning(f"NATS purge failed for scenario {scenario_id}: {e}")
+
+
 @router.delete("/{scenario_id}", status_code=204)
-async def delete_scenario(scenario_id: uuid.UUID):
+async def delete_scenario(scenario_id: uuid.UUID, request: Request):
+    await _purge_nats_messages(request.app.state.js, scenario_id)
     repo = ScenarioRepository(async_session_factory)
     deleted = await repo.delete_scenario(scenario_id)
     if not deleted:
