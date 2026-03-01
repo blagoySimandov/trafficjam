@@ -1,5 +1,6 @@
 .PHONY: help build run stop restart logs shell clean \
-	nats-build nats-run nats-stop nats-restart nats-logs nats-clean
+	nats-build nats-run nats-stop nats-restart nats-logs nats-clean \
+	up down up-build ps all-logs
 
 ############################
 ##@ Database
@@ -84,6 +85,29 @@ nats-logs: ## view NATS logs
 nats-clean: nats-stop ## nukes the NATS data volume
 	docker volume rm trafficjam_nats_data || true
 
+
+############################
+##@ Docker Compose (all services)
+############################
+
+up: ## start all services
+	docker compose up -d
+
+up-build: ## build and start all services
+	docker compose up -d --build
+
+down: ## stop all services
+	docker compose down
+
+ps: ## show status of all services
+	docker compose ps
+
+all-logs: ## tail logs from all services
+	docker compose logs -f
+
+############################
+##@ Help
+############################
 
 help: ## Display this help message
 	@echo ""

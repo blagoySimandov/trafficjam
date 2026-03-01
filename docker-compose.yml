@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  nats:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nats
+    container_name: trafficjam-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - trafficjam_nats_data:/data/jetstream
+
+  map-data:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.map-data
+    container_name: trafficjam-map-data
+    environment:
+      DATABASE_URL: "${DATABASE_URL}"
+    ports:
+      - "8100:8000" # changed host port to avoid Coolify collision
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.be
+    container_name: trafficjam-be
+    environment:
+      DATABASE_URL: "${DATABASE_URL}"
+      NATS_URL: "nats://nats:4222"
+      SIMENGINE_URL: "http://simengine:8080"
+    ports:
+      - "8001:8001"
+    depends_on:
+      nats:
+        condition: service_healthy
+
+  simengine:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.simengine
+    container_name: trafficjam-simengine
+    environment:
+      NATS_URL: "nats://nats:4222"
+    ports:
+      - "8180:8080" # changed host port to avoid Traefik collision
+    depends_on:
+      nats:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fe
+    container_name: trafficjam-fe
+    env_file:
+      - trafficjam-fe/.env.production
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+      - map-data
+
+volumes:
+  trafficjam_db_data:
+  trafficjam_nats_data:
