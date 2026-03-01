@@ -1,9 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { DeckGL, TripsLayer, ScatterplotLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MAPBOX_TOKEN } from "../../constants/map";
-import { loadTrips, getVehiclePositions } from "../../event-processing";
+import { getVehiclePositions } from "../../event-processing";
 import type { Trip } from "../../event-processing";
 import {
   useSimulationTime,
@@ -45,15 +44,9 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
 }
 
 export function Visualizer({ scenarioId, runId, onBack }: VisualizerProps) {
-  const { data: staticTrips = [] } = useQuery({
-    queryKey: ["trips"],
-    queryFn: loadTrips,
-    enabled: !runId,
-  });
+  const { trips: liveTrips } = useLiveSimulation(scenarioId, runId);
 
-  const { trips: liveTrips, isLive } = useLiveSimulation(scenarioId, runId);
-
-  const trips = isLive ? liveTrips : staticTrips;
+  const trips = liveTrips;
 
   const simulation = useSimulationTime(trips);
   const layers = useLayers(trips, simulation);

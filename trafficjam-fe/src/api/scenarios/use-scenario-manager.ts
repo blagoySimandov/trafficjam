@@ -16,14 +16,16 @@ export function useScenarioManager() {
   });
 
   const { data: runs = [], isLoading: isLoadingRuns } = useQuery({
-    queryKey: ["runs"],
-    queryFn: () => scenariosApi.listRuns(),
+    queryKey: ["runs", activeScenarioId],
+    queryFn: () => scenariosApi.listRuns(activeScenarioId!),
+    enabled: !!activeScenarioId,
     staleTime: 5000,
+    refetchInterval: 5000,
   });
 
   // Mutations
   const createScenarioMutation = useMutation({
-    mutationFn: ({ name, config }: { name: string; config: AgentConfig }) => 
+    mutationFn: ({ name, config }: { name: string; config: AgentConfig }) =>
       scenariosApi.createScenario(name, config),
     onSuccess: (newScenario) => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
@@ -32,7 +34,7 @@ export function useScenarioManager() {
   });
 
   const updateScenarioMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) => 
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) =>
       scenariosApi.updateScenario(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
@@ -46,20 +48,31 @@ export function useScenarioManager() {
     },
   });
 
-  const activeScenario = scenarios.find(s => s.id === (activeScenarioId || scenarios[0]?.id)) || null;
+  const activeScenario =
+    scenarios.find((s) => s.id === (activeScenarioId || scenarios[0]?.id)) ||
+    null;
 
-  const createScenario = useCallback((name: string, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
-    return createScenarioMutation.mutateAsync({ name, config });
-  }, [createScenarioMutation]);
+  const createScenario = useCallback(
+    (name: string, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
+      return createScenarioMutation.mutateAsync({ name, config });
+    },
+    [createScenarioMutation],
+  );
 
-  const updateScenario = useCallback((id: string, updates: Partial<Scenario>) => {
-    return updateScenarioMutation.mutateAsync({ id, updates });
-  }, [updateScenarioMutation]);
+  const updateScenario = useCallback(
+    (id: string, updates: Partial<Scenario>) => {
+      return updateScenarioMutation.mutateAsync({ id, updates });
+    },
+    [updateScenarioMutation],
+  );
 
-  const deleteScenario = useCallback((id: string) => {
-    if (activeScenarioId === id) setActiveScenarioId(null);
-    return deleteScenarioMutation.mutateAsync(id);
-  }, [deleteScenarioMutation, activeScenarioId]);
+  const deleteScenario = useCallback(
+    (id: string) => {
+      if (activeScenarioId === id) setActiveScenarioId(null);
+      return deleteScenarioMutation.mutateAsync(id);
+    },
+    [deleteScenarioMutation, activeScenarioId],
+  );
 
   return {
     scenarios,
@@ -69,6 +82,6 @@ export function useScenarioManager() {
     updateScenario,
     deleteScenario,
     runs,
-    isLoading: isLoadingScenarios || isLoadingRuns
+    isLoading: isLoadingScenarios || isLoadingRuns,
   };
 }

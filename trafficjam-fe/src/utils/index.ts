@@ -2,3 +2,8 @@ export * from "./building-geojson";
 export * from "./network-geojson";
 export * from "./transport-geojson";
 export * from "./node-geojson";
+export * from "./network-bounds";
+export * from "./layer-utils";
+export * from "./cn";
+export * from "./format-time";
+export * from "./feature-detection";

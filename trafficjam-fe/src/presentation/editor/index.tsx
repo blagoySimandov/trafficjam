@@ -1,20 +1,29 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { EditorMapView } from "./components/editor-map-view";
 import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
 import { LinkAttributePanel } from "../link-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
+import { SaveIndicator } from "../../components/save-indicator/save-indicator";
+import { LoadingScreen } from "../../components/loading-screen";
 import { useUndoStack } from "./hooks/use-undo-stack";
+import { useNetworkPersistence } from "./hooks/use-network-persistence";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
+import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
 import type { TrafficLink, Network } from "../../types";
-import type { Scenario } from "../../api/scenarios";
+import type { Scenario, Run } from "../../api/scenarios";
+import type { CityConfig } from "../../constants/cities";
 
 interface EditorProps {
+  city: CityConfig;
   activeScenario: Scenario | null;
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
+  onSaveScenario: (id: string, updates: Partial<Scenario>) => Promise<unknown>;
+  rerunSource?: Run | null;
+  onClearRerun?: () => void;
 }
 
-export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
+export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, rerunSource, onClearRerun }: EditorProps) {
   function remapSelectedLinks(
     selectedLinks: TrafficLink[],
     network: Network,
@@ -24,31 +33,64 @@ export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
       .filter((link): link is TrafficLink => link !== undefined);
   }
 
+  const { data: autoNetwork, isLoading } = useAutoLoadMap(city);
+  const prevScenarioIdRef = useRef(activeScenario?.id);
+
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
   const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  if (prevScenarioIdRef.current !== activeScenario?.id) {
+    prevScenarioIdRef.current = activeScenario?.id;
+    setNetwork(null);
+    setSelectedLinks([]);
+  }
+
+  const rerunInitialValues = useMemo(() => {
+    if (!rerunSource) return undefined;
+    return {
+      iterations: rerunSource.iterations,
+      randomSeed: rerunSource.randomSeed,
+      note: rerunSource.note,
+    };
+  }, [rerunSource]);
+
+  const activeNetwork = useMemo(
+    () => network ?? activeScenario?.networkData ?? autoNetwork ?? null,
+    [network, activeScenario?.networkData, autoNetwork],
+  );
+
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
+
+  const { isDirty, isSaving, showSaved, markDirty } = useNetworkPersistence({
+    activeScenario,
+    network: activeNetwork,
+    onSave: onSaveScenario,
+  });
   const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
-  const handleLinkClick = useCallback((link: TrafficLink, modKey: boolean) => {
-    setSelectedLinks(resolveSelection(link, modKey));
-  }, [resolveSelection]);
+  const handleLinkClick = useCallback(
+    (link: TrafficLink, modKey: boolean) => {
+      setSelectedLinks(resolveSelection(link, modKey));
+    },
+    [resolveSelection],
+  );
 
   const handleLinkSave = useCallback(
     (updatedNetwork: Network, message: string) => {
-      if (network) {
-        pushToUndoStack(network);
+      if (activeNetwork) {
+        pushToUndoStack(activeNetwork);
       }
       setNetwork(updatedNetwork);
       setStatus(message);
+      markDirty();
 
       if (selectedLinks.length > 0) {
         setSelectedLinks(remapSelectedLinks(selectedLinks, updatedNetwork));
       }
     },
-    [network, selectedLinks, pushToUndoStack],
+    [activeNetwork, selectedLinks, pushToUndoStack, markDirty],
   );
 
   const handleUndo = useCallback(() => {
@@ -76,28 +118,40 @@ export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
   const handleLaunch = useCallback(
     (info: { scenarioId: string; runId: string }) => {
       setDialogOpen(false);
+      onClearRerun?.();
       onRunSimulation(info);
     },
-    [onRunSimulation],
+    [onRunSimulation, onClearRerun],
   );
+
+  const handleCloseDialog = useCallback(() => {
+    setDialogOpen(false);
+    onClearRerun?.();
+  }, [onClearRerun]);
+
+  const showDialog = dialogOpen || !!rerunSource;
 
   const handleSelectAllWithSameName = useCallback(
     (streetName: string) => {
-      if (!network) return;
-      const matchingLinks = Array.from(network.links.values()).filter(
+      if (!activeNetwork) return;
+      const matchingLinks = Array.from(activeNetwork.links.values()).filter(
         (link) => link.tags.name === streetName,
       );
       setSelectedLinks(matchingLinks);
       setStatus(`Selected ${matchingLinks.length} links on ${streetName}`);
     },
-    [network],
+    [activeNetwork],
   );
+
+  if (isLoading) {
+    return <LoadingScreen cityName={city.name} />;
+  }
 
   return (
     <>
       <EditorMapView
-        network={network}
-        onNetworkChange={setNetwork}
+        network={activeNetwork}
+        city={city}
         onNetworkSave={handleLinkSave}
         onStatusChange={setStatus}
         onLinkClick={handleLinkClick}
@@ -108,22 +162,26 @@ export function Editor({ activeScenario, onRunSimulation }: EditorProps) {
       />
       {selectedLinks.length > 0 && (
         <LinkAttributePanel
-        key={selectedLinks.map(l => l.id).join(",")}
+          key={selectedLinks.map((l) => l.id).join(",")}
           links={selectedLinks}
-          network={network}
+          network={activeNetwork}
           onClose={handleClosePanel}
           onSave={handleLinkSave}
           onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
-      {status && <StatusBar message={status} />}
+      <SaveIndicator isDirty={isDirty} isSaving={isSaving} showSaved={showSaved} />
+      {status && !isDirty && !isSaving && !showSaved && (
+        <StatusBar message={status} />
+      )}
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
-      {dialogOpen && (
+      {showDialog && (
         <LaunchDialog
           activeScenario={activeScenario}
-          network={network}
+          network={activeNetwork}
           onLaunch={handleLaunch}
-          onClose={() => setDialogOpen(false)}
+          onClose={handleCloseDialog}
+          initialValues={rerunInitialValues}
         />
       )}
     </>

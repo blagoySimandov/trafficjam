@@ -30,6 +30,7 @@ function buildFormData(params: StartRunParams): FormData {
     formData.append("iterations", params.iterations.toString());
   if (params.randomSeed !== undefined)
     formData.append("randomSeed", params.randomSeed.toString());
+  if (params.note) formData.append("note", params.note);
   return formData;
 }
 

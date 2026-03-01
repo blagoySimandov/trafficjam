@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { MapMouseEvent } from "react-map-gl";
 import type { MapRef } from "react-map-gl";
 import type { Network, TrafficLink } from "../types";
+import { useRafState } from "./use-raf-state";
 
 export const INTERACTIVE_LAYER_IDS = ["network-main"];
 
@@ -16,7 +17,7 @@ export function useNetworkInteraction(
   mapRef: React.RefObject<MapRef | null>,
   onLinkClick: (link: TrafficLink) => void
 ) {
-  const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
+  const [hoverInfo, setHoverInfo] = useRafState<HoverInfo | null>(null);
 
   const linksById = useMemo(() => {
     if (!network) return new Map<string, TrafficLink>();
@@ -62,7 +63,7 @@ export function useNetworkInteraction(
       }
       return false;
     },
-    [linksById, mapRef]
+    [linksById, mapRef, setHoverInfo]
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -71,7 +72,7 @@ export function useNetworkInteraction(
       map.getCanvas().style.cursor = "";
     }
     setHoverInfo(null);
-  }, [mapRef]);
+  }, [mapRef, setHoverInfo]);
 
   return {
     hoverInfo,
