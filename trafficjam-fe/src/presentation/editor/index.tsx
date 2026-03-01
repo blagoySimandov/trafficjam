@@ -24,7 +24,14 @@ interface EditorProps {
   onClearRerun?: () => void;
 }
 
-export function Editor({ city, activeScenario, isSwitchingScenario, onRunSimulation, rerunSource, onClearRerun }: EditorProps) {
+export function Editor({
+  city,
+  activeScenario,
+  isSwitchingScenario,
+  onRunSimulation,
+  rerunSource,
+  onClearRerun,
+}: EditorProps) {
   function remapSelectedLinks(
     selectedLinks: TrafficLink[],
     network: Network,
@@ -60,7 +67,7 @@ export function Editor({ city, activeScenario, isSwitchingScenario, onRunSimulat
   const scenarioNetwork = useMemo(() => {
     if (!autoNetwork || !activeScenario?.linksDiff) return null;
     return applyLinksDiff(autoNetwork, activeScenario.linksDiff);
-  }, [autoNetwork, activeScenario?.linksDiff]);
+  }, [autoNetwork, activeScenario]);
 
   const activeNetwork = useMemo(
     () => network ?? scenarioNetwork ?? autoNetwork ?? null,
@@ -180,7 +187,11 @@ export function Editor({ city, activeScenario, isSwitchingScenario, onRunSimulat
           onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
-      <SaveIndicator isDirty={isDirty} isSaving={isSaving} showSaved={showSaved} />
+      <SaveIndicator
+        isDirty={isDirty}
+        isSaving={isSaving}
+        showSaved={showSaved}
+      />
       {status && !isDirty && !isSaving && !showSaved && (
         <StatusBar message={status} />
       )}
