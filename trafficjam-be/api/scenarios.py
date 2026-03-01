@@ -54,8 +54,8 @@ async def update_scenario(scenario_id: uuid.UUID, body: ScenarioUpdate):
 @router.put("/{scenario_id}/network", status_code=204)
 async def update_network(scenario_id: uuid.UUID, body: dict):
     repo = ScenarioRepository(async_session_factory)
-    scenario = await repo.update_scenario(scenario_id, network_config=body)
-    if not scenario:
+    updated = await repo.update_network_config(scenario_id, body)
+    if not updated:
         raise HTTPException(status_code=404, detail="Scenario not found")
 
 

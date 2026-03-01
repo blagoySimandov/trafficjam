@@ -72,6 +72,16 @@ class ScenarioRepository:
             await session.refresh(scenario)
             return scenario
 
+    async def update_network_config(self, scenario_id: uuid.UUID, network_config: dict) -> bool:
+        async with self.session_factory() as session:
+            result = await session.execute(
+                update(Scenario)
+                .where(Scenario.id == scenario_id)
+                .values(network_config=network_config)
+            )
+            await session.commit()
+            return result.rowcount > 0
+
     async def delete_scenario(self, scenario_id: uuid.UUID) -> bool:
         async with self.session_factory() as session:
             scenario = await session.get(Scenario, scenario_id)
