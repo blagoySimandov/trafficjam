@@ -18,7 +18,7 @@ interface BackendScenario {
 
 function toFrontendScenario(s: BackendScenario): Scenario {
   const agentConfig = s.plan_params
-    ? (s.plan_params as AgentConfig)
+    ? (s.plan_params as unknown as AgentConfig)
     : DEFAULT_AGENT_CONFIG;
   return {
     id: s.id,
