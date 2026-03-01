@@ -1,18 +1,6 @@
-services:
-  db:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.db
-    container_name: trafficjam-db
-    environment:
-      POSTGRES_DB: trafficjam
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    ports:
-      - "5432:5432"
-    volumes:
-      - trafficjam_db_data:/var/lib/postgresql/data
+version: "3.9"
 
+services:
   nats:
     build:
       context: .
@@ -30,12 +18,9 @@ services:
       dockerfile: docker/Dockerfile.map-data
     container_name: trafficjam-map-data
     environment:
-      DATABASE_URL: "postgresql+asyncpg://admin:admin@db:5432/trafficjam"
+      DATABASE_URL: "${DATABASE_URL}"
     ports:
-      - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
+      - "8100:8000" # changed host port to avoid Coolify collision
 
   backend:
     build:
@@ -43,14 +28,12 @@ services:
       dockerfile: docker/Dockerfile.be
     container_name: trafficjam-be
     environment:
-      DATABASE_URL: "postgresql+asyncpg://admin:admin@db:5432/trafficjam"
+      DATABASE_URL: "${DATABASE_URL}"
       NATS_URL: "nats://nats:4222"
       SIMENGINE_URL: "http://simengine:8080"
     ports:
       - "8001:8001"
     depends_on:
-      db:
-        condition: service_healthy
       nats:
         condition: service_healthy
 
@@ -62,7 +45,7 @@ services:
     environment:
       NATS_URL: "nats://nats:4222"
     ports:
-      - "8080:8080"
+      - "8180:8080" # changed host port to avoid Traefik collision
     depends_on:
       nats:
         condition: service_healthy
@@ -72,6 +55,8 @@ services:
       context: .
       dockerfile: docker/Dockerfile.fe
     container_name: trafficjam-fe
+    env_file:
+      - trafficjam-fe/.env.prod
     ports:
       - "5173:5173"
     depends_on:
