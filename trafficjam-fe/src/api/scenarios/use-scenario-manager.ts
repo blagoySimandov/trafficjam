@@ -20,7 +20,10 @@ export function useScenarioManager() {
     queryFn: () => scenariosApi.listRuns(activeScenarioId!),
     enabled: !!activeScenarioId,
     staleTime: 5000,
-    refetchInterval: 5000,
+    refetchInterval: (query) => {
+      const data = query.state.data ?? [];
+      return data.some(r => r.status === "pending" || r.status === "running") ? 5000 : false;
+    },
   });
 
   // Mutations
