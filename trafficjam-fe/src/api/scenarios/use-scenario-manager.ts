@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { scenariosApi } from "./client";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 import type { Scenario, AgentConfig } from "./types";
@@ -15,10 +15,32 @@ export function useScenarioManager() {
     staleTime: 5000,
   });
 
+  const resolvedActiveId = activeScenarioId || scenarios[0]?.id || null;
+
+  const { data: activeScenario = null, isLoading: isLoadingActive, isFetching: isFetchingActive } = useQuery({
+    queryKey: ["scenario", resolvedActiveId],
+    queryFn: ({ signal }) => scenariosApi.getScenario(resolvedActiveId!, signal),
+    enabled: !!resolvedActiveId,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 30,
+    placeholderData: keepPreviousData,
+  });
+
+  const prefetchScenario = useCallback(
+    (id: string) => {
+      queryClient.prefetchQuery({
+        queryKey: ["scenario", id],
+        queryFn: ({ signal }) => scenariosApi.getScenario(id, signal),
+        staleTime: Infinity,
+      });
+    },
+    [queryClient],
+  );
+
   const { data: runs = [], isLoading: isLoadingRuns } = useQuery({
-    queryKey: ["runs", activeScenarioId],
-    queryFn: () => scenariosApi.listRuns(activeScenarioId!),
-    enabled: !!activeScenarioId,
+    queryKey: ["runs", resolvedActiveId],
+    queryFn: () => scenariosApi.listRuns(resolvedActiveId!),
+    enabled: !!resolvedActiveId,
     staleTime: 5000,
     refetchInterval: 5000,
   });
@@ -46,10 +68,6 @@ export function useScenarioManager() {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
     },
   });
-
-  const activeScenario =
-    scenarios.find((s) => s.id === (activeScenarioId || scenarios[0]?.id)) ||
-    null;
 
   const createScenario = useCallback(
     async (city: CityConfig, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
@@ -104,12 +122,16 @@ export function useScenarioManager() {
 
   return {
     scenarios,
+    activeScenarioId: resolvedActiveId,
     activeScenario,
     setActiveScenarioId: (id: string | null) => setActiveScenarioId(id),
     createScenario,
     updateScenario,
     deleteScenario,
+    prefetchScenario,
     runs,
-    isLoading: isLoadingScenarios || isLoadingRuns,
+    isLoadingScenarios,
+    isSwitchingScenario: isFetchingActive && !isLoadingActive,
+    isLoading: isLoadingScenarios || isLoadingActive || isLoadingRuns,
   };
 }
