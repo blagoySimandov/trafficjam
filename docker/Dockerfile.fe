@@ -13,4 +13,4 @@ ENV NODE_ENV=production
 RUN bun run build
 
 EXPOSE 5173
-CMD ["bun", "run", "start"]
+CMD ["bun", "run", "preview","--host", "0.0.0.0"]
