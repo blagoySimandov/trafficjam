@@ -9,6 +9,7 @@ interface SidebarProps {
   activeScenarioId: string | null;
   isLoadingScenarios?: boolean;
   onSelectScenario: (id: string) => void;
+  onPrefetchScenario: (id: string) => void;
   onCreateScenario: () => void;
   onOpenAgentConfig: (scenarioId: string) => void;
   onDeleteScenario: (scenarioId: string) => void;
@@ -80,6 +81,7 @@ export function Sidebar({
   activeScenarioId,
   isLoadingScenarios,
   onSelectScenario,
+  onPrefetchScenario,
   onCreateScenario,
   onOpenAgentConfig,
   onDeleteScenario,
@@ -121,6 +123,7 @@ export function Sidebar({
                     key={s.id}
                     className={`${styles.listItem} ${s.id === activeScenarioId ? styles.active : ""}`}
                     onClick={() => onSelectScenario(s.id)}
+                    onMouseEnter={() => onPrefetchScenario(s.id)}
                   >
                     {editingId === s.id ? (
                       <InlineRenameInput

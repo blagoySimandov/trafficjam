@@ -21,6 +21,7 @@ export default function App() {
     createScenario,
     updateScenario,
     deleteScenario,
+    prefetchScenario,
     runs,
     isLoadingScenarios,
     isSwitchingScenario,
@@ -79,6 +80,7 @@ export default function App() {
           setActiveScenarioId(id);
           setMode("editor");
         }}
+        onPrefetchScenario={prefetchScenario}
         onCreateScenario={() => setIsCreateOpen(true)}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}

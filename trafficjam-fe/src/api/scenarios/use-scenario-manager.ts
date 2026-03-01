@@ -20,9 +20,21 @@ export function useScenarioManager() {
     queryKey: ["scenario", resolvedActiveId],
     queryFn: ({ signal }) => scenariosApi.getScenario(resolvedActiveId!, signal),
     enabled: !!resolvedActiveId,
-    staleTime: 10000,
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 30,
     placeholderData: keepPreviousData,
   });
+
+  const prefetchScenario = useCallback(
+    (id: string) => {
+      queryClient.prefetchQuery({
+        queryKey: ["scenario", id],
+        queryFn: ({ signal }) => scenariosApi.getScenario(id, signal),
+        staleTime: Infinity,
+      });
+    },
+    [queryClient],
+  );
 
   const { data: runs = [], isLoading: isLoadingRuns } = useQuery({
     queryKey: ["runs", resolvedActiveId],
@@ -86,6 +98,7 @@ export function useScenarioManager() {
     createScenario,
     updateScenario,
     deleteScenario,
+    prefetchScenario,
     runs,
     isLoadingScenarios,
     isSwitchingScenario: isFetchingActive && !isLoadingActive,
