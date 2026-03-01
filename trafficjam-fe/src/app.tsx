@@ -3,10 +3,12 @@ import { Visualizer } from "./presentation/visualizer";
 import { Editor } from "./presentation/editor";
 import { Sidebar } from "./components/sidebar/sidebar";
 import { ConfirmDialog } from "./components/confirm-dialog";
+import { Dialog } from "./components/dialog";
 import { AgentConfigModal } from "./presentation/editor/components/agent-config-modal/agent-config-modal";
 import { useScenarioManager } from "./api/scenarios";
+import { DEFAULT_AGENT_CONFIG } from "./api/scenarios";
 import { DEFAULT_CITY } from "./constants/cities";
-import type { Run } from "./api/scenarios";
+import type { Run, AgentConfig } from "./api/scenarios";
 
 type Mode = "editor" | "visualizer";
 
@@ -24,6 +26,8 @@ export default function App() {
   } = useScenarioManager();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [duplicateName, setDuplicateName] = useState<string | null>(null);
   const [runInfo, setRunInfo] = useState<{
     scenarioId: string;
     runId: string;
@@ -49,8 +53,17 @@ export default function App() {
   }, [deleteTarget, deleteScenario]);
 
   const handleCreateScenario = useCallback(() => {
-    createScenario(DEFAULT_CITY);
-    setMode("editor");
+    setIsCreateOpen(true);
+  }, []);
+
+  const handleSaveNewScenario = useCallback(async (config: AgentConfig) => {
+    setIsCreateOpen(false);
+    const { created, scenario } = await createScenario(DEFAULT_CITY, config);
+    if (!created) {
+      setDuplicateName(scenario.name);
+    } else {
+      setMode("editor");
+    }
   }, [createScenario]);
 
   return (
@@ -63,7 +76,7 @@ export default function App() {
           setMode("editor");
         }}
         onCreateScenario={handleCreateScenario}
-        onOpenAgentConfig={() => setIsConfigOpen(true)}
+        onOpenAgentConfig={(_id) => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
         runs={runs}
         onSelectRun={handleSelectRun}
@@ -93,6 +106,15 @@ export default function App() {
         />
       )}
 
+      {isCreateOpen && (
+        <AgentConfigModal
+          scenario={{ id: "", name: "", agentConfig: DEFAULT_AGENT_CONFIG, createdAt: "", updatedAt: "" }}
+          saveLabel="Create Scenario"
+          onClose={() => setIsCreateOpen(false)}
+          onSave={handleSaveNewScenario}
+        />
+      )}
+
       {isConfigOpen && activeScenario && (
         <AgentConfigModal
           scenario={activeScenario}
@@ -102,6 +124,17 @@ export default function App() {
             setIsConfigOpen(false);
           }}
         />
+      )}
+
+      {duplicateName && (
+        <Dialog
+          title="Scenario Already Exists"
+          onClose={() => setDuplicateName(null)}
+          maxWidth={400}
+          footer={<button onClick={() => setDuplicateName(null)}>OK</button>}
+        >
+          <p>A scenario with this configuration already exists: <strong>{duplicateName}</strong></p>
+        </Dialog>
       )}
     </div>
   );

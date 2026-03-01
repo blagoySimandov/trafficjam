@@ -53,9 +53,9 @@ async function listScenarios(): Promise<Scenario[]> {
 
 async function createScenario(city: CityConfig, agentConfig: AgentConfig): Promise<Scenario> {
   const planParams: PlanParams = {
+    ...agentConfig,
     population: city.population,
     populationDensity: city.populationDensity,
-    ...agentConfig,
   };
   const sortedContent =
     city.name +
@@ -72,7 +72,7 @@ async function createScenario(city: CityConfig, agentConfig: AgentConfig): Promi
   const res = await fetch(`${BASE_URL}/scenarios`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, plan_params: planParams }),
+    body: JSON.stringify({ name, network_config: "", plan_params: planParams }),
   });
   assertOk(res);
   return mapScenario(await res.json());

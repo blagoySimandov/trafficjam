@@ -11,12 +11,14 @@ import styles from "./agent-config-modal.module.css";
 
 interface AgentConfigModalProps {
   scenario: Scenario;
+  saveLabel?: string;
   onSave: (config: AgentConfig) => void;
   onClose: () => void;
 }
 
 export function AgentConfigModal({
   scenario,
+  saveLabel = "Save Changes",
   onSave,
   onClose,
 }: AgentConfigModalProps) {
@@ -36,7 +38,7 @@ export function AgentConfigModal({
   const dialogTitle = (
     <div className={styles.titleInfo}>
       <h2 className={styles.title}>Agent Planner Config</h2>
-      <span className={styles.subtitle}>{scenario.name}</span>
+      {scenario.name && <span className={styles.subtitle}>{scenario.name}</span>}
     </div>
   );
 
@@ -54,7 +56,7 @@ export function AgentConfigModal({
           className={styles.saveBtn}
           onClick={handleSubmit(onSave)}
         >
-          <Save size={16} /> Save Changes
+          <Save size={16} /> {saveLabel}
         </button>
       </div>
     </>

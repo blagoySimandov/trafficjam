@@ -2,6 +2,7 @@
 .venv
 .claude/settings*
 meditor/.env
+trafficjam-be/.env
 trafficjam-be/utils
 trafficjam-be/public_transport
 trafficjam-be/plans

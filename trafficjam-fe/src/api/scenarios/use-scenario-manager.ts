@@ -51,9 +51,9 @@ export function useScenarioManager() {
   const createScenario = useCallback(
     async (city: CityConfig, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
       const planParams = {
+        ...config,
         population: city.population,
         populationDensity: city.populationDensity,
-        ...config,
       };
       const sortedContent =
         city.name +
@@ -75,10 +75,11 @@ export function useScenarioManager() {
       const existing = scenarios.find((s) => s.name === expectedName);
       if (existing) {
         setActiveScenarioId(existing.id);
-        return existing;
+        return { scenario: existing, created: false };
       }
 
-      return createScenarioMutation.mutateAsync({ city, config });
+      const scenario = await createScenarioMutation.mutateAsync({ city, config });
+      return { scenario, created: true };
     },
     [createScenarioMutation, scenarios],
   );

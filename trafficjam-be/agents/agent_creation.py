@@ -50,11 +50,12 @@ def create_adult(
     has_transport: bool,
     needs_to_dropoff_children: bool,
     children_ids: list[Child],
+    cfg: AgentConfig,
 ) -> Adult:
-    age = generate_adult_age()
-    employed, is_student = determine_employment_status(age)
+    age = generate_adult_age(cfg)
+    employed, is_student = determine_employment_status(age, cfg)
     uses_pt, has_car = determine_transport_preferences(
-        age, employed, has_transport, needs_to_dropoff_children
+        age, employed, has_transport, needs_to_dropoff_children, cfg
     )
 
     if has_car:
@@ -89,6 +90,7 @@ def create_household(
     schools: list[Building],
     kindergartens: list[Building],
     has_transport: bool,
+    cfg: AgentConfig,
 ) -> list[Agent]:
     num_children = random.choices([0, 1, 2, 3], weights=[0.3, 0.35, 0.25, 0.1])[0]
     num_adults = random.choices([1, 2], weights=[0.3, 0.7])[0]
@@ -107,6 +109,7 @@ def create_household(
             has_transport,
             is_dropper,
             children_ids if is_dropper else [],
+            cfg,
         )
         adults.append(adult)
 
@@ -143,7 +146,7 @@ def create_agents_from_network(
     for _ in range(num_households):
         home = random.choice(residential_buildings)
         household = create_household(
-            home, buildings, schools, kindergartens, has_transport
+            home, buildings, schools, kindergartens, has_transport, cfg
         )
         agents.extend(household)
 
