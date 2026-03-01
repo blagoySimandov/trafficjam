@@ -30,6 +30,7 @@ export default function App() {
     scenarioId: string;
     runId: string;
   } | null>(null);
+  const [rerunSource, setRerunSource] = useState<Run | null>(null);
 
   const handleRunSimulation = useCallback((info: { scenarioId: string; runId: string }) => {
     setRunInfo(info);
@@ -44,6 +45,15 @@ export default function App() {
   const handleBackToEditor = useCallback(() => {
     setMode("editor");
   }, []);
+
+  const handleRerunRun = useCallback((run: Run) => {
+    setRerunSource(run);
+    setMode("editor");
+  }, []);
+
+  const handleRenameScenario = useCallback((id: string, newName: string) => {
+    updateScenario(id, { name: newName });
+  }, [updateScenario]);
 
   const handleConfirmDelete = useCallback(() => {
     if (deleteTarget) deleteScenario(deleteTarget);
@@ -68,8 +78,10 @@ export default function App() {
         onCreateScenario={() => setIsCreateOpen(true)}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
+        onRenameScenario={handleRenameScenario}
         runs={runs}
         onSelectRun={handleSelectRun}
+        onRerunRun={handleRerunRun}
       />
       <main style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         {mode === "editor" ? (
@@ -77,6 +89,9 @@ export default function App() {
             city={DEFAULT_CITY}
             activeScenario={activeScenario}
             onRunSimulation={handleRunSimulation}
+            onSaveScenario={updateScenario}
+            rerunSource={rerunSource}
+            onClearRerun={() => setRerunSource(null)}
           />
         ) : (
           <Visualizer

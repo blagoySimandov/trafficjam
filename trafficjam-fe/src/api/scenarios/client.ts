@@ -1,70 +1,101 @@
-import { v4 as uuidv4 } from "uuid";
 import type { Scenario, Run, AgentConfig } from "./types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
+import { serializeNetwork, deserializeNetwork, isNonEmptyNetworkConfig } from "./network-serializer";
 
-const mockScenarios: Scenario[] = [
-  {
-    id: "default-scenario",
-    name: "Default Scenario",
-    agentConfig: DEFAULT_AGENT_CONFIG,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+const BASE_URL =
+  import.meta.env.VITE_TRAFFICJAM_BE_URL || "http://localhost:8001";
 
-const mockRuns: Run[] = [];
+interface BackendScenario {
+  id: string;
+  name: string;
+  description: string | null;
+  network_config: Record<string, unknown> | null;
+  plan_params: string;
+  matsim_config: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+function toFrontendScenario(s: BackendScenario): Scenario {
+  const agentConfig = s.plan_params
+    ? (JSON.parse(s.plan_params) as AgentConfig)
+    : DEFAULT_AGENT_CONFIG;
+  return {
+    id: s.id,
+    name: s.name,
+    description: s.description ?? undefined,
+    agentConfig,
+    networkData: isNonEmptyNetworkConfig(s.network_config)
+      ? deserializeNetwork(s.network_config!)
+      : undefined,
+    createdAt: s.created_at,
+    updatedAt: s.updated_at,
+  };
+}
+
+async function assertOk(response: Response) {
+  if (!response.ok) {
+    throw new Error(`Backend error: ${response.status}`);
+  }
+}
 
 async function listScenarios(): Promise<Scenario[]> {
-  await delay(100);
-  return [...mockScenarios];
+  const response = await fetch(`${BASE_URL}/scenarios`);
+  await assertOk(response);
+  const data: BackendScenario[] = await response.json();
+  return data.map(toFrontendScenario);
 }
 
 async function createScenario(
   name: string,
   config: AgentConfig,
 ): Promise<Scenario> {
-  await delay(100);
-  const newScenario: Scenario = {
-    id: uuidv4(),
-    name,
-    agentConfig: config,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  mockScenarios.push(newScenario);
-  return newScenario;
+  const response = await fetch(`${BASE_URL}/scenarios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      plan_params: JSON.stringify(config),
+      network_config: {},
+    }),
+  });
+  await assertOk(response);
+  return toFrontendScenario(await response.json());
 }
 
 async function updateScenario(
   id: string,
   updates: Partial<Scenario>,
 ): Promise<Scenario> {
-  await delay(100);
-  const index = mockScenarios.findIndex((s) => s.id === id);
-  if (index === -1) throw new Error("Scenario not found");
+  const body: Record<string, unknown> = {};
+  if (updates.name !== undefined) body.name = updates.name;
+  if (updates.description !== undefined) body.description = updates.description;
+  if (updates.agentConfig !== undefined)
+    body.plan_params = JSON.stringify(updates.agentConfig);
+  if (updates.networkData !== undefined)
+    body.network_config = serializeNetwork(updates.networkData);
 
-  mockScenarios[index] = {
-    ...mockScenarios[index],
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
-  return mockScenarios[index];
+  const response = await fetch(`${BASE_URL}/scenarios/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  await assertOk(response);
+  return toFrontendScenario(await response.json());
 }
 
 async function deleteScenario(id: string): Promise<void> {
-  await delay(100);
-  const index = mockScenarios.findIndex((s) => s.id === id);
-  if (index === -1) throw new Error("Scenario not found");
-  mockScenarios.splice(index, 1);
+  const response = await fetch(`${BASE_URL}/scenarios/${id}`, {
+    method: "DELETE",
+  });
+  await assertOk(response);
 }
 
 async function listRuns(scenarioId?: string): Promise<Run[]> {
-  await delay(100);
-  return scenarioId
-    ? mockRuns.filter((r) => r.scenarioId === scenarioId)
-    : [...mockRuns];
+  if (!scenarioId) return [];
+  const response = await fetch(`${BASE_URL}/scenarios/${scenarioId}/runs`);
+  if (!response.ok) return [];
+  return await response.json();
 }
 
 export const scenariosApi = {

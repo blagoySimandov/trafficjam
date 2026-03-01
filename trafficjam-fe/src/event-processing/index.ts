@@ -6,11 +6,6 @@ export interface Trip {
   activityType?: string;
 }
 
-export async function loadTrips(): Promise<Trip[]> {
-  const res = await fetch("/trips.json");
-  return res.json();
-}
-
 export function getTimeRange(trips: Trip[]): [number, number] {
   let min = Infinity,
     max = -Infinity;

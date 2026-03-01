@@ -35,8 +35,8 @@ export function useLiveSimulation(scenarioId?: string, runId?: string) {
         signal,
       )) {
         processEvent(event, tripsMap);
-        eventCount++;
 
+        eventCount++;
         if (eventCount % BATCH_SIZE === 0) {
           queryClient.setQueryData(queryKey, Array.from(tripsMap.values()));
         }

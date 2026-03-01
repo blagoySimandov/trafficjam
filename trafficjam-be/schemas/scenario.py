@@ -8,7 +8,7 @@ from pydantic import BaseModel
 class ScenarioCreate(BaseModel):
     name: str
     description: str | None = None
-    network_config: str
+    network_config: dict[str, Any] | None = None
     plan_params: str
     matsim_config: dict[str, Any] | None = None
 
@@ -16,7 +16,7 @@ class ScenarioCreate(BaseModel):
 class ScenarioUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
-    network_config: str | None = None
+    network_config: dict[str, Any] | None = None
     plan_params: str | None = None
     matsim_config: dict[str, Any] | None = None
 
@@ -25,7 +25,7 @@ class ScenarioResponse(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None
-    network_config: str
+    network_config: dict[str, Any] | None
     plan_params: str
     matsim_config: dict[str, Any] | None
     created_at: datetime
