@@ -7,6 +7,7 @@ import styles from "./sidebar.module.css";
 interface SidebarProps {
   scenarios: Scenario[];
   activeScenarioId: string | null;
+  isLoadingScenarios?: boolean;
   onSelectScenario: (id: string) => void;
   onCreateScenario: () => void;
   onOpenAgentConfig: (scenarioId: string) => void;
@@ -77,6 +78,7 @@ function RunStatusIcon({ status }: { status: string }) {
 export function Sidebar({
   scenarios,
   activeScenarioId,
+  isLoadingScenarios,
   onSelectScenario,
   onCreateScenario,
   onOpenAgentConfig,
@@ -108,31 +110,37 @@ export function Sidebar({
         <ScrollArea.Viewport className={styles.scrollViewport}>
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Scenarios</h2>
-            <ul className={styles.list}>
-              {scenarios.map((s) => (
-                <li
-                  key={s.id}
-                  className={`${styles.listItem} ${s.id === activeScenarioId ? styles.active : ""}`}
-                  onClick={() => onSelectScenario(s.id)}
-                >
-                  {editingId === s.id ? (
-                    <InlineRenameInput
-                      defaultName={s.name}
-                      onConfirm={(name) => handleRenameConfirm(s.id, name)}
-                      onCancel={() => setEditingId(null)}
+            {isLoadingScenarios ? (
+              <div className={styles.loadingContainer}>
+                <Loader2 size={20} className={styles.spinner} />
+              </div>
+            ) : (
+              <ul className={styles.list}>
+                {scenarios.map((s) => (
+                  <li
+                    key={s.id}
+                    className={`${styles.listItem} ${s.id === activeScenarioId ? styles.active : ""}`}
+                    onClick={() => onSelectScenario(s.id)}
+                  >
+                    {editingId === s.id ? (
+                      <InlineRenameInput
+                        defaultName={s.name}
+                        onConfirm={(name) => handleRenameConfirm(s.id, name)}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    ) : (
+                      <div className={styles.scenarioName}>{s.name}</div>
+                    )}
+                    <ScenarioActions
+                      isActive={s.id === activeScenarioId}
+                      onEdit={() => setEditingId(s.id)}
+                      onConfigure={() => onOpenAgentConfig(s.id)}
+                      onDelete={() => onDeleteScenario(s.id)}
                     />
-                  ) : (
-                    <div className={styles.scenarioName}>{s.name}</div>
-                  )}
-                  <ScenarioActions
-                    isActive={s.id === activeScenarioId}
-                    onEdit={() => setEditingId(s.id)}
-                    onConfigure={() => onOpenAgentConfig(s.id)}
-                    onDelete={() => onDeleteScenario(s.id)}
-                  />
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           {activeScenario && (

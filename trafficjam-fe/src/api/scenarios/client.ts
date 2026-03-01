@@ -1,35 +1,51 @@
 import type { Scenario, Run, AgentConfig } from "./types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
-import { serializeNetwork, deserializeNetwork, isNonEmptyNetworkConfig } from "./network-serializer";
+import {
+  serializeNetwork,
+  deserializeNetwork,
+  isNonEmptyNetworkConfig,
+} from "./network-serializer";
 
 const BASE_URL =
   import.meta.env.VITE_TRAFFICJAM_BE_URL || "http://localhost:8001";
 
-interface BackendScenario {
+interface BackendScenarioSummary {
   id: string;
   name: string;
   description: string | null;
-  network_config: Record<string, unknown> | null;
   plan_params: string;
-  matsim_config: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
 
-function toFrontendScenario(s: BackendScenario): Scenario {
-  const agentConfig = s.plan_params
-    ? (JSON.parse(s.plan_params) as AgentConfig)
+interface BackendScenario extends BackendScenarioSummary {
+  network_config: Record<string, unknown> | null;
+  matsim_config: Record<string, unknown> | null;
+}
+
+function parseAgentConfig(planParams: string): AgentConfig {
+  return planParams
+    ? (JSON.parse(planParams) as AgentConfig)
     : DEFAULT_AGENT_CONFIG;
+}
+
+function toScenarioSummary(s: BackendScenarioSummary): Scenario {
   return {
     id: s.id,
     name: s.name,
     description: s.description ?? undefined,
-    agentConfig,
+    agentConfig: parseAgentConfig(s.plan_params),
+    createdAt: s.created_at,
+    updatedAt: s.updated_at,
+  };
+}
+
+function toFullScenario(s: BackendScenario): Scenario {
+  return {
+    ...toScenarioSummary(s),
     networkData: isNonEmptyNetworkConfig(s.network_config)
       ? deserializeNetwork(s.network_config!)
       : undefined,
-    createdAt: s.created_at,
-    updatedAt: s.updated_at,
   };
 }
 
@@ -42,8 +58,14 @@ async function assertOk(response: Response) {
 async function listScenarios(): Promise<Scenario[]> {
   const response = await fetch(`${BASE_URL}/scenarios`);
   await assertOk(response);
-  const data: BackendScenario[] = await response.json();
-  return data.map(toFrontendScenario);
+  const data: BackendScenarioSummary[] = await response.json();
+  return data.map(toScenarioSummary);
+}
+
+async function getScenario(id: string): Promise<Scenario> {
+  const response = await fetch(`${BASE_URL}/scenarios/${id}`);
+  await assertOk(response);
+  return toFullScenario(await response.json());
 }
 
 async function createScenario(
@@ -60,7 +82,7 @@ async function createScenario(
     }),
   });
   await assertOk(response);
-  return toFrontendScenario(await response.json());
+  return toFullScenario(await response.json());
 }
 
 async function updateScenario(
@@ -81,7 +103,7 @@ async function updateScenario(
     body: JSON.stringify(body),
   });
   await assertOk(response);
-  return toFrontendScenario(await response.json());
+  return toFullScenario(await response.json());
 }
 
 async function deleteScenario(id: string): Promise<void> {
@@ -100,6 +122,7 @@ async function listRuns(scenarioId?: string): Promise<Run[]> {
 
 export const scenariosApi = {
   listScenarios,
+  getScenario,
   createScenario,
   updateScenario,
   deleteScenario,

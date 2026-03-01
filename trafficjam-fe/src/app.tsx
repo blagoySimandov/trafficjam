@@ -21,6 +21,7 @@ export default function App() {
     updateScenario,
     deleteScenario,
     runs,
+    isLoadingScenarios,
   } = useScenarioManager();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export default function App() {
       <Sidebar
         scenarios={scenarios}
         activeScenarioId={activeScenario?.id || null}
+        isLoadingScenarios={isLoadingScenarios}
         onSelectScenario={(id) => {
           setActiveScenarioId(id);
           setMode("editor");

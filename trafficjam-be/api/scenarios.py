@@ -4,13 +4,13 @@ import uuid
 from fastapi import APIRouter, HTTPException, Request
 
 from db import async_session_factory, ScenarioRepository
-from schemas import ScenarioCreate, ScenarioUpdate, ScenarioResponse
+from schemas import ScenarioCreate, ScenarioUpdate, ScenarioResponse, ScenarioSummary
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("", response_model=list[ScenarioResponse])
+@router.get("", response_model=list[ScenarioSummary])
 async def list_scenarios():
     repo = ScenarioRepository(async_session_factory)
     return await repo.list_scenarios()

@@ -33,9 +33,17 @@ class ScenarioRepository:
             return await session.get(Scenario, scenario_id)
 
     async def list_scenarios(self) -> list[Scenario]:
+        summary_columns = [
+            Scenario.id,
+            Scenario.name,
+            Scenario.description,
+            Scenario.plan_params,
+            Scenario.created_at,
+            Scenario.updated_at,
+        ]
         async with self.session_factory() as session:
-            result = await session.execute(select(Scenario))
-            return list(result.scalars().all())
+            result = await session.execute(select(*summary_columns))
+            return [row._mapping for row in result.all()]
 
     async def update_scenario(
         self,

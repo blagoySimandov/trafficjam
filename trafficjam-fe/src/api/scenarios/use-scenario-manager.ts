@@ -8,22 +8,29 @@ export function useScenarioManager() {
   const queryClient = useQueryClient();
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
 
-  // Queries
   const { data: scenarios = [], isLoading: isLoadingScenarios } = useQuery({
     queryKey: ["scenarios"],
     queryFn: () => scenariosApi.listScenarios(),
     staleTime: 5000,
   });
 
+  const resolvedActiveId = activeScenarioId || scenarios[0]?.id || null;
+
+  const { data: activeScenario = null, isLoading: isLoadingActive } = useQuery({
+    queryKey: ["scenario", resolvedActiveId],
+    queryFn: () => scenariosApi.getScenario(resolvedActiveId!),
+    enabled: !!resolvedActiveId,
+    staleTime: 10000,
+  });
+
   const { data: runs = [], isLoading: isLoadingRuns } = useQuery({
-    queryKey: ["runs", activeScenarioId],
-    queryFn: () => scenariosApi.listRuns(activeScenarioId!),
-    enabled: !!activeScenarioId,
+    queryKey: ["runs", resolvedActiveId],
+    queryFn: () => scenariosApi.listRuns(resolvedActiveId!),
+    enabled: !!resolvedActiveId,
     staleTime: 5000,
     refetchInterval: 5000,
   });
 
-  // Mutations
   const createScenarioMutation = useMutation({
     mutationFn: ({ name, config }: { name: string; config: AgentConfig }) =>
       scenariosApi.createScenario(name, config),
@@ -36,8 +43,9 @@ export function useScenarioManager() {
   const updateScenarioMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) =>
       scenariosApi.updateScenario(id, updates),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
+      queryClient.invalidateQueries({ queryKey: ["scenario", id] });
     },
   });
 
@@ -47,10 +55,6 @@ export function useScenarioManager() {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
     },
   });
-
-  const activeScenario =
-    scenarios.find((s) => s.id === (activeScenarioId || scenarios[0]?.id)) ||
-    null;
 
   const createScenario = useCallback(
     (name: string, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
@@ -82,6 +86,7 @@ export function useScenarioManager() {
     updateScenario,
     deleteScenario,
     runs,
-    isLoading: isLoadingScenarios || isLoadingRuns,
+    isLoadingScenarios,
+    isLoading: isLoadingScenarios || isLoadingActive || isLoadingRuns,
   };
 }
