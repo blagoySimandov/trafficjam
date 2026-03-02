@@ -55,3 +55,20 @@ export const BUILDING_OUTLINE_LAYER: LayerProps = {
     "line-width": 2,
   },
 };
+
+export const BUILDING_HOTSPOT_LAYER_ID = "buildings-hotspot";
+export const BUILDING_HOTSPOT_OUTLINE_LAYER_ID = "buildings-hotspot-outline";
+
+export const BUILDING_HOTSPOT_FILL_LAYER: LayerProps = {
+  id: BUILDING_HOTSPOT_LAYER_ID,
+  type: "fill",
+  filter: ["==", ["get", "isHotspot"], true],
+  paint: { "fill-color": "#FF6B00", "fill-opacity": 0.85 },
+};
+
+export const BUILDING_HOTSPOT_OUTLINE_LAYER: LayerProps = {
+  id: BUILDING_HOTSPOT_OUTLINE_LAYER_ID,
+  type: "line",
+  filter: ["==", ["get", "isHotspot"], true],
+  paint: { "line-color": "#FF6B00", "line-width": 4 },
+};

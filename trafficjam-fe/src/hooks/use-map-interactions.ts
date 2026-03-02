@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { MapMouseEvent, MapRef } from "react-map-gl";
-import type { Network, TrafficLink, CombinedHoverInfo } from "../types";
+import type { Network, TrafficLink, Building, CombinedHoverInfo } from "../types";
 import {
   detectFeaturesAtPoint,
   safeQueryRenderedFeatures,
@@ -21,6 +21,7 @@ interface UseMapInteractionsParams {
     coords?: { lng: number; lat: number },
     modKey?: boolean,
   ) => void;
+  onBuildingClick?: (building: Building) => void;
   editorMode?: boolean;
 }
 
@@ -30,6 +31,7 @@ export function useMapInteractions({
   network,
   mapRef,
   onLinkClick,
+  onBuildingClick,
   editorMode,
 }: UseMapInteractionsParams) {
   const [hoverInfo, setHoverInfo] = useRafState<CombinedHoverInfo | null>(null);
@@ -101,12 +103,16 @@ export function useMapInteractions({
         detected.link || (editorMode ? findNearbyLink(event) : undefined);
 
       if (detected.building) {
-        setHoverInfo({
-          building: detected.building,
-          routes: [],
-          longitude: event.lngLat.lng,
-          latitude: event.lngLat.lat,
-        });
+        if (onBuildingClick) {
+          onBuildingClick(detected.building);
+        } else {
+          setHoverInfo({
+            building: detected.building,
+            routes: [],
+            longitude: event.lngLat.lng,
+            latitude: event.lngLat.lat,
+          });
+        }
         return true;
       } else if (link && onLinkClick) {
         onLinkClick(
@@ -119,7 +125,7 @@ export function useMapInteractions({
 
       return false;
     },
-    [network, mapRef, onLinkClick, editorMode, findNearbyLink, setHoverInfo],
+    [network, mapRef, onLinkClick, onBuildingClick, editorMode, findNearbyLink, setHoverInfo],
   );
 
   const handleMouseMove = useCallback(

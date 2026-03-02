@@ -36,6 +36,12 @@ export interface TransportRoute {
 
 export type BuildingType = "retail" | "apartments" | "supermarket" | "school" | "kindergarten" | "parking";
 
+export interface BuildingHotspot {
+  label: string;
+  trafficPercentage: number;
+  dwellTimeMinutes: number;
+}
+
 export interface Building {
   id: string;
   position: LngLatTuple;
@@ -47,6 +53,7 @@ export interface Building {
     shop?: string;
     amenity?: string;
   };
+  hotspot?: BuildingHotspot;
 }
 
 export interface Network {

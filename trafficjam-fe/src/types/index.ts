@@ -3,6 +3,7 @@ export type {
   TrafficLink,
   TransportRoute,
   Building,
+  BuildingHotspot,
   BuildingType,
   Network,
   LngLatTuple,

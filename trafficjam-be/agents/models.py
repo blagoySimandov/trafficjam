@@ -6,6 +6,12 @@ from datetime import time
 from .config import config as _env_config
 
 
+class HotspotConfig(BaseModel):
+    label: str = ""
+    trafficPercentage: float = 0
+    dwellTimeMinutes: int = 0
+
+
 class Building(BaseModel):
     id: str
     osm_id: int
@@ -13,6 +19,7 @@ class Building(BaseModel):
     geometry: list[tuple[float, float]]
     type: Optional[str] = None
     tags: dict[str, str]
+    hotspot: Optional[HotspotConfig] = None
 
     def get_tag(self, key: str) -> Optional[str]:
         return self.tags.get(key)

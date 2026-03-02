@@ -3,7 +3,7 @@ import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import { useHotkeys } from "react-hotkeys-hook";
 import "mapbox-gl/dist/mapbox-gl.css";
-import type { Network, TrafficLink } from "../../../types";
+import type { Network, TrafficLink, Building } from "../../../types";
 import {
   MAP_STYLE,
   MAPBOX_TOKEN,
@@ -30,6 +30,7 @@ interface EditorMapViewProps {
   onNetworkSave: (network: Network, message: string) => void;
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink, modKey: boolean) => void;
+  onBuildingClick?: (building: Building) => void;
   onUndo: () => void;
   onClear: () => void;
   canUndo: boolean;
@@ -41,6 +42,7 @@ export function EditorMapView({
   city,
   onStatusChange,
   onLinkClick,
+  onBuildingClick,
   onNetworkSave,
   onUndo,
   onClear,
@@ -70,6 +72,7 @@ export function EditorMapView({
     network,
     mapRef,
     onLinkClick: handleLinkClickLocal,
+    onBuildingClick,
     editorMode,
   });
 

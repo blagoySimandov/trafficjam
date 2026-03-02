@@ -51,6 +51,26 @@ def _add(
     )
 
 
+def _minutes_to_time(minutes: int) -> time:
+    return time(hour=minutes // 60, minute=minutes % 60)
+
+
+def _maybe_visit_hotspot(buildings: list[Building]) -> tuple[Building, int] | None:
+    hotspots = [b for b in buildings if b.hotspot and b.hotspot.trafficPercentage > 0]
+    if not hotspots:
+        return None
+    total = sum(b.hotspot.trafficPercentage for b in hotspots if b.hotspot) / 100.0
+    if random.random() > min(total, 1.0):
+        return None
+    weights = [b.hotspot.trafficPercentage for b in hotspots if b.hotspot]
+    selected = random.choices(hotspots, weights=weights)[0]
+    dwell_raw = (
+        selected.hotspot.dwellTimeMinutes if selected.hotspot else 0
+    ) + random.randint(-20, 20)
+    dwell = max(5, dwell_raw)
+    return selected, dwell
+
+
 def _find_nearby_shopping(
     home: Building, buildings: list[Building], config: PlannerConfig
 ) -> Building | None:
@@ -88,18 +108,41 @@ def generate_plan_adult_dropoff_work(adult: Adult, config: PlannerConfig) -> Dai
         end_time=generate_departure_time_school(child.age, config),
     )
     dropoff_duration = time(
-        minute=random.randint(config.child_dropoff_min_minutes, config.child_dropoff_max_minutes)
+        minute=random.randint(
+            config.child_dropoff_min_minutes, config.child_dropoff_max_minutes
+        )
     )
-    _add(plan, ActivityType.EDUCATION, child.school.position, mode, duration=dropoff_duration)
-    _add(plan, ActivityType.WORK, adult.work.position, mode, duration=generate_work_duration())
-    _add(plan, ActivityType.EDUCATION, child.school.position, mode, duration=dropoff_duration)
+    _add(
+        plan,
+        ActivityType.EDUCATION,
+        child.school.position,
+        mode,
+        duration=dropoff_duration,
+    )
+    _add(
+        plan,
+        ActivityType.WORK,
+        adult.work.position,
+        mode,
+        duration=generate_work_duration(),
+    )
+    _add(
+        plan,
+        ActivityType.EDUCATION,
+        child.school.position,
+        mode,
+        duration=dropoff_duration,
+    )
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
     return plan
 
 
 def generate_plan_adult_work(
-    adult: Adult, buildings: list[Building], config: PlannerConfig, with_shopping: bool = True
+    adult: Adult,
+    buildings: list[Building],
+    config: PlannerConfig,
+    with_shopping: bool = True,
 ) -> DailyPlan | None:
     if not adult.employed or not adult.work:
         return None
@@ -113,12 +156,34 @@ def generate_plan_adult_work(
         adult.home.position,
         end_time=generate_departure_time_adult(),
     )
-    _add(plan, ActivityType.WORK, adult.work.position, mode, duration=generate_work_duration())
+    _add(
+        plan,
+        ActivityType.WORK,
+        adult.work.position,
+        mode,
+        duration=generate_work_duration(),
+    )
 
-    if with_shopping and should_go_shopping(config):
+    hotspot_result = _maybe_visit_hotspot(buildings)
+    if hotspot_result:
+        hotspot_building, dwell_minutes = hotspot_result
+        _add(
+            plan,
+            ActivityType.LEISURE,
+            hotspot_building.position,
+            mode,
+            duration=_minutes_to_time(dwell_minutes),
+        )
+    elif with_shopping and should_go_shopping(config):
         shop = _find_nearby_shopping(adult.home, buildings, config)
         if shop:
-            _add(plan, ActivityType.SHOPPING, shop.position, mode, duration=generate_errand_duration(config))
+            _add(
+                plan,
+                ActivityType.SHOPPING,
+                shop.position,
+                mode,
+                duration=generate_errand_duration(config),
+            )
 
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
@@ -126,35 +191,75 @@ def generate_plan_adult_work(
 
 
 def generate_plan_child(child: Child, config: PlannerConfig) -> DailyPlan | None:
-    if child.needs_dropoff or not child.school or child.age < config.min_independent_school_age:
+    if (
+        child.needs_dropoff
+        or not child.school
+        or child.age < config.min_independent_school_age
+    ):
         return None
 
     mode = _get_mode(child)
     plan = DailyPlan()
 
-    _add(plan, ActivityType.HOME, child.home.position, end_time=generate_departure_time_school(child.age, config))
-    _add(plan, ActivityType.EDUCATION, child.school.position, mode, duration=generate_school_duration(child.age, config))
+    _add(
+        plan,
+        ActivityType.HOME,
+        child.home.position,
+        end_time=generate_departure_time_school(child.age, config),
+    )
+    _add(
+        plan,
+        ActivityType.EDUCATION,
+        child.school.position,
+        mode,
+        duration=generate_school_duration(child.age, config),
+    )
     _add(plan, ActivityType.HOME, child.home.position, mode)
 
     return plan
 
 
 def _generate_errand_plan(
-    adult: Adult, buildings: list[Building], config: PlannerConfig, healthcare_chance: float = 0.0
+    adult: Adult,
+    buildings: list[Building],
+    config: PlannerConfig,
+    healthcare_chance: float = 0.0,
 ) -> DailyPlan:
     mode = _get_mode(adult)
     plan = DailyPlan()
 
-    _add(plan, ActivityType.HOME, adult.home.position, end_time=generate_departure_time_elderly())
+    _add(
+        plan,
+        ActivityType.HOME,
+        adult.home.position,
+        end_time=generate_departure_time_elderly(),
+    )
 
-    shop = _find_nearby_shopping(adult.home, buildings, config)
-    if shop:
-        act_type = (
-            ActivityType.HEALTHCARE
-            if healthcare_chance > 0 and random.random() < healthcare_chance
-            else ActivityType.SHOPPING
+    hotspot_result = _maybe_visit_hotspot(buildings)
+    if hotspot_result:
+        hotspot_building, dwell_minutes = hotspot_result
+        _add(
+            plan,
+            ActivityType.LEISURE,
+            hotspot_building.position,
+            mode,
+            duration=_minutes_to_time(dwell_minutes),
         )
-        _add(plan, act_type, shop.position, mode, duration=generate_errand_duration(config))
+    else:
+        shop = _find_nearby_shopping(adult.home, buildings, config)
+        if shop:
+            act_type = (
+                ActivityType.HEALTHCARE
+                if healthcare_chance > 0 and random.random() < healthcare_chance
+                else ActivityType.SHOPPING
+            )
+            _add(
+                plan,
+                act_type,
+                shop.position,
+                mode,
+                duration=generate_errand_duration(config),
+            )
 
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
@@ -169,10 +274,14 @@ def generate_plan_non_employed(
     return _generate_errand_plan(adult, buildings, config)
 
 
-def generate_plan_elderly(adult: Adult, buildings: list[Building], config: PlannerConfig) -> DailyPlan | None:
+def generate_plan_elderly(
+    adult: Adult, buildings: list[Building], config: PlannerConfig
+) -> DailyPlan | None:
     if adult.age < config.elderly_age_threshold:
         return None
-    return _generate_errand_plan(adult, buildings, config, healthcare_chance=config.healthcare_chance)
+    return _generate_errand_plan(
+        adult, buildings, config, healthcare_chance=config.healthcare_chance
+    )
 
 
 def generate_plan_for_agent(

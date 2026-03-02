@@ -5,6 +5,7 @@ export interface BuildingFeatureProperties {
   id: string;
   type: string;
   name?: string;
+  isHotspot: boolean;
 }
 
 const BBOX_SIZE_DEGREES = 0.0001;
@@ -40,6 +41,7 @@ function createBuildingFeature(building: Building): Feature<Polygon, BuildingFea
       id: building.id,
       type: building.type,
       name: building.tags.name,
+      isHotspot: !!building.hotspot,
     },
     geometry: {
       type: "Polygon",
