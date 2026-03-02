@@ -1,6 +1,7 @@
 services:
   db:
     image: postgis/postgis:17-3.5
+    platform: linux/amd64
     container_name: trafficjam-db
     environment:
       POSTGRES_DB: trafficjam
