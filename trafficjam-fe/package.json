@@ -50,6 +50,10 @@
     "react-map-gl": "^7.1.9",
     "react-router-dom": "^7.13.1",
     "react-use": "^17.6.0",
-    "uuid": "^13.0.0"
+    "react-vega": "^8.0.0",
+    "uuid": "^13.0.0",
+    "vega": "^6.2.0",
+    "vega-lite": "^6.4.2",
+    "yaml": "^2.8.2"
   }
 }
