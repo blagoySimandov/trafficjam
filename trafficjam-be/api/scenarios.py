@@ -4,13 +4,13 @@ import uuid
 from fastapi import APIRouter, HTTPException, Request
 
 from db import async_session_factory, ScenarioRepository
-from schemas import ScenarioCreate, ScenarioUpdate, ScenarioResponse
+from schemas import ScenarioCreate, ScenarioUpdate, ScenarioResponse, ScenarioSummary
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("", response_model=list[ScenarioResponse])
+@router.get("", response_model=list[ScenarioSummary])
 async def list_scenarios():
     repo = ScenarioRepository(async_session_factory)
     return await repo.list_scenarios()
@@ -37,20 +37,26 @@ async def create_scenario(body: ScenarioCreate):
     )
 
 
-@router.put("/{scenario_id}", response_model=ScenarioResponse)
+@router.put("/{scenario_id}", response_model=ScenarioSummary)
 async def update_scenario(scenario_id: uuid.UUID, body: ScenarioUpdate):
     repo = ScenarioRepository(async_session_factory)
     scenario = await repo.update_scenario(
         scenario_id=scenario_id,
         name=body.name,
         description=body.description,
-        network_config=body.network_config,
         plan_params=body.plan_params,
-        matsim_config=body.matsim_config,
     )
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
     return scenario
+
+
+@router.put("/{scenario_id}/network", status_code=204)
+async def update_network(scenario_id: uuid.UUID, body: dict):
+    repo = ScenarioRepository(async_session_factory)
+    updated = await repo.update_network_config(scenario_id, body)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Scenario not found")
 
 
 async def _purge_nats_messages(js, scenario_id: uuid.UUID):
