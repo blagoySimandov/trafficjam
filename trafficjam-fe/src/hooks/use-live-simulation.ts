@@ -5,13 +5,30 @@ import type { StreamedEvent } from "../api/trafficjam-be/types";
 
 const BATCH_SIZE = 50;
 
-function processEvent(event: StreamedEvent, tripsMap: Map<string, Trip>) {
-  if (!event.agentId || event.x == null || event.y == null) return;
+const VEHICLE_LINK_EVENTS = new Set(["entered link", "left link", "vehicle enters traffic", "vehicle leaves traffic"]);
 
-  let trip = tripsMap.get(event.agentId);
+function processEvent(
+  event: StreamedEvent,
+  tripsMap: Map<string, Trip>,
+  vehicleToPersonMap: Map<string, string>,
+) {
+  if (!event.agentId) return;
+
+  if (event.type === "PersonEntersVehicle" && event.linkId) {
+    vehicleToPersonMap.set(event.linkId, event.agentId);
+    return;
+  }
+
+  if (event.x == null || event.y == null) return;
+
+  const personId = VEHICLE_LINK_EVENTS.has(event.type)
+    ? (vehicleToPersonMap.get(event.agentId) ?? event.agentId)
+    : event.agentId;
+
+  let trip = tripsMap.get(personId);
   if (!trip) {
-    trip = { id: event.agentId, path: [], timestamps: [] };
-    tripsMap.set(event.agentId, trip);
+    trip = { id: personId, path: [], timestamps: [] };
+    tripsMap.set(personId, trip);
   }
 
   trip.path.push([event.x, event.y]);
@@ -27,6 +44,7 @@ export function useLiveSimulation(scenarioId?: string, runId?: string) {
     queryKey,
     queryFn: async ({ signal }) => {
       const tripsMap = new Map<string, Trip>();
+      const vehicleToPersonMap = new Map<string, string>();
       let eventCount = 0;
 
       for await (const event of simulationApi.streamEvents(
@@ -34,7 +52,7 @@ export function useLiveSimulation(scenarioId?: string, runId?: string) {
         runId!,
         signal,
       )) {
-        processEvent(event, tripsMap);
+        processEvent(event, tripsMap, vehicleToPersonMap);
 
         eventCount++;
         if (eventCount % BATCH_SIZE === 0) {

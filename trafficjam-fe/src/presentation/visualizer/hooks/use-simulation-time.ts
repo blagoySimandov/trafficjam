@@ -57,9 +57,10 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
     let prev = performance.now();
     let id = requestAnimationFrame(function tick(now) {
       if (isPlayingRef.current) {
+        const delta = (now - prev) / 1000;
         setTime((t) => {
           if (t < range[0]) return range[0];
-          const next = t + ((now - prev) / 1000) * speedRef.current;
+          const next = t + delta * speedRef.current;
           return next > range[1] ? range[0] : next;
         });
       }

@@ -57,8 +57,9 @@ export function useScenarioManager() {
   const updateScenarioMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) =>
       scenariosApi.updateScenario(id, updates),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
+      queryClient.invalidateQueries({ queryKey: ["scenario", variables.id] });
     },
   });
 
@@ -93,7 +94,12 @@ export function useScenarioManager() {
         .slice(0, 6);
       const expectedName = `${city.name} - ${hash}`;
 
-      const existing = scenarios.find((s) => s.name === expectedName);
+      const existing = scenarios.find((s) => {
+        const a = s.agentConfig;
+        return (Object.keys(config) as (keyof AgentConfig)[]).every(
+          (k) => a[k] === config[k],
+        );
+      });
       if (existing) {
         setActiveScenarioId(existing.id);
         return { scenario: existing, created: false };

@@ -65,10 +65,6 @@ export default function App() {
     setDeleteTarget(null);
   }, [deleteTarget, deleteScenario]);
 
-  const handleCreateScenario = useCallback(() => {
-    setIsCreateOpen(true);
-  }, []);
-
   const handleSaveNewScenario = useCallback(async (config: AgentConfig) => {
     setIsCreateOpen(false);
     const { created, scenario } = await createScenario(DEFAULT_CITY, config);
