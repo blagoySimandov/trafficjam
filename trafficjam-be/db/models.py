@@ -40,7 +40,6 @@ class Run(Base):
     scenario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("scenarios.id"), nullable=False, index=True)
     status: Mapped[RunStatus] = mapped_column(Enum(RunStatus, values_callable=lambda e: [x.value for x in e]), nullable=False, default=RunStatus.PENDING)
     nats_subject: Mapped[str | None] = mapped_column(Text, nullable=True)
-    simwrapper_bucket: Mapped[str | None] = mapped_column(Text, nullable=True)
     iterations: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     random_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)

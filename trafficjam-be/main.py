@@ -38,10 +38,8 @@ async def lifespan(app: FastAPI):
     app.state.nc = await nats_lib.connect(settings.nats_url)
     app.state.js = app.state.nc.jetstream()
     app.state.status_worker = asyncio.create_task(_monitor_all_statuses(app.state.js))
-    app.state.simwrapper_worker = asyncio.create_task(_monitor_simwrapper_ready(app.state.js))
     yield
     app.state.status_worker.cancel()
-    app.state.simwrapper_worker.cancel()
     await app.state.nc.drain()
     await engine.dispose()
 
@@ -62,6 +60,7 @@ app.add_middleware(
 async def decompress_gzip_request(request: Request, call_next):
     if request.headers.get("content-encoding") == "gzip":
         import gzip
+
         body = await request.body()
         request._body = gzip.decompress(body)
     return await call_next(request)
@@ -82,41 +81,6 @@ async def _monitor_all_statuses(js):
                 except Exception as e:
                     logger.error(f"Status update failed for {run_id}: {e}")
         except Exception:
-            await asyncio.sleep(5)
-
-
-async def _monitor_simwrapper_ready(js):
-    consumer = EventConsumer(js, "*", "*")
-    error_count = 0
-    max_errors = 5
-    
-    while True:
-        try:
-            async for run_id, bucket_name in consumer.listen_simwrapper_ready():
-                if not bucket_name:
-                    continue
-                try:
-                    parsed_run_id = uuid.UUID(run_id)
-                    repo = RunRepository(async_session_factory)
-                    await repo.update_simwrapper_bucket(parsed_run_id, bucket_name)
-                    logger.info(f"Updated SimWrapper bucket {bucket_name} for run {run_id}")
-                    
-                    # Reset error count on successful processing
-                    error_count = 0
-                except Exception as e:
-                    logger.error(f"SimWrapper bucket update failed for {run_id}: {e}")
-            
-            # If the async for loop exits normally
-            error_count = 0
-            
-        except Exception as e:
-            error_count += 1
-            if error_count >= max_errors:
-                # Print a bright red error message directly to the running terminal
-                print(f"\033[91m\n[CRITICAL FAILURE] SimWrapper NATS Consumer crashed {max_errors} times in a row! Shutting down listener.\nLast Error: {e}\033[0m")
-                break
-                
-            logger.warning(f"SimWrapper listener error (Attempt {error_count}/{max_errors}): {e}")
             await asyncio.sleep(5)
 
 
@@ -353,26 +317,13 @@ async def stream_run_events(scenario_id: str, run_id: str, request: Request):
     return EventSourceResponse(consumer.stream_events(request, is_replay))
 
 
-async def _get_run_with_bucket(scenario_id: str, run_id: str):
-    try:
-        parsed_id = uuid.UUID(run_id)
-        parsed_scenario_id = uuid.UUID(scenario_id)
-    except ValueError:
-        raise HTTPException(400, "Invalid UUID format")
-    repo = RunRepository(async_session_factory)
-    run = await repo.get_run_by_scenario(parsed_scenario_id, parsed_id)
-    if not run:
-        raise HTTPException(404, "Run not found")
-    if not run.simwrapper_bucket:
-        raise HTTPException(404, "SimWrapper data not available for this run yet")
-    return run
-
-
 @app.get("/scenarios/{scenario_id}/runs/{run_id}/simwrapper-files")
-async def list_simwrapper_files(scenario_id: str, run_id: str, request: Request):
-    run = await _get_run_with_bucket(scenario_id, run_id)
+async def list_simwrapper_files(run_id: str, request: Request):
+    """List all files in the simwrapper object store for this run."""
+    bucket_name = f"sim_results_{run_id}"
+
     try:
-        os = await request.app.state.js.object_store(run.simwrapper_bucket)
+        os = await request.app.state.js.object_store(bucket_name)
         objects = await os.list()
         return [obj.name for obj in objects]
     except Exception as e:
@@ -381,12 +332,13 @@ async def list_simwrapper_files(scenario_id: str, run_id: str, request: Request)
 
 
 @app.get("/scenarios/{scenario_id}/runs/{run_id}/simwrapper/{filename:path}")
-async def get_simwrapper_file(scenario_id: str, run_id: str, filename: str, request: Request):
-    run = await _get_run_with_bucket(scenario_id, run_id)
+async def get_simwrapper_file(run_id: str, filename: str, request: Request):
+    """Retrieve a specific simwrapper file from the object store."""
+    bucket_name = f"sim_results_{run_id}"
 
     try:
-        os = await request.app.state.js.object_store(run.simwrapper_bucket)
-        
+        os = await request.app.state.js.object_store(bucket_name)
+
         # Determine content type
         content_type = "application/octet-stream"
         if filename.endswith(".yaml") or filename.endswith(".yml"):
@@ -395,20 +347,18 @@ async def get_simwrapper_file(scenario_id: str, run_id: str, filename: str, requ
             content_type = "text/csv"
         elif filename.endswith(".json"):
             content_type = "application/json"
-            
+
         # Get the object from NATS
         obj = await os.get(filename)
         headers = {
             "Content-Disposition": f'inline; filename="{filename}"',
-            "Cache-Control": "public, max-age=3600"
+            "Cache-Control": "public, max-age=3600",
         }
-        
+
         return fastapi.responses.Response(
-            content=obj.data,
-            media_type=content_type,
-            headers=headers
+            content=obj.data, media_type=content_type, headers=headers
         )
-    except nats_lib.js.errors.NotFoundError:
+    except nats_lib.js.errors.TimeoutError as e:
         raise HTTPException(404, f"File {filename} not found in Object Store")
     except Exception as e:
         logger.error(f"Error fetching simwrapper file {filename}: {e}")

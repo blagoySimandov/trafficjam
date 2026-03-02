@@ -51,16 +51,6 @@ class RunRepository:
             await session.refresh(run)
             return run
 
-    async def update_simwrapper_bucket(self, run_id: uuid.UUID, bucket_name: str) -> Run | None:
-        async with self.session_factory() as session:
-            run = await session.get(Run, run_id)
-            if not run:
-                return None
-            run.simwrapper_bucket = bucket_name
-            await session.commit()
-            await session.refresh(run)
-            return run
-
     async def create_run(
         self,
         scenario_id: uuid.UUID,

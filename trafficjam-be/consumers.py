@@ -68,22 +68,4 @@ class EventConsumer:
         finally:
             await sub.unsubscribe()
 
-    async def listen_simwrapper_ready(self) -> AsyncGenerator[tuple[str, str], None]:
-        sub = await self.js.subscribe("sim.*.simwrapper.ready", ordered_consumer=True)
-        try:
-            while True:
-                try:
-                    msg = await sub.next_msg(timeout=5.0)
-                    subject_parts = msg.subject.split(".")
-                    if len(subject_parts) >= 4:
-                        run_id = subject_parts[1]
-                        data = json.loads(msg.data.decode())
-                        bucket_name = data.get("bucket_name")
-                        yield run_id, bucket_name
-                    await msg.ack()
-                except NatsTimeoutError:
-                    continue
-                except asyncio.CancelledError:
-                    break
-        finally:
-            await sub.unsubscribe()
+
