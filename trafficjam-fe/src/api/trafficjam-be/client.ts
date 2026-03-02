@@ -1,5 +1,6 @@
 import { decodeEventStream } from "./decoder";
 import Papa from "papaparse";
+import { ungzip } from "pako";
 
 import type {
   CreateRunResponse,
@@ -87,16 +88,28 @@ async function getSimwrapperFile<T>(
 
   if (filename.endsWith(".csv")) {
     const text = await response.text();
-
     const result = Papa.parse(text, {
-      header: true, // converts rows into objects
-      dynamicTyping: true, // auto-convert numbers
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+    });
+    return result.data as T;
+  }
+
+  if (filename.endsWith(".csv.gz")) {
+    const buffer = await response.arrayBuffer();
+    const decompressed = ungzip(new Uint8Array(buffer), { to: "string" });
+
+    const result = Papa.parse(decompressed, {
+      header: true,
+      dynamicTyping: true,
       skipEmptyLines: true,
     });
 
     return result.data as T;
   }
 
+  // fallback for other file types
   return (await response.text()) as unknown as T;
 }
 

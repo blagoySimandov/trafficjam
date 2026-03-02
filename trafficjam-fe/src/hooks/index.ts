@@ -7,3 +7,4 @@ export {
 export { useLiveSimulation } from "./use-live-simulation";
 export { useAutoLoadMap } from "./use-auto-load-map";
 export { useRafState } from "./use-raf-state";
+export { useLinkVolumes } from "./use-link-volumes";
