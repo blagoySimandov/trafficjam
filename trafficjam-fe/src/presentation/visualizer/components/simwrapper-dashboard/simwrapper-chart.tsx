@@ -38,6 +38,8 @@ function traceForType(
       return { x, y, name, type: "scatter", mode: "lines", fill: "tozeroy" };
     case "bar":
       return { x, y, name, type: "bar" };
+    case "scatter":
+      return { x, y, name, type: "scatter", mode: "markers" };
     case "pie":
       return { labels: x as string[], values: y as number[], name, type: "pie" };
     default:

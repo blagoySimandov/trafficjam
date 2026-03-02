@@ -15,7 +15,7 @@ interface DashboardPanelProps {
   files: string[];
 }
 
-const NATIVE_CHART_TYPES = new Set(["line", "area", "bar", "pie"]);
+const NATIVE_CHART_TYPES = new Set(["line", "area", "bar", "pie", "scatter"]);
 
 function collectDatasets(config: DashboardConfig): Record<string, DatasetConfig> {
   const result: Record<string, DatasetConfig> = { ...(config.datasets ?? {}) };
@@ -68,10 +68,22 @@ interface DashboardRowProps {
   runId: string;
 }
 
+const DATA_INDEPENDENT_TYPES = new Set(["text", "plotly"]);
+
+function hasDataset(el: DashboardElement, datasets: Record<string, import("./types").ParsedDataset> | undefined): boolean {
+  if (DATA_INDEPENDENT_TYPES.has(el.type)) return true;
+  if (!datasets) return false;
+  const key = resolveElementDatasetKey(el);
+  return !!key && !!datasets[key];
+}
+
 function DashboardRow({ elements, datasets, scenarioId, runId }: DashboardRowProps) {
+  const visible = elements.filter((el) => hasDataset(el, datasets));
+  if (visible.length === 0) return null;
+
   return (
     <div className={styles.row}>
-      {elements.map((el, idx) => (
+      {visible.map((el, idx) => (
         <div key={idx} className={styles.chartContainer}>
           {el.title && <h3 className={styles.chartTitle}>{el.title}</h3>}
           <ElementRenderer
@@ -99,17 +111,20 @@ function ElementRenderer({ element, datasets, scenarioId, runId }: ElementRender
   const dsKey = resolveElementDatasetKey(element);
   const ds = dsKey ? datasets[dsKey] : undefined;
 
+  if (element.type === "text") {
+    return <TextBlock element={element} scenarioId={scenarioId} runId={runId} />;
+  }
   if (element.type === "plotly") {
     return <PlotlyChart element={element} datasets={datasets} />;
   }
-  if (NATIVE_CHART_TYPES.has(element.type) && ds) {
+
+  if (!ds) return null;
+
+  if (NATIVE_CHART_TYPES.has(element.type)) {
     return <SimWrapperChart element={element} dataset={ds} />;
   }
-  if (element.type === "csv" && ds) {
+  if (element.type === "csv") {
     return <CsvTable dataset={ds} />;
-  }
-  if (element.type === "text") {
-    return <TextBlock element={element} scenarioId={scenarioId} runId={runId} />;
   }
   if (element.type === "tile") {
     return <TileCard element={element} dataset={ds} />;
