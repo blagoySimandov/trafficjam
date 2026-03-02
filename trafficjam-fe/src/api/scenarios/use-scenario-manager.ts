@@ -72,43 +72,10 @@ export function useScenarioManager() {
 
   const createScenario = useCallback(
     async (city: CityConfig, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
-      const planParams = {
-        ...config,
-        population: city.population,
-        populationDensity: city.populationDensity,
-      };
-      const sortedContent =
-        city.name +
-        JSON.stringify(
-          Object.fromEntries(
-            Object.keys(planParams)
-              .sort()
-              .map((k) => [k, planParams[k as keyof typeof planParams]]),
-          ),
-        );
-      const data = new TextEncoder().encode(sortedContent);
-      const buffer = await crypto.subtle.digest("SHA-256", data);
-      const hash = Array.from(new Uint8Array(buffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("")
-        .slice(0, 6);
-      const expectedName = `${city.name} - ${hash}`;
-
-      const existing = scenarios.find((s) => {
-        const a = s.agentConfig;
-        return (Object.keys(config) as (keyof AgentConfig)[]).every(
-          (k) => a[k] === config[k],
-        );
-      });
-      if (existing) {
-        setActiveScenarioId(existing.id);
-        return { scenario: existing, created: false };
-      }
-
-      const scenario = await createScenarioMutation.mutateAsync({ name: expectedName, config });
+      const scenario = await createScenarioMutation.mutateAsync({ name: city.name, config });
       return { scenario, created: true };
     },
-    [createScenarioMutation, scenarios],
+    [createScenarioMutation],
   );
 
   const updateScenario = useCallback(
