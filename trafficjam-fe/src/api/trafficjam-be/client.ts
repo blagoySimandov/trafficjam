@@ -1,4 +1,6 @@
 import { decodeEventStream } from "./decoder";
+import Papa from "papaparse";
+
 import type {
   CreateRunResponse,
   StartRunResponse,
@@ -41,10 +43,9 @@ function assertOk(response: Response) {
 }
 
 async function createRun(scenarioId: string): Promise<CreateRunResponse> {
-  const response = await fetch(
-    `${BASE_URL}/scenarios/${scenarioId}/runs`,
-    { method: "POST" },
-  );
+  const response = await fetch(`${BASE_URL}/scenarios/${scenarioId}/runs`, {
+    method: "POST",
+  });
   assertOk(response);
   return await response.json();
 }
@@ -71,4 +72,37 @@ async function* streamEvents(
   yield* decodeEventStream(response);
 }
 
-export const simulationApi = { createRun, startRun, streamEvents };
+async function getSimwrapperFile<T>(
+  scenarioId: string,
+  runId: string,
+  filename: string,
+): Promise<T> {
+  const url = `${BASE_URL}/scenarios/${scenarioId}/runs/${runId}/simwrapper/${filename}`;
+  const response = await fetch(url);
+  assertOk(response);
+
+  if (filename.endsWith(".json") || filename.endsWith(".vega.json")) {
+    return await response.json();
+  }
+
+  if (filename.endsWith(".csv")) {
+    const text = await response.text();
+
+    const result = Papa.parse(text, {
+      header: true, // converts rows into objects
+      dynamicTyping: true, // auto-convert numbers
+      skipEmptyLines: true,
+    });
+
+    return result.data as T;
+  }
+
+  return (await response.text()) as unknown as T;
+}
+
+export const simulationApi = {
+  createRun,
+  startRun,
+  streamEvents,
+  getSimwrapperFile,
+};
