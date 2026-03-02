@@ -13,7 +13,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - trafficjam_db_data:/var/lib/postgresql/data
+      - trafficjam_db_data:/var/lib/postgresql
 
   nats:
     build:

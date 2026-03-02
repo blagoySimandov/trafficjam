@@ -29,7 +29,7 @@ run: ## run the database
 		-e POSTGRES_USER=$(DB_USER) \
 		-e POSTGRES_PASSWORD=$(DB_PASS) \
 		-p $(DB_PORT):5432 \
-		-v trafficjam_db_data:/var/lib/postgresql/data \
+		-v trafficjam_db_data:/var/lib/postgresql \
 		$(IMAGE_NAME)
 
 
