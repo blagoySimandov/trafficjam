@@ -1,6 +1,6 @@
 .PHONY: help build run stop restart logs shell clean \
 	nats-build nats-run nats-stop nats-restart nats-logs nats-clean \
-	up down up-build ps all-logs clean-local \
+	up down up-build ps all-logs clean-local rebuild \
 	coolify-up coolify-down coolify-up-build coolify-ps coolify-logs
 
 ############################
@@ -108,6 +108,10 @@ all-logs: ## tail logs from local services
 
 clean-local: ## stop local services and delete all volumes (wipes db)
 	docker compose -f docker-compose.local.yml down -v
+
+rebuild: ## stop, rebuild all images, and restart local services
+	docker compose -f docker-compose.local.yml down
+	docker compose -f docker-compose.local.yml up -d --build
 
 ############################
 ##@ Docker Compose — Coolify
