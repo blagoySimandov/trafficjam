@@ -12,6 +12,7 @@ import { INITIAL_STATE_CORK, DARK_MAP_STYLE } from "./constants";
 import { BackToEditorButton } from "./components/back-button";
 import { PlaybackBar } from "./components/playback-bar";
 import { useLiveSimulation } from "../../hooks/use-live-simulation";
+import { SimWrapperDashboard } from "./components/simwrapper-dashboard";
 
 interface VisualizerProps {
   scenarioId?: string;
@@ -56,6 +57,9 @@ export function Visualizer({ scenarioId, runId, onBack }: VisualizerProps) {
       <Map mapStyle={DARK_MAP_STYLE} mapboxAccessToken={MAPBOX_TOKEN} />
       <BackToEditorButton onClick={onBack} />
       <PlaybackBar simulation={simulation} />
+      {scenarioId && runId && (
+        <SimWrapperDashboard scenarioId={scenarioId} runId={runId} />
+      )}
     </DeckGL>
   );
 }

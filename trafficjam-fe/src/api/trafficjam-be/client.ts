@@ -71,4 +71,36 @@ async function* streamEvents(
   yield* decodeEventStream(response);
 }
 
-export const simulationApi = { createRun, startRun, streamEvents };
+async function listSimwrapperFiles(
+  scenarioId: string,
+  runId: string,
+): Promise<string[]> {
+  const response = await fetch(
+    `${BASE_URL}/scenarios/${scenarioId}/runs/${runId}/simwrapper-files`,
+  );
+  assertOk(response);
+  return await response.json();
+}
+
+export const simulationApi = {
+  createRun,
+  startRun,
+  streamEvents,
+  listSimwrapperFiles,
+  getSimwrapperFileUrl(scenarioId: string, runId: string, filename: string): string {
+    return `${BASE_URL}/scenarios/${scenarioId}/runs/${runId}/simwrapper/${filename}`;
+  },
+  async getSimwrapperFile<T>(
+    scenarioId: string,
+    runId: string,
+    filename: string,
+  ): Promise<T> {
+    const url = this.getSimwrapperFileUrl(scenarioId, runId, filename);
+    const response = await fetch(url);
+    assertOk(response);
+    if (filename.endsWith(".json") || filename.endsWith(".vega.json")) {
+      return await response.json();
+    }
+    return (await response.text()) as unknown as T;
+  },
+};

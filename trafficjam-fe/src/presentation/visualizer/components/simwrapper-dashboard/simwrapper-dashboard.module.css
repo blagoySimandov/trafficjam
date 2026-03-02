@@ -1,0 +1,226 @@
+.dashboardOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 600px;
+  background: rgba(18, 18, 18, 0.95);
+  border-left: 1px solid #333;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  color: #eee;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.header {
+  padding: 1rem;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #fff;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.dashboardTitle {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboardDescription {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+.tabBar {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #333;
+  overflow-x: auto;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #888;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: #ccc;
+}
+
+.tabActive {
+  color: #fd805d;
+  border-bottom-color: #fd805d;
+}
+
+.row {
+  margin-bottom: 2rem;
+}
+
+.chartContainer {
+  background: #252525;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #333;
+}
+
+.chartTitle {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #ccc;
+  border-left: 3px solid #fd805d;
+  padding-left: 0.5rem;
+}
+
+.loading, .error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #888;
+}
+
+.error {
+  color: #ff5555;
+}
+
+.openButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 900;
+  background: rgba(18, 18, 18, 0.8);
+  border: 1px solid #444;
+  color: #fff;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tableWrapper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableWrapper th {
+  text-align: left;
+  background: #333;
+  padding: 8px;
+  position: sticky;
+  top: 0;
+  color: #fff;
+}
+
+.tableWrapper td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #333;
+}
+
+.tableWrapper tr:hover {
+  background: #2a2a2a;
+}
+
+.textBlock {
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+  color: #ccc;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.tile {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tileValue {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #fd805d;
+}
+
+.tileLabel {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
+.unsupported {
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.chartContainer :global(.js-plotly-plot) {
+  background: transparent !important;
+}
+
+.chartContainer :global(.js-plotly-plot .plotly .main-svg) {
+  background: transparent !important;
+}

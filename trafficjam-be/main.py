@@ -353,22 +353,36 @@ async def stream_run_events(scenario_id: str, run_id: str, request: Request):
     return EventSourceResponse(consumer.stream_events(request, is_replay))
 
 
-@app.get("/scenarios/{scenario_id}/runs/{run_id}/simwrapper/{filename:path}")
-async def get_simwrapper_file(scenario_id: str, run_id: str, filename: str, request: Request):
+async def _get_run_with_bucket(scenario_id: str, run_id: str):
     try:
         parsed_id = uuid.UUID(run_id)
         parsed_scenario_id = uuid.UUID(scenario_id)
     except ValueError:
         raise HTTPException(400, "Invalid UUID format")
-
     repo = RunRepository(async_session_factory)
     run = await repo.get_run_by_scenario(parsed_scenario_id, parsed_id)
-    
     if not run:
         raise HTTPException(404, "Run not found")
-        
     if not run.simwrapper_bucket:
         raise HTTPException(404, "SimWrapper data not available for this run yet")
+    return run
+
+
+@app.get("/scenarios/{scenario_id}/runs/{run_id}/simwrapper-files")
+async def list_simwrapper_files(scenario_id: str, run_id: str, request: Request):
+    run = await _get_run_with_bucket(scenario_id, run_id)
+    try:
+        os = await request.app.state.js.object_store(run.simwrapper_bucket)
+        objects = await os.list()
+        return [obj.name for obj in objects]
+    except Exception as e:
+        logger.error(f"Error listing simwrapper files: {e}")
+        raise HTTPException(500, "Failed to list files")
+
+
+@app.get("/scenarios/{scenario_id}/runs/{run_id}/simwrapper/{filename:path}")
+async def get_simwrapper_file(scenario_id: str, run_id: str, filename: str, request: Request):
+    run = await _get_run_with_bucket(scenario_id, run_id)
 
     try:
         os = await request.app.state.js.object_store(run.simwrapper_bucket)
