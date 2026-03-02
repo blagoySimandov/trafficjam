@@ -30,12 +30,28 @@ class ScenarioRepository:
 
     async def get_scenario(self, scenario_id: uuid.UUID) -> Scenario | None:
         async with self.session_factory() as session:
-            return await session.get(Scenario, scenario_id)
+            scenario = await session.get(Scenario, scenario_id)
+            if scenario:
+                if isinstance(scenario.network_config, str):
+                    import json
+                    scenario.network_config = json.loads(scenario.network_config)
+                if isinstance(scenario.matsim_config, str):
+                    import json
+                    scenario.matsim_config = json.loads(scenario.matsim_config)
+            return scenario
 
     async def list_scenarios(self) -> list[Scenario]:
         async with self.session_factory() as session:
             result = await session.execute(select(Scenario))
-            return list(result.scalars().all())
+            scenarios = list(result.scalars().all())
+            for scenario in scenarios:
+                if isinstance(scenario.network_config, str):
+                    import json
+                    scenario.network_config = json.loads(scenario.network_config)
+                if isinstance(scenario.matsim_config, str):
+                    import json
+                    scenario.matsim_config = json.loads(scenario.matsim_config)
+            return scenarios
 
     async def update_scenario(
         self,

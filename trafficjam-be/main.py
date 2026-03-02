@@ -38,10 +38,8 @@ async def lifespan(app: FastAPI):
     app.state.nc = await nats_lib.connect(settings.nats_url)
     app.state.js = app.state.nc.jetstream()
     app.state.status_worker = asyncio.create_task(_monitor_all_statuses(app.state.js))
-    app.state.simwrapper_worker = asyncio.create_task(_monitor_simwrapper_ready(app.state.js))
     yield
     app.state.status_worker.cancel()
-    app.state.simwrapper_worker.cancel()
     await app.state.nc.drain()
     await engine.dispose()
 
@@ -75,39 +73,7 @@ async def _monitor_all_statuses(js):
             await asyncio.sleep(5)
 
 
-async def _monitor_simwrapper_ready(js):
-    consumer = EventConsumer(js, "*", "*")
-    error_count = 0
-    max_errors = 5
-    
-    while True:
-        try:
-            async for run_id, bucket_name in consumer.listen_simwrapper_ready():
-                if not bucket_name:
-                    continue
-                try:
-                    parsed_run_id = uuid.UUID(run_id)
-                    repo = RunRepository(async_session_factory)
-                    await repo.update_simwrapper_bucket(parsed_run_id, bucket_name)
-                    logger.info(f"Updated SimWrapper bucket {bucket_name} for run {run_id}")
-                    
-                    # Reset error count on successful processing
-                    error_count = 0
-                except Exception as e:
-                    logger.error(f"SimWrapper bucket update failed for {run_id}: {e}")
-            
-            # If the async for loop exits normally
-            error_count = 0
-            
-        except Exception as e:
-            error_count += 1
-            if error_count >= max_errors:
-                # Print a bright red error message directly to the running terminal
-                print(f"\033[91m\n[CRITICAL FAILURE] SimWrapper NATS Consumer crashed {max_errors} times in a row! Shutting down listener.\nLast Error: {e}\033[0m")
-                break
-                
-            logger.warning(f"SimWrapper listener error (Attempt {error_count}/{max_errors}): {e}")
-            await asyncio.sleep(5)
+
 
 
 def _map_status(status: str) -> RunStatus | None:
@@ -357,11 +323,10 @@ async def get_simwrapper_file(scenario_id: str, run_id: str, filename: str, requ
     if not run:
         raise HTTPException(404, "Run not found")
         
-    if not run.simwrapper_bucket:
-        raise HTTPException(404, "SimWrapper data not available for this run yet")
+    deterministic_bucket_name = f"sim_results_{run_id}"
 
     try:
-        os = await request.app.state.js.object_store(run.simwrapper_bucket)
+        os = await request.app.state.js.object_store(deterministic_bucket_name)
         
         # Determine content type
         content_type = "application/octet-stream"
