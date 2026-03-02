@@ -69,7 +69,7 @@ class EventConsumer:
             await sub.unsubscribe()
 
     async def listen_simwrapper_ready(self) -> AsyncGenerator[tuple[str, str], None]:
-        sub = await self.js.subscribe("simulation.*.simwrapper.ready", ordered_consumer=True)
+        sub = await self.js.subscribe("sim.*.simwrapper.ready", ordered_consumer=True)
         try:
             while True:
                 try:

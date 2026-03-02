@@ -137,7 +137,7 @@ public class NatsJetStreamClient {
         try {
             Map<String, String> payloadMap = Map.of("run_id", runId, "bucket_name", bucketName);
             byte[] payload = objectMapper.writeValueAsBytes(payloadMap);
-            jetStream.publish("simulation." + runId + ".simwrapper.ready", payload);
+            jetStream.publish("sim." + runId + ".simwrapper.ready", payload);
         } catch (Exception e) {
             logger.error("Failed to publish SimWrapper ready event: {}", e.getMessage());
         }
