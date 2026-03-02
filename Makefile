@@ -1,6 +1,7 @@
 .PHONY: help build run stop restart logs shell clean \
 	nats-build nats-run nats-stop nats-restart nats-logs nats-clean \
-	up down up-build ps all-logs
+	up down up-build ps all-logs \
+	coolify-up coolify-down coolify-up-build coolify-ps coolify-logs
 
 ############################
 ##@ Database
@@ -87,22 +88,41 @@ nats-clean: nats-stop ## nukes the NATS data volume
 
 
 ############################
-##@ Docker Compose (all services)
+##@ Docker Compose — Local Dev
 ############################
 
-up: ## start all services
+up: ## start all local services
+	docker compose -f docker-compose.local.yml up -d
+
+up-build: ## build and start all local services
+	docker compose -f docker-compose.local.yml up -d --build
+
+down: ## stop all local services
+	docker compose -f docker-compose.local.yml down
+
+ps: ## show status of local services
+	docker compose -f docker-compose.local.yml ps
+
+all-logs: ## tail logs from local services
+	docker compose -f docker-compose.local.yml logs -f
+
+############################
+##@ Docker Compose — Coolify
+############################
+
+coolify-up: ## start all Coolify services
 	docker compose up -d
 
-up-build: ## build and start all services
+coolify-up-build: ## build and start all Coolify services
 	docker compose up -d --build
 
-down: ## stop all services
+coolify-down: ## stop all Coolify services
 	docker compose down
 
-ps: ## show status of all services
+coolify-ps: ## show status of Coolify services
 	docker compose ps
 
-all-logs: ## tail logs from all services
+coolify-logs: ## tail logs from Coolify services
 	docker compose logs -f
 
 ############################
