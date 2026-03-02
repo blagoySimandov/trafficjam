@@ -8,8 +8,6 @@ RUN bun install --frozen-lockfile
 
 COPY trafficjam-fe/ .
 
-ENV NODE_ENV=production
-
 RUN bun run build
 
 

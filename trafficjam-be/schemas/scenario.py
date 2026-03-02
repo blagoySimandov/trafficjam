@@ -21,6 +21,17 @@ class ScenarioUpdate(BaseModel):
     matsim_config: dict[str, Any] | None = None
 
 
+class ScenarioSummary(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str | None
+    plan_params: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ScenarioResponse(BaseModel):
     id: uuid.UUID
     name: str
