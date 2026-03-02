@@ -31,11 +31,16 @@ function calculateCapacity(link: TrafficLink) {
 }
 
 function buildGeomNodes(link: TrafficLink) {
-  return link.geometry.slice(1, -1).map(([lat, lng], i) => ({
+  return link.geometry.slice(1, -1).filter((_, i) => i % 4 === 0).map(([lat, lng], i) => ({
     id: `${link.id}_g${i}`,
     x: lng,
     y: lat,
   }));
+}
+
+function sampledGeom(link: TrafficLink): [number, number][] {
+  const inner = link.geometry.slice(1, -1).filter((_, i) => i % 4 === 0);
+  return [link.geometry[0], ...inner, link.geometry[link.geometry.length - 1]];
 }
 
 function buildSubLinks(link: TrafficLink, allIds: string[]): string[] {
@@ -43,8 +48,9 @@ function buildSubLinks(link: TrafficLink, allIds: string[]): string[] {
   const capacity = calculateCapacity(link);
   const modes = link.disabled ? "walk" : "car";
   const lanes = getLanes(link);
+  const geom = sampledGeom(link);
   return allIds.slice(0, -1).map((fromId, i) => {
-    const length = haversineMeters(link.geometry[i], link.geometry[i + 1]).toFixed(2);
+    const length = haversineMeters(geom[i], geom[i + 1]).toFixed(2);
     const linkAttrs = `length="${length}" freespeed="${freespeed}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
     return `    <link id="${link.id}_${i}" from="${fromId}" to="${allIds[i + 1]}" ${linkAttrs} />`;
   });
@@ -56,7 +62,7 @@ function buildRevSubLinks(link: TrafficLink, allIds: string[]): string[] {
   const modes = link.disabled ? "walk" : "car";
   const lanes = getLanes(link);
   const reversed = [...allIds].reverse();
-  const reversedGeom = [...link.geometry].reverse();
+  const reversedGeom = [...sampledGeom(link)].reverse();
   return reversed.slice(0, -1).map((fromId, i) => {
     const length = haversineMeters(reversedGeom[i], reversedGeom[i + 1]).toFixed(2);
     const linkAttrs = `length="${length}" freespeed="${freespeed}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;

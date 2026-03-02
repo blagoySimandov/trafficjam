@@ -111,6 +111,8 @@ clean-local: ## stop local services and delete all volumes (wipes db)
 
 rebuild: ## stop, rebuild all images, and restart local services
 	docker compose -f docker-compose.local.yml down
+	docker stop $(NATS_CONTAINER) 2>/dev/null || true
+	docker rm $(NATS_CONTAINER) 2>/dev/null || true
 	docker compose -f docker-compose.local.yml up -d --build
 
 ############################
