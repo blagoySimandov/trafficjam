@@ -1,22 +1,20 @@
 services:
   db:
-    image: postgis/postgis:17-3.5
+    image: postgis/postgis
     platform: linux/amd64
     container_name: trafficjam-db
     environment:
       POSTGRES_DB: trafficjam
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
-    ports:
-      - "5432:5432"
     volumes:
-      - trafficjam_db_data:/var/lib/postgresql
+      - trafficjam_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d trafficjam"]
+      test: ["CMD-SHELL", "psql -U admin -d trafficjam -c 'SELECT 1' || exit 1"]
       interval: 5s
       timeout: 5s
-      retries: 5
-
+      retries: 10
+      start_period: 10s
   nats:
     build:
       context: .
