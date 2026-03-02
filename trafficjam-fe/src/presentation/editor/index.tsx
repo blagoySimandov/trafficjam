@@ -10,6 +10,7 @@ import { useUndoStack } from "./hooks/use-undo-stack";
 import { useNetworkPersistence } from "./hooks/use-network-persistence";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
+import { applyLinksDiff } from "../../api/scenarios/network-serializer";
 import type { TrafficLink, Network } from "../../types";
 import type { Scenario, Run } from "../../api/scenarios";
 import type { CityConfig } from "../../constants/cities";
@@ -17,13 +18,20 @@ import type { CityConfig } from "../../constants/cities";
 interface EditorProps {
   city: CityConfig;
   activeScenario: Scenario | null;
+  isSwitchingScenario?: boolean;
   onRunSimulation: (info: { scenarioId: string; runId: string }) => void;
-  onSaveScenario: (id: string, updates: Partial<Scenario>) => Promise<unknown>;
   rerunSource?: Run | null;
   onClearRerun?: () => void;
 }
 
-export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, rerunSource, onClearRerun }: EditorProps) {
+export function Editor({
+  city,
+  activeScenario,
+  isSwitchingScenario,
+  onRunSimulation,
+  rerunSource,
+  onClearRerun,
+}: EditorProps) {
   function remapSelectedLinks(
     selectedLinks: TrafficLink[],
     network: Network,
@@ -56,9 +64,14 @@ export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, 
     };
   }, [rerunSource]);
 
+  const scenarioNetwork = useMemo(() => {
+    if (!autoNetwork || !activeScenario?.linksDiff) return null;
+    return applyLinksDiff(autoNetwork, activeScenario.linksDiff);
+  }, [autoNetwork, activeScenario]);
+
   const activeNetwork = useMemo(
-    () => network ?? activeScenario?.networkData ?? autoNetwork ?? null,
-    [network, activeScenario?.networkData, autoNetwork],
+    () => network ?? scenarioNetwork ?? autoNetwork ?? null,
+    [network, scenarioNetwork, autoNetwork],
   );
 
   const { pushToUndoStack, undo, canUndo, clearUndoStack } = useUndoStack();
@@ -66,7 +79,7 @@ export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, 
   const { isDirty, isSaving, showSaved, markDirty } = useNetworkPersistence({
     activeScenario,
     network: activeNetwork,
-    onSave: onSaveScenario,
+    baseNetwork: autoNetwork ?? null,
   });
   const { handleLinkClick: resolveSelection } = useMultiSelect(selectedLinks);
 
@@ -147,6 +160,10 @@ export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, 
     return <LoadingScreen cityName={city.name} />;
   }
 
+  if (isSwitchingScenario) {
+    return <LoadingScreen message="Loading scenario..." />;
+  }
+
   return (
     <>
       <EditorMapView
@@ -170,7 +187,11 @@ export function Editor({ city, activeScenario, onRunSimulation, onSaveScenario, 
           onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
-      <SaveIndicator isDirty={isDirty} isSaving={isSaving} showSaved={showSaved} />
+      <SaveIndicator
+        isDirty={isDirty}
+        isSaving={isSaving}
+        showSaved={showSaved}
+      />
       {status && !isDirty && !isSaving && !showSaved && (
         <StatusBar message={status} />
       )}
