@@ -25,7 +25,7 @@ class ScenarioSummary(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None
-    plan_params: str
+    plan_params: dict[str, Any]
     created_at: datetime
     updated_at: datetime
 
