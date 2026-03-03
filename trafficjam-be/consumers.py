@@ -67,3 +67,5 @@ class EventConsumer:
                     break
         finally:
             await sub.unsubscribe()
+
+
