@@ -1,10 +1,12 @@
 .DS_Store
 .venv
 .claude/settings*
+.env
 meditor/.env
 trafficjam-be/utils
 trafficjam-be/public_transport
 trafficjam-be/plans
+trafficjam-be/.env
 package-lock.json
 map-data-service/.env
 map-data-service/*.json
