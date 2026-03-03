@@ -109,7 +109,17 @@ async function getSimwrapperFile<T>(
     return result.data as T;
   }
 
-  // fallback for other file types
+  if (filename.endsWith(".txt")) {
+    const text = await response.text();
+    const result = Papa.parse(text, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      delimiter: "\t",
+    });
+    return result.data as T;
+  }
+
   return (await response.text()) as unknown as T;
 }
 
