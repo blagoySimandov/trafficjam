@@ -15,8 +15,8 @@ interface DeparturesArrivalsChartProps {
 }
 
 function formatHour(value: unknown): string {
-  const seconds = Number(value);
-  return `${Math.floor(seconds / 3600)}h`;
+  const [hours] = String(value).split(":");
+  return `${parseInt(hours, 10)}h`;
 }
 
 export function DeparturesArrivalsChart({
