@@ -369,18 +369,18 @@
 .rtIntro {
   font-size: 13px;
   line-height: 1.6;
-  color: #666;
+  color: #a0aabc;
   margin-bottom: 16px;
 }
 
 .rtIntro code {
   font-family: monospace;
   font-size: 12px;
-  background: #f0f4ff;
-  border: 1px solid #d0daf8;
+  background: #1e2a40;
+  border: 1px solid #2e3f60;
   border-radius: 3px;
   padding: 0.1em 0.4em;
-  color: #3b5fe0;
+  color: #7ecbff;
 }
 
 .rtGrid {
@@ -393,23 +393,23 @@
 .rtCard {
   position: relative;
   padding: 10px 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #2a2e3a;
   border-left: 3px solid var(--rt-color, #3b82f6);
   border-radius: 8px;
-  background: white;
+  background: #1e2230;
   text-align: left;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
 
 .rtCard:hover {
-  background: #f8faff;
+  background: #232840;
   border-color: var(--rt-color, #3b82f6);
   transform: translateY(-1px);
 }
 
 .rtCardActive {
-  background: #f0f4ff;
+  background: #1a2035;
   border-color: var(--rt-color, #3b82f6);
 }
 
@@ -424,7 +424,7 @@
 .rtCardName {
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: #e8edf5;
   text-transform: capitalize;
 }
 
@@ -443,14 +443,14 @@
 .rtCardDesc {
   font-size: 12px;
   line-height: 1.5;
-  color: #666;
+  color: #8a96b0;
   margin: 0 0 6px;
 }
 
 .rtCardModes {
   font-family: monospace;
   font-size: 11px;
-  color: #888;
+  color: #5a7aaa;
 }
 
 /* ── Road type detail panel ── */
@@ -467,8 +467,8 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: color-mix(in srgb, var(--rt-color, #3b82f6) 8%, white);
-  border-bottom: 1px solid color-mix(in srgb, var(--rt-color, #3b82f6) 25%, transparent);
+  background: color-mix(in srgb, var(--rt-color, #3b82f6) 12%, #1a1d2a);
+  border-bottom: 1px solid color-mix(in srgb, var(--rt-color, #3b82f6) 30%, transparent);
 }
 
 .rtDetailDot {
@@ -483,7 +483,7 @@
 .rtDetailTitle {
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: #e8edf5;
   text-transform: capitalize;
 }
 
@@ -492,6 +492,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 14px;
+  background: #161924;
 }
 
 .rtDetailLabel {
@@ -499,24 +500,24 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #999;
+  color: #5a6a87;
   margin-bottom: 3px;
 }
 
 .rtDetailGrid strong {
   font-size: 13px;
-  color: #333;
+  color: #dce4f0;
 }
 
 .rtDetailGrid span {
   font-size: 13px;
-  color: #555;
+  color: #8a96b0;
   line-height: 1.4;
 }
 
 .rtSpeedTrack {
   height: 5px;
-  background: #eee;
+  background: #252a3a;
   border-radius: 99px;
   margin-top: 6px;
   overflow: hidden;
