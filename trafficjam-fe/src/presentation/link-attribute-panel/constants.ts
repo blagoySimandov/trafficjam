@@ -75,7 +75,7 @@ export const ROAD_TYPE_INFO: Partial<Record<string, RoadTypeInfo>> = {
     freespeedPct: 70,
     modes: "car, bike, walk",
     capacity: "High.",
-    notes: "Urban context (GHSL) lowers effective freespeed for crossings and junctions.",
+    notes: "In built-up areas, lower effective freespeed accounts for pedestrian crossings, traffic lights, and junction density.",
   },
   primary_link: {
     color: "#ffe066",
@@ -93,7 +93,7 @@ export const ROAD_TYPE_INFO: Partial<Record<string, RoadTypeInfo>> = {
     freespeedPct: 58,
     modes: "car, bike, walk",
     capacity: "Moderate-high.",
-    notes: "Urban/rural distinction applied via GHSL.",
+    notes: "Urban and rural variants use different default freespeeds to reflect typical junction density and roadside constraints.",
   },
   secondary_link: {
     color: "#55efc4",
