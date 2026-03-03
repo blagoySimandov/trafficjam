@@ -35,8 +35,14 @@ export function BuildingAttributePanel({
       const parsedTraffic = Number(trafficPct);
       const parsedDwell = Number(dwellTime);
 
+      const otherTotal = [...network.buildings.values()]
+        .filter((b) => b.id !== building.id && b.hotspot)
+        .reduce((sum, b) => sum + b.hotspot!.trafficPercentage, 0);
+
       if (!trafficPct || isNaN(parsedTraffic) || parsedTraffic < 1 || parsedTraffic > 100)
         newErrors.trafficPct = "Must be between 1 and 100";
+      else if (otherTotal + parsedTraffic > 100)
+        newErrors.trafficPct = `Total hotspot % would be ${otherTotal + parsedTraffic}% — must not exceed 100%`;
       if (!dwellTime || isNaN(parsedDwell) || parsedDwell < 5)
         newErrors.dwellTime = "Must be at least 5 minutes";
 
