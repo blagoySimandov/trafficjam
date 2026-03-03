@@ -52,9 +52,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.fe
+      args:
+        NODE_ENV: production
     container_name: trafficjam-fe
-    env_file:
-      - trafficjam-fe/.env.production
+    environment:
+      NODE_ENV: production
     ports:
       - "5173:5173"
     depends_on:
