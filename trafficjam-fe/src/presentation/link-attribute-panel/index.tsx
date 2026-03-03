@@ -58,7 +58,7 @@ export function LinkAttributePanel({
       maxspeed: !hasUniqueMaxspeed,
       oneway: !hasUniqueOneway,
     };
-  }, [links, isSingleLink]);
+  }, [links]);
 
   const getDisplayValue = (field: keyof TrafficLink["tags"]) => {
     if (field in editedValues) {
@@ -294,7 +294,7 @@ export function LinkAttributePanel({
       </div>
 
       <div className={styles.panelFooter}>
-        <button className={styles.saveButton} onClick={handleSave}>
+        <button className={styles.saveButton} onClick={handleSave} type="button">
           {isSingleLink ? 'Save Changes' : `Save Changes to ${links.length} Links`}
         </button>
       </div>

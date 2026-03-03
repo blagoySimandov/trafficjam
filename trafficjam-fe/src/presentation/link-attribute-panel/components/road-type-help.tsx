@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, useEffect, useCallback, memo } from "react";
 import { BookOpen } from "lucide-react";
 import { Dialog } from "../../../components/dialog/dialog";
 import { Tooltip } from "../../../components/tooltip/tooltip";
@@ -12,7 +12,7 @@ type RoadTypeCardProps = {
   onSelect: () => void;
 };
 
-function RoadTypeCard({ typeKey, info, isActive, onSelect }: RoadTypeCardProps) {
+const RoadTypeCard = memo(function RoadTypeCard({ typeKey, info, isActive, onSelect }: RoadTypeCardProps) {
   return (
     <button
       className={`${styles.rtCard} ${isActive ? styles.rtCardActive : ""}`}
@@ -28,7 +28,7 @@ function RoadTypeCard({ typeKey, info, isActive, onSelect }: RoadTypeCardProps) 
       <div className={styles.rtCardModes}>{info.modes}</div>
     </button>
   );
-}
+});
 
 function SpeedBar({ pct }: { pct: number }) {
   return (
@@ -138,10 +138,54 @@ function FreespeedSection() {
 
 function RoadTypeHelpContent() {
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [numCols, setNumCols] = useState(999);
   const entries = Object.entries(ROAD_TYPE_INFO) as [string, RoadTypeInfo][];
 
-  const handleSelect = (key: string) =>
-    setActiveKey((prev) => (prev === key ? null : key));
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const update = () => {
+      const cols = window.getComputedStyle(el).gridTemplateColumns.split(" ").length;
+      setNumCols(Math.max(1, cols));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const handleSelect = useCallback(
+  (key: string) => setActiveKey((prev) => (prev === key ? null : key)),
+  []
+);
+  
+
+  const activeIndex = activeKey ? entries.findIndex(([k]) => k === activeKey) : -1;
+  const activeRow = activeIndex >= 0 ? Math.floor(activeIndex / numCols) : -1;
+
+  const gridItems = entries.flatMap(([key, info], idx) => {
+    const card = (
+      <RoadTypeCard
+        key={key}
+        typeKey={key}
+        info={info}
+        isActive={activeKey === key}
+        onSelect={() => handleSelect(key)}
+      />
+    );
+    const rowIdx = Math.floor(idx / numCols);
+    const isLastInRow = (idx + 1) % numCols === 0 || idx === entries.length - 1;
+    if (isLastInRow && rowIdx === activeRow && activeKey && ROAD_TYPE_INFO[activeKey]) {
+      return [
+        card,
+        <div key="__detail" style={{ gridColumn: "1 / -1" }}>
+          <RoadTypeDetail typeKey={activeKey} info={ROAD_TYPE_INFO[activeKey]!} />
+        </div>,
+      ];
+    }
+    return [card];
+  });
 
   return (
     <div>
@@ -149,20 +193,9 @@ function RoadTypeHelpContent() {
         Each link's <code>roadType</code> comes from the OSM <code>highway=*</code> tag and sets
         default freespeed, capacity, and allowed transport modes. Click a card for details.
       </p>
-      <div className={styles.rtGrid}>
-        {entries.map(([key, info]) => (
-          <RoadTypeCard
-            key={key}
-            typeKey={key}
-            info={info}
-            isActive={activeKey === key}
-            onSelect={() => handleSelect(key)}
-          />
-        ))}
+      <div ref={gridRef} className={styles.rtGrid}>
+        {gridItems}
       </div>
-      {activeKey && ROAD_TYPE_INFO[activeKey] && (
-        <RoadTypeDetail typeKey={activeKey} info={ROAD_TYPE_INFO[activeKey]!} />
-      )}
       <FreespeedSection />
     </div>
   );
