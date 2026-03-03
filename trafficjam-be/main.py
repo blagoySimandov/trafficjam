@@ -9,6 +9,7 @@ from typing import List, Optional
 import nats as nats_lib
 import httpx
 from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form
+import fastapi.responses
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
 
@@ -80,6 +81,9 @@ async def _monitor_all_statuses(js):
                     logger.error(f"Status update failed for {run_id}: {e}")
         except Exception:
             await asyncio.sleep(5)
+
+
+
 
 
 def _map_status(status: str) -> RunStatus | None:
@@ -313,6 +317,53 @@ async def stream_run_events(scenario_id: str, run_id: str, request: Request):
     consumer = EventConsumer(request.app.state.js, scenario_id, str(parsed_id))
 
     return EventSourceResponse(consumer.stream_events(request, is_replay))
+
+
+@app.get("/scenarios/{scenario_id}/runs/{run_id}/simwrapper/{filename:path}")
+async def get_simwrapper_file(scenario_id: str, run_id: str, filename: str, request: Request):
+    try:
+        parsed_id = uuid.UUID(run_id)
+        parsed_scenario_id = uuid.UUID(scenario_id)
+    except ValueError:
+        raise HTTPException(400, "Invalid UUID format")
+
+    repo = RunRepository(async_session_factory)
+    run = await repo.get_run_by_scenario(parsed_scenario_id, parsed_id)
+    
+    if not run:
+        raise HTTPException(404, "Run not found")
+        
+    deterministic_bucket_name = f"sim_results_{run_id}"
+
+    try:
+        os = await request.app.state.js.object_store(deterministic_bucket_name)
+        
+        # Determine content type
+        content_type = "application/octet-stream"
+        if filename.endswith(".yaml") or filename.endswith(".yml"):
+            content_type = "application/x-yaml"
+        elif filename.endswith(".csv"):
+            content_type = "text/csv"
+        elif filename.endswith(".json"):
+            content_type = "application/json"
+            
+        # Get the object from NATS
+        obj = await os.get(filename)
+        headers = {
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "Cache-Control": "public, max-age=3600"
+        }
+        
+        return fastapi.responses.Response(
+            content=obj.data,
+            media_type=content_type,
+            headers=headers
+        )
+    except nats_lib.js.errors.NotFoundError:
+        raise HTTPException(404, f"File {filename} not found in Object Store")
+    except Exception as e:
+        logger.error(f"Error fetching simwrapper file {filename}: {e}")
+        raise HTTPException(500, "Failed to retrieve file")
 
 
 if __name__ == "__main__":
