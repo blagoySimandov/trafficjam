@@ -87,12 +87,20 @@
   margin-bottom: 20px;
 }
 
+.attributeLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
 .attributeLabel {
   display: block;
   font-size: 13px;
   font-weight: 600;
   color: #555;
-  margin-bottom: 6px;
+  margin-bottom: 0;
+  flex: 1;
 }
 
 .attributeValue {
@@ -325,4 +333,198 @@
 
 .confirmDisable:hover {
   background: #dc2626;
+}
+
+/* ── Road type label actions ── */
+
+.rtLabelActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.rtHelpButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: #888;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rtHelpButton:hover {
+  background: #e8f0fe;
+  color: #3b82f6;
+}
+
+/* ── Road type help modal content ── */
+
+.rtIntro {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.rtIntro code {
+  font-family: monospace;
+  font-size: 12px;
+  background: #f0f4ff;
+  border: 1px solid #d0daf8;
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  color: #3b5fe0;
+}
+
+.rtGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rtCard {
+  position: relative;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-left: 3px solid var(--rt-color, #3b82f6);
+  border-radius: 8px;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.rtCard:hover {
+  background: #f8faff;
+  border-color: var(--rt-color, #3b82f6);
+  transform: translateY(-1px);
+}
+
+.rtCardActive {
+  background: #f0f4ff;
+  border-color: var(--rt-color, #3b82f6);
+}
+
+.rtCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rtCardName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  text-transform: capitalize;
+}
+
+.rtCardBadge {
+  font-family: monospace;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--rt-color, #3b82f6) 12%, transparent);
+  color: color-mix(in srgb, var(--rt-color, #3b82f6) 80%, #000);
+  border: 1px solid color-mix(in srgb, var(--rt-color, #3b82f6) 30%, transparent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rtCardDesc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #666;
+  margin: 0 0 6px;
+}
+
+.rtCardModes {
+  font-family: monospace;
+  font-size: 11px;
+  color: #888;
+}
+
+/* ── Road type detail panel ── */
+
+.rtDetail {
+  border: 1px solid var(--rt-color, #3b82f6);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.rtDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--rt-color, #3b82f6) 8%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--rt-color, #3b82f6) 25%, transparent);
+}
+
+.rtDetailDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rt-color, #3b82f6);
+  box-shadow: 0 0 6px var(--rt-color, #3b82f6);
+  flex-shrink: 0;
+}
+
+.rtDetailTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-transform: capitalize;
+}
+
+.rtDetailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px;
+}
+
+.rtDetailLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #999;
+  margin-bottom: 3px;
+}
+
+.rtDetailGrid strong {
+  font-size: 13px;
+  color: #333;
+}
+
+.rtDetailGrid span {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.4;
+}
+
+.rtSpeedTrack {
+  height: 5px;
+  background: #eee;
+  border-radius: 99px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.rtSpeedFill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--rt-color, #3b82f6), color-mix(in srgb, var(--rt-color, #3b82f6) 50%, #74b9ff));
+  transition: width 0.35s ease;
 }
