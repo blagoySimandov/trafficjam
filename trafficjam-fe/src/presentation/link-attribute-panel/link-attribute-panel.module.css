@@ -87,12 +87,20 @@
   margin-bottom: 20px;
 }
 
+.attributeLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
 .attributeLabel {
   display: block;
   font-size: 13px;
   font-weight: 600;
   color: #555;
-  margin-bottom: 6px;
+  margin-bottom: 0;
+  flex: 1;
 }
 
 .attributeValue {
@@ -325,4 +333,282 @@
 
 .confirmDisable:hover {
   background: #dc2626;
+}
+
+.linksList {
+  max-height: 200px;
+  overflow: auto;
+}
+
+/* ── Road type label actions ── */
+
+.rtLabelActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.rtHelpButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: #888;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rtHelpButton:hover {
+  background: #e8f0fe;
+  color: #3b82f6;
+}
+
+/* ── Road type help modal content ── */
+
+.rtIntro {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #a0aabc;
+  margin-bottom: 16px;
+}
+
+.rtIntro code {
+  font-family: monospace;
+  font-size: 12px;
+  background: #1e2a40;
+  border: 1px solid #2e3f60;
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  color: #7ecbff;
+}
+
+.rtGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rtCard {
+  position: relative;
+  padding: 10px 12px;
+  border: 1px solid #2a2e3a;
+  border-left: 3px solid var(--rt-color, #3b82f6);
+  border-radius: 8px;
+  background: #1e2230;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.rtCard:hover {
+  background: #232840;
+  border-color: var(--rt-color, #3b82f6);
+  transform: translateY(-1px);
+}
+
+.rtCardActive {
+  background: #1a2035;
+  border-color: var(--rt-color, #3b82f6);
+}
+
+.rtCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rtCardName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8edf5;
+  text-transform: capitalize;
+}
+
+.rtCardBadge {
+  font-family: monospace;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--rt-color, #3b82f6) 12%, transparent);
+  color: color-mix(in srgb, var(--rt-color, #3b82f6) 80%, #000);
+  border: 1px solid color-mix(in srgb, var(--rt-color, #3b82f6) 30%, transparent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rtCardDesc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #8a96b0;
+  margin: 0 0 6px;
+}
+
+.rtCardModes {
+  font-family: monospace;
+  font-size: 11px;
+  color: #5a7aaa;
+}
+
+/* ── Road type detail panel ── */
+
+.rtDetail {
+  border: 1px solid var(--rt-color, #3b82f6);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+
+.rtDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--rt-color, #3b82f6) 12%, #1a1d2a);
+  border-bottom: 1px solid color-mix(in srgb, var(--rt-color, #3b82f6) 30%, transparent);
+}
+
+.rtDetailDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rt-color, #3b82f6);
+  box-shadow: 0 0 6px var(--rt-color, #3b82f6);
+  flex-shrink: 0;
+}
+
+.rtDetailTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8edf5;
+  text-transform: capitalize;
+}
+
+.rtDetailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px;
+  background: #161924;
+}
+
+.rtDetailLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5a6a87;
+  margin-bottom: 3px;
+}
+
+.rtDetailGrid strong {
+  font-size: 13px;
+  color: #dce4f0;
+}
+
+.rtDetailGrid span {
+  font-size: 13px;
+  color: #8a96b0;
+  line-height: 1.4;
+}
+
+.rtSpeedTrack {
+  height: 5px;
+  background: #252a3a;
+  border-radius: 99px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.rtSpeedFill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--rt-color, #3b82f6), color-mix(in srgb, var(--rt-color, #3b82f6) 50%, #74b9ff));
+  transition: width 0.35s ease;
+}
+
+/* ── Freespeed section ── */
+
+.rtFreespeedSection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #2a2e3a;
+}
+
+.rtSectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #5a6a87;
+  margin-bottom: 12px;
+}
+
+.rtSteps {
+  border: 1px solid #2a2e3a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rtStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #2a2e3a;
+  background: #1e2230;
+  transition: background 0.15s;
+}
+
+.rtStep:last-child {
+  border-bottom: none;
+}
+
+.rtStep:hover {
+  background: #232840;
+}
+
+.rtStepNum {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #161924;
+  border: 1px solid #2a2e3a;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #5a6a87;
+  margin-top: 1px;
+}
+
+.rtStepText {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8a96b0;
+}
+
+.rtStepText strong {
+  color: #dce4f0;
+  font-weight: 600;
+}
+
+.rtStepText code {
+  font-family: monospace;
+  font-size: 11px;
+  background: #1a2540;
+  border: 1px solid #2e3f60;
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  color: #7ecbff;
 }
