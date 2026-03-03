@@ -164,10 +164,11 @@ export function useMapInteractions({
         }
       }
 
-      if (link || detected.routes.length > 0) {
+      if (link || detected.routes.length > 0 || detected.building) {
         setHoverInfo({
           link,
           routes: detected.routes,
+          building: detected.building,
           longitude: event.lngLat.lng,
           latitude: event.lngLat.lat,
         });
