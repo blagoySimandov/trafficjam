@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { Building, BuildingHotspot, Network } from "../../types";
+import type { Building, Network } from "../../types";
 import { BUILDING_TYPE_LABELS } from "../../constants";
 import styles from "./building-attribute-panel.module.css";
 
@@ -18,16 +18,46 @@ export function BuildingAttributePanel({
   onSave,
 }: BuildingAttributePanelProps) {
   const [isHotspot, setIsHotspot] = useState(!!building.hotspot);
-  const [hotspot, setHotspot] = useState<BuildingHotspot>(
-    building.hotspot ?? { label: "", trafficPercentage: 10, dwellTimeMinutes: 60 }
+  const [label, setLabel] = useState(building.hotspot?.label ?? "");
+  const [trafficPct, setTrafficPct] = useState(
+    String(building.hotspot?.trafficPercentage ?? 10)
   );
+  const [dwellTime, setDwellTime] = useState(
+    String(building.hotspot?.dwellTimeMinutes ?? 60)
+  );
+  const [errors, setErrors] = useState<{ trafficPct?: string; dwellTime?: string }>({});
 
   const handleSave = () => {
     if (!network) return;
-    const updatedBuilding: Building = {
-      ...building,
-      hotspot: isHotspot ? hotspot : undefined,
-    };
+
+    if (isHotspot) {
+      const newErrors: typeof errors = {};
+      const parsedTraffic = Number(trafficPct);
+      const parsedDwell = Number(dwellTime);
+
+      if (!trafficPct || isNaN(parsedTraffic) || parsedTraffic < 1 || parsedTraffic > 100)
+        newErrors.trafficPct = "Must be between 1 and 100";
+      if (!dwellTime || isNaN(parsedDwell) || parsedDwell < 5)
+        newErrors.dwellTime = "Must be at least 5 minutes";
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+      setErrors({});
+
+      const updatedBuilding: Building = {
+        ...building,
+        hotspot: { label, trafficPercentage: parsedTraffic, dwellTimeMinutes: parsedDwell },
+      };
+      const updatedBuildings = new Map(network.buildings);
+      updatedBuildings.set(building.id, updatedBuilding);
+      onSave({ ...network, buildings: updatedBuildings }, "Updated building hotspot");
+      onClose();
+      return;
+    }
+
+    const updatedBuilding: Building = { ...building, hotspot: undefined };
     const updatedBuildings = new Map(network.buildings);
     updatedBuildings.set(building.id, updatedBuilding);
     onSave({ ...network, buildings: updatedBuildings }, "Updated building hotspot");
@@ -66,35 +96,36 @@ export function BuildingAttributePanel({
               <input
                 type="text"
                 className={styles.attributeInput}
-                value={hotspot.label}
-                onChange={(e) => setHotspot({ ...hotspot, label: e.target.value })}
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
                 placeholder="e.g. Concert, Shopping Event"
               />
             </div>
             <div className={styles.attributeSection}>
               <label className={styles.attributeLabel}>Traffic % (1–100)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 className={styles.attributeInput}
-                min={1}
-                max={100}
-                value={hotspot.trafficPercentage}
-                onChange={(e) =>
-                  setHotspot({ ...hotspot, trafficPercentage: Number(e.target.value) })
-                }
+                value={trafficPct}
+                onChange={(e) => setTrafficPct(e.target.value.replace(/[^0-9]/g, ""))}
               />
+              {errors.trafficPct && (
+                <span className={styles.fieldError}>{errors.trafficPct}</span>
+              )}
             </div>
             <div className={styles.attributeSection}>
               <label className={styles.attributeLabel}>Dwell Time (minutes)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 className={styles.attributeInput}
-                min={5}
-                value={hotspot.dwellTimeMinutes}
-                onChange={(e) =>
-                  setHotspot({ ...hotspot, dwellTimeMinutes: Number(e.target.value) })
-                }
+                value={dwellTime}
+                onChange={(e) => setDwellTime(e.target.value.replace(/[^0-9]/g, ""))}
               />
+              {errors.dwellTime && (
+                <span className={styles.fieldError}>{errors.dwellTime}</span>
+              )}
             </div>
           </div>
         )}

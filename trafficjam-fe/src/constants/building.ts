@@ -58,12 +58,13 @@ export const BUILDING_OUTLINE_LAYER: LayerProps = {
 
 export const BUILDING_HOTSPOT_LAYER_ID = "buildings-hotspot";
 export const BUILDING_HOTSPOT_OUTLINE_LAYER_ID = "buildings-hotspot-outline";
+export const HOTSPOT_PATTERN_ID = "hotspot-stripes";
 
 export const BUILDING_HOTSPOT_FILL_LAYER: LayerProps = {
   id: BUILDING_HOTSPOT_LAYER_ID,
   type: "fill",
   filter: ["==", ["get", "isHotspot"], true],
-  paint: { "fill-color": "#FF6B00", "fill-opacity": 0.85 },
+  paint: { "fill-pattern": HOTSPOT_PATTERN_ID },
 };
 
 export const BUILDING_HOTSPOT_OUTLINE_LAYER: LayerProps = {
