@@ -102,9 +102,9 @@ const FREESPEED_STEPS = [
     body: (
       <>
         <strong>All other links</strong> fall back to a default speed based on their road type
-         — so a motorway_link gets a lower default than a motorway, reflecting the slower d
-         esign speed of on/off-ramps. These defaults are baked into the network at conversion 
-         time and are what MATSim reads directly as the freespeed for each link.
+        — so a motorway_link gets a lower default than a motorway, reflecting the slower
+        design speed of on/off-ramps. These defaults are baked into the network at conversion
+        time and are what MATSim reads directly as the freespeed for each link.
       </>
     ),
   },

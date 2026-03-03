@@ -335,6 +335,11 @@
   background: #dc2626;
 }
 
+.linksList {
+  max-height: 200px;
+  overflow: auto;
+}
+
 /* ── Road type label actions ── */
 
 .rtLabelActions {

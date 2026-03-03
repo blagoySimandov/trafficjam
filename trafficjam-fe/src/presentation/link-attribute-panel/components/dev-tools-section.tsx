@@ -38,7 +38,7 @@ export function DevToolsSection({ links }: DevToolsSectionProps) {
             </>
           ) : (
             <AttributeField label="Selected Links">
-              <div style={{ maxHeight: "200px", overflow: "auto" }}>
+              <div className={styles.linksList}>
                 {links.map((link, idx) => (
                   <div key={link.id}>
                     {idx + 1}. {link.tags.name || link.tags.highway} (ID:{" "}
