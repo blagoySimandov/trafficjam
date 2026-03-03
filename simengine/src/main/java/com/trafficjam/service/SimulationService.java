@@ -3,6 +3,7 @@ package com.trafficjam.service;
 import com.trafficjam.matsim.ConfigGenerator;
 import com.trafficjam.matsim.EventHandler;
 import com.trafficjam.matsim.MatsimRunner;
+import com.trafficjam.matsim.SimWrapperNatsPublisher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +13,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
@@ -19,6 +22,7 @@ public class SimulationService {
 
   private final MatsimRunner matsimRunner;
   private final NatsJetStreamClient natsClient;
+  private final SimWrapperNatsPublisher simWrapperNatsPublisher;
 
   @Value("${matsim.temp.directory}")
   private String tempDirectory;
@@ -26,9 +30,10 @@ public class SimulationService {
   @Value("${matsim.output.directory}")
   private String outputDirectory;
 
-  public SimulationService(NatsJetStreamClient natsClient) {
+  public SimulationService(NatsJetStreamClient natsClient, SimWrapperNatsPublisher simWrapperNatsPublisher) {
     this.matsimRunner = new MatsimRunner();
     this.natsClient = natsClient;
+    this.simWrapperNatsPublisher = simWrapperNatsPublisher;
   }
 
   public record SimulationStartResult(String simulationId, String scenarioId, String runId) {
@@ -48,10 +53,17 @@ public class SimulationService {
 
     natsClient.publishStatus(finalScenarioId, finalRunId, MatsimRunner.SimulationState.RUNNING.name());
 
+    Path outputPath = Paths.get(outputDirectory, finalScenarioId);
+
     String actualSimId = matsimRunner.runSimulationAsync(
         configPath.toString(),
         event -> handleOutputEvent(finalScenarioId, finalRunId, event),
-        (simId, status) -> natsClient.publishStatus(finalScenarioId, finalRunId, status.name()));
+        (simId, status) -> {
+          natsClient.publishStatus(finalScenarioId, finalRunId, status.name());
+          if (MatsimRunner.SimulationState.COMPLETED == status) {
+            simWrapperNatsPublisher.publishSimWrapperData(finalRunId, outputPath);
+          }
+        });
 
     return new SimulationStartResult(actualSimId, finalScenarioId, finalRunId);
   }
