@@ -43,7 +43,7 @@ export function ModeShareChart({ data, isLoading }: ModeShareChartProps) {
         isAnimationActive={false}
         labelLine={false}
         label={({ name, percent }) =>
-          `${name} ${(percent * 100).toFixed(0)}%`
+          percent ? `${name} ${(percent * 100).toFixed(0)}%` : name
         }
       >
         {chartData.map((entry, index) => (
