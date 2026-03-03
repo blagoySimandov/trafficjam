@@ -11,7 +11,7 @@ import { useUndoStack } from "./hooks/use-undo-stack";
 import { useNetworkPersistence } from "./hooks/use-network-persistence";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
-import { applyLinksDiff } from "../../api/scenarios/network-serializer";
+import { applyLinksDiff, applyBuildingsDiff } from "../../api/scenarios/network-serializer";
 import type { TrafficLink, Network, Building } from "../../types";
 import type { Scenario, Run } from "../../api/scenarios";
 import type { CityConfig } from "../../constants/cities";
@@ -68,8 +68,12 @@ export function Editor({
   }, [rerunSource]);
 
   const scenarioNetwork = useMemo(() => {
-    if (!autoNetwork || !activeScenario?.linksDiff) return null;
-    return applyLinksDiff(autoNetwork, activeScenario.linksDiff);
+    if (!autoNetwork) return null;
+    const { linksDiff, buildingsDiff } = activeScenario ?? {};
+    if (!linksDiff && !buildingsDiff) return null;
+    let net = linksDiff ? applyLinksDiff(autoNetwork, linksDiff) : autoNetwork;
+    if (buildingsDiff) net = applyBuildingsDiff(net, buildingsDiff);
+    return net;
   }, [autoNetwork, activeScenario]);
 
   const activeNetwork = useMemo(

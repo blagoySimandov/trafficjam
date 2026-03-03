@@ -34,6 +34,7 @@ export function isNonEmptyNetworkConfig(config: Record<string, unknown> | null |
   if (!config) return false;
   if (config.links && Object.keys(config.links as object).length > 0) return true;
   if (config.nodes && Object.keys(config.nodes as object).length > 0) return true;
+  if (config.buildings && Object.keys(config.buildings as object).length > 0) return true;
   return false;
 }
 
@@ -60,4 +61,31 @@ export function applyLinksDiff(
     mergedLinks.set(id, link);
   }
   return { ...base, links: mergedLinks };
+}
+
+export function computeBuildingsDiff(
+  base: Network,
+  edited: Network,
+): Record<string, Building> {
+  const diff: Record<string, Building> = {};
+  if (!edited.buildings) return diff;
+  for (const [id, building] of edited.buildings) {
+    const baseHotspot = base.buildings?.get(id)?.hotspot;
+    if (JSON.stringify(baseHotspot) !== JSON.stringify(building.hotspot)) {
+      diff[id] = building;
+    }
+  }
+  return diff;
+}
+
+export function applyBuildingsDiff(
+  base: Network,
+  diff: Record<string, Building>,
+): Network {
+  if (!base.buildings) return base;
+  const mergedBuildings = new Map(base.buildings);
+  for (const [id, building] of Object.entries(diff)) {
+    mergedBuildings.set(id, building);
+  }
+  return { ...base, buildings: mergedBuildings };
 }

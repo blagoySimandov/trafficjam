@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { scenariosApi } from "../../../api/scenarios";
-import { computeLinksDiff } from "../../../api/scenarios/network-serializer";
+import { computeLinksDiff, computeBuildingsDiff } from "../../../api/scenarios/network-serializer";
 import type { Network } from "../../../types";
 import type { Scenario } from "../../../api/scenarios";
 
@@ -28,10 +28,12 @@ export function useNetworkPersistence({ activeScenario, network, baseNetwork }: 
   const save = useCallback(async () => {
     if (!activeScenario || !network || !baseNetwork || isSaving) return;
     await mutateAsync({ id: activeScenario.id, base: baseNetwork, edited: network });
-    const diff = computeLinksDiff(baseNetwork, network);
+    const linksDiff = computeLinksDiff(baseNetwork, network);
+    const buildingsDiff = computeBuildingsDiff(baseNetwork, network);
     queryClient.setQueryData(["scenario", activeScenario.id], {
       ...activeScenario,
-      linksDiff: Object.keys(diff).length > 0 ? diff : undefined,
+      linksDiff: Object.keys(linksDiff).length > 0 ? linksDiff : undefined,
+      buildingsDiff: Object.keys(buildingsDiff).length > 0 ? buildingsDiff : undefined,
     });
     setIsDirty(false);
     setShowSaved(true);

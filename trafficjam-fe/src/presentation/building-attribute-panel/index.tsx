@@ -35,7 +35,7 @@ export function BuildingAttributePanel({
       const parsedTraffic = Number(trafficPct);
       const parsedDwell = Number(dwellTime);
 
-      const otherTotal = [...network.buildings.values()]
+      const otherTotal = [...(network.buildings?.values() ?? [])]
         .filter((b) => b.id !== building.id && b.hotspot)
         .reduce((sum, b) => sum + b.hotspot!.trafficPercentage, 0);
 
