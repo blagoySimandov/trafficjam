@@ -529,3 +529,81 @@
   background: linear-gradient(90deg, var(--rt-color, #3b82f6), color-mix(in srgb, var(--rt-color, #3b82f6) 50%, #74b9ff));
   transition: width 0.35s ease;
 }
+
+/* ── Freespeed section ── */
+
+.rtFreespeedSection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #2a2e3a;
+}
+
+.rtSectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #5a6a87;
+  margin-bottom: 12px;
+}
+
+.rtSteps {
+  border: 1px solid #2a2e3a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rtStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #2a2e3a;
+  background: #1e2230;
+  transition: background 0.15s;
+}
+
+.rtStep:last-child {
+  border-bottom: none;
+}
+
+.rtStep:hover {
+  background: #232840;
+}
+
+.rtStepNum {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #161924;
+  border: 1px solid #2a2e3a;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #5a6a87;
+  margin-top: 1px;
+}
+
+.rtStepText {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8a96b0;
+}
+
+.rtStepText strong {
+  color: #dce4f0;
+  font-weight: 600;
+}
+
+.rtStepText code {
+  font-family: monospace;
+  font-size: 11px;
+  background: #1a2540;
+  border: 1px solid #2e3f60;
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  color: #7ecbff;
+}

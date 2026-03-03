@@ -68,6 +68,74 @@ function RoadTypeDetail({ typeKey, info }: { typeKey: string; info: RoadTypeInfo
   );
 }
 
+const FREESPEED_STEPS = [
+  {
+    num: 1,
+    body: (
+      <>
+        <strong>OSM maxspeed tag present?</strong> If <code>maxspeed=*</code> is explicitly set in
+        OSM, MATSim uses that value directly as freespeed. mph values are automatically converted
+        to km/h.
+      </>
+    ),
+  },
+  {
+    num: 2,
+    body: (
+      <>
+        <strong>Walk-only links</strong> fall back to <strong>4 km/h</strong> (1.111 m/s), except
+        for steps which use <strong>2 km/h</strong> (0.556 m/s).
+      </>
+    ),
+  },
+  {
+    num: 3,
+    body: (
+      <>
+        <strong>Bike or bike+walk links</strong> (without a car mode) default to{" "}
+        <strong>15 km/h</strong> (4.167 m/s).
+      </>
+    ),
+  },
+  {
+    num: 4,
+    body: (
+      <>
+        <strong>All other links</strong> fall back to a default speed based on their road type
+         — so a motorway_link gets a lower default than a motorway, reflecting the slower d
+         esign speed of on/off-ramps. These defaults are baked into the network at conversion 
+         time and are what MATSim reads directly as the freespeed for each link.
+      </>
+    ),
+  },
+  {
+    num: 5,
+    body: (
+      <>
+        <strong>Freespeed ≠ Speed limit.</strong> Freespeed is the uncongested travel speed on an
+        unimpeded link. In MATSim, agents travel close to freespeed unless flow capacity is
+        exceeded, at which point vehicles are queued and travel time increases.
+      </>
+    ),
+  },
+];
+
+function FreespeedSection() {
+  return (
+    <div className={styles.rtFreespeedSection}>
+      <div className={styles.rtSectionLabel}>How freespeed is determined</div>
+      <div className={styles.rtSteps}>
+        {FREESPEED_STEPS.map(({ num, body }) => (
+          <div key={num} className={styles.rtStep}>
+            <div className={styles.rtStepNum}>{num}</div>
+            <div className={styles.rtStepText}>{body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RoadTypeHelpContent() {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const entries = Object.entries(ROAD_TYPE_INFO) as [string, RoadTypeInfo][];
@@ -95,6 +163,7 @@ function RoadTypeHelpContent() {
       {activeKey && ROAD_TYPE_INFO[activeKey] && (
         <RoadTypeDetail typeKey={activeKey} info={ROAD_TYPE_INFO[activeKey]!} />
       )}
+      <FreespeedSection />
     </div>
   );
 }
