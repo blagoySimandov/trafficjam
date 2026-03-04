@@ -11,8 +11,10 @@ export function LoginScreen() {
     setError(null);
     try {
       await signInWithGoogle();
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to sign in with Google");
+      }
       setLoading(false);
     }
   };
@@ -22,15 +24,15 @@ export function LoginScreen() {
       <div className={styles.card}>
         <h1 className={styles.title}>TrafficJam</h1>
         <p className={styles.subtitle}>Sign in to start simulating</p>
-        
-        <button 
-          className={styles.googleButton} 
+
+        <button
+          className={styles.googleButton}
           onClick={handleLogin}
           disabled={loading}
         >
-          <img 
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-            alt="Google" 
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt="Google"
             className={styles.googleIcon}
           />
           <span>{loading ? "Signing in..." : "Sign in with Google"}</span>
