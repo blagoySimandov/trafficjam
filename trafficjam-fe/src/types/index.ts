@@ -9,3 +9,12 @@ export type {
   LngLatBounds,
   CombinedHoverInfo,
 } from "./network";
+export type {
+  MatsimMode,
+  ModeUser,
+  TripStat,
+  PopulationTripStat,
+  LegHistogramRow,
+  ModeShareByDistance,
+  ScoreStatRow,
+} from "./insights";

@@ -27,7 +27,7 @@ export function LinkAttributePanel({
   onSelectAllWithSameName,
 }: LinkAttributePanelProps) {
   const [editedValues, setEditedValues] = useState<Partial<TrafficLink["tags"]>>({});
-  
+
   const { updateLinks } = useUpdateLink(network, onSave);
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
   const isSingleLink = links.length === 1;
@@ -98,12 +98,12 @@ export function LinkAttributePanel({
 
   const handleSave = () => {
     const updatedLinks = links.map((l) => ({
-          ...l,
-          tags: {
-            ...l.tags,
-            ...editedValues,
-          },
-        }));
+      ...l,
+      tags: {
+        ...l.tags,
+        ...editedValues,
+      },
+    }));
     updateLinks(updatedLinks);
     onClose();
   };

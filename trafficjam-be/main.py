@@ -334,7 +334,7 @@ async def get_simwrapper_file(scenario_id: str, run_id: str, filename: str, requ
     if not run:
         raise HTTPException(404, "Run not found")
         
-    deterministic_bucket_name = f"sim_results_{run_id}"
+    deterministic_bucket_name = f"sim-outputs-{run_id}"
 
     try:
         os = await request.app.state.js.object_store(deterministic_bucket_name)
