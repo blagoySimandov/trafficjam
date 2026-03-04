@@ -18,7 +18,6 @@ import { useNodeDrag } from "../hooks/use-node-drag";
 import { useNodeAdd } from "../hooks/use-node-add";
 import { EditorControls } from "./editor-controls";
 import { NetworkLayer } from "../../../components/layers/network-layer";
-import { TransportLayer } from "../../../components/layers/transport-layer";
 import { BuildingLayer } from "../../../components/layers/building-layer";
 import { NodeLayer } from "./layers/node-layer";
 import { CombinedTooltip } from "../../../components/combined-tooltip";
@@ -60,7 +59,7 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Added node on link");
       }
     },
-    pushToUndoStack: () => {},
+    pushToUndoStack: () => { },
     onStatusChange,
     editorMode,
     onLinkClick,
@@ -90,7 +89,7 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Moved node");
       }
     },
-    onBeforeChange: () => {},
+    onBeforeChange: () => { },
   });
 
   const {
@@ -110,7 +109,7 @@ export function EditorMapView({
         onNetworkSave(updatedNetwork, "Added node");
       }
     },
-    onBeforeChange: () => {},
+    onBeforeChange: () => { },
   });
 
   const baseNetwork = network;
@@ -237,9 +236,7 @@ export function EditorMapView({
           />
         </>
       ) : null}
-      {baseNetwork?.transportRoutes && baseNetwork.transportRoutes.size > 0 && (
-        <TransportLayer routes={baseNetwork.transportRoutes} hoverInfo={null} />
-      )}
+
       {showBuildings &&
         baseNetwork?.buildings &&
         baseNetwork.buildings.size > 0 && (
