@@ -2,13 +2,17 @@ import styles from "../link-attribute-panel.module.css";
 
 interface AttributeFieldProps {
   label: string;
+  labelSuffix?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function AttributeField({ label, children }: AttributeFieldProps) {
+export function AttributeField({ label, labelSuffix, children }: AttributeFieldProps) {
   return (
     <div className={styles.attributeSection}>
-      <label className={styles.attributeLabel}>{label}</label>
+      <div className={styles.attributeLabelRow}>
+        <label className={styles.attributeLabel}>{label}</label>
+        {labelSuffix}
+      </div>
       {children}
     </div>
   );

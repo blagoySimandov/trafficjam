@@ -4,6 +4,7 @@ import type { Network, TrafficLink } from "../../types";
 import { HIGHWAY_TYPES } from "../../constants";
 import { AttributeField } from "./components/attribute-field";
 import { DevToolsSection } from "./components/dev-tools-section";
+import { RoadTypeFieldLabel } from "./components/road-type-help";
 import { useUpdateLink } from "./hooks/use-update-link";
 import { LANE_OPTIONS, MAXSPEED_OPTIONS, ONEWAY_OPTIONS } from "./constants";
 import styles from "./link-attribute-panel.module.css";
@@ -57,7 +58,7 @@ export function LinkAttributePanel({
       maxspeed: !hasUniqueMaxspeed,
       oneway: !hasUniqueOneway,
     };
-  }, [links, isSingleLink]);
+  }, [links]);
 
   const getDisplayValue = (field: keyof TrafficLink["tags"]) => {
     if (field in editedValues) {
@@ -152,7 +153,18 @@ export function LinkAttributePanel({
           />
         </AttributeField>
 
-        <AttributeField label="Highway Type">
+        <AttributeField
+          label="Highway Type"
+          labelSuffix={
+            <RoadTypeFieldLabel
+              currentHighway={
+                getDisplayValue("highway") !== MIXED_VALUE
+                  ? (getDisplayValue("highway") as string)
+                  : undefined
+              }
+            />
+          }
+        >
           <select
             className={styles.attributeSelect}
             value={getDisplayValue("highway") === MIXED_VALUE ? "" : (getDisplayValue("highway") as string)}
@@ -282,7 +294,7 @@ export function LinkAttributePanel({
       </div>
 
       <div className={styles.panelFooter}>
-        <button className={styles.saveButton} onClick={handleSave}>
+        <button className={styles.saveButton} onClick={handleSave} type="button">
           {isSingleLink ? 'Save Changes' : `Save Changes to ${links.length} Links`}
         </button>
       </div>
