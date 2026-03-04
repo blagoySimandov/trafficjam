@@ -27,6 +27,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
+/**
+ * Client for connecting to NATS JetStream and publishing simulation events.
+ * Manages the connection lifecycle, stream configuration, and Object Store
+ * operations.
+ */
 @Component
 public class NatsJetStreamClient {
 
@@ -43,6 +48,9 @@ public class NatsJetStreamClient {
     private JetStream jetStream;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Initializes the NATS connection, creating streams as needed.
+     */
     @PostConstruct
     public void connect() {
         try {
@@ -92,12 +100,24 @@ public class NatsJetStreamClient {
         }
     }
 
+    /**
+     * Checks if the JetStream connection is currently active.
+     *
+     * @return true if connected, false otherwise
+     */
     public boolean isConnected() {
         return connection != null
                 && connection.getStatus() == Connection.Status.CONNECTED
                 && jetStream != null;
     }
 
+    /**
+     * Publishes a transformed simulation event to JetStream.
+     *
+     * @param scenarioId the scenario ID
+     * @param runId      the run ID
+     * @param event      the event payload
+     */
     public void publishEvent(String scenarioId, String runId, EventHandler.TransformedEvent event) {
         if (!isConnected()) {
             logger.warn("JetStream not connected, dropping event");
@@ -111,6 +131,13 @@ public class NatsJetStreamClient {
         }
     }
 
+    /**
+     * Publishes a simulation status update to JetStream.
+     *
+     * @param scenarioId the scenario ID
+     * @param runId      the run ID
+     * @param status     the status string
+     */
     public void publishStatus(String scenarioId, String runId, String status) {
         if (!isConnected()) {
             logger.warn("JetStream not connected, dropping status");
@@ -129,6 +156,13 @@ public class NatsJetStreamClient {
         return "sim." + scenarioId + "." + runId + "." + type;
     }
 
+    /**
+     * Publishes a notification that SimWrapper data is fully uploaded to the Object
+     * Store.
+     *
+     * @param runId      the run ID
+     * @param bucketName the NATS Object Store bucket name
+     */
     public void publishSimWrapperReady(String runId, String bucketName) {
         if (!isConnected()) {
             logger.warn("JetStream not connected, dropping simwrapper ready event");
@@ -143,6 +177,14 @@ public class NatsJetStreamClient {
         }
     }
 
+    /**
+     * Uploads a file to a NATS Object Store bucket. Creates the bucket if it does
+     * not exist.
+     *
+     * @param bucketName the destination bucket
+     * @param objectName the destination object key
+     * @param file       the source file to upload
+     */
     public void uploadToObjectStore(String bucketName, String objectName, File file) {
         if (connection == null || connection.getStatus() != Connection.Status.CONNECTED) {
             logger.warn("NATS not connected, cannot upload to object store");
@@ -170,6 +212,9 @@ public class NatsJetStreamClient {
         }
     }
 
+    /**
+     * Closes the NATS connection.
+     */
     @PreDestroy
     public void disconnect() {
         try {

@@ -12,14 +12,31 @@ public class SimulationResponse {
     private String runId;
 
     // Constructors
+    /**
+     * Default constructor for Jackson deserialization.
+     */
     public SimulationResponse() {
     }
 
+    /**
+     * Creates a response with just the simulation ID and status.
+     *
+     * @param simulationId the unique simulation identifier
+     * @param status       the initial status
+     */
     public SimulationResponse(String simulationId, String status) {
         this.simulationId = simulationId;
         this.status = status;
     }
 
+    /**
+     * Creates a full response including scenario and run IDs.
+     *
+     * @param simulationId the unique simulation identifier
+     * @param status       the initial status
+     * @param scenarioId   the related scenario identifier
+     * @param runId        the related run identifier
+     */
     public SimulationResponse(String simulationId, String status, String scenarioId, String runId) {
         this.simulationId = simulationId;
         this.status = status;
@@ -28,6 +45,11 @@ public class SimulationResponse {
     }
 
     // Getters and Setters
+    /**
+     * Gets the simulation ID.
+     *
+     * @return the simulation ID
+     */
     public String getSimulationId() {
         return simulationId;
     }
@@ -36,6 +58,11 @@ public class SimulationResponse {
         this.simulationId = simulationId;
     }
 
+    /**
+     * Gets the current simulation status.
+     *
+     * @return the status string
+     */
     public String getStatus() {
         return status;
     }
@@ -44,6 +71,11 @@ public class SimulationResponse {
         this.status = status;
     }
 
+    /**
+     * Gets the associated scenario ID.
+     *
+     * @return the scenario ID
+     */
     public String getScenarioId() {
         return scenarioId;
     }
@@ -52,6 +84,11 @@ public class SimulationResponse {
         this.scenarioId = scenarioId;
     }
 
+    /**
+     * Gets the associated run ID.
+     *
+     * @return the run ID
+     */
     public String getRunId() {
         return runId;
     }

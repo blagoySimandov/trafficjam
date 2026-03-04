@@ -18,16 +18,30 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Core engine component responsible for executing MATSim Controler runs.
+ * Supports synchronous and asynchronous execution, tracking active simulation
+ * status,
+ * and hooking into the event framework.
+ */
 public class MatsimRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(MatsimRunner.class);
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
     private final Map<String, SimulationInfo> activeSimulations = new ConcurrentHashMap<>();
 
+    /**
+     * Enumerates the possible lifecycle states of a simulation.
+     */
     public enum SimulationState {
         RUNNING, COMPLETED, FAILED, STOPPED
     }
 
+    /**
+     * Starts a simulation synchronously, blocking the caller.
+     *
+     * @param configPath path to the MATSim config file
+     */
     public void runSimulation(String configPath) {
         Scenario scenario = loadScenario(configPath);
         Controler controler = new Controler(scenario);
@@ -35,6 +49,14 @@ public class MatsimRunner {
         controler.run();
     }
 
+    /**
+     * Starts a simulation asynchronously on a background thread.
+     *
+     * @param configPath     path to the MATSim config file
+     * @param eventCallback  callback to execute for each simulation event
+     * @param statusCallback callback to execute when simulation status changes
+     * @return a unique internal simulation ID tracking this execution
+     */
     public String runSimulationAsync(String configPath, EventCallback eventCallback, StatusCallback statusCallback) {
         String simulationId = UUID.randomUUID().toString();
         Scenario scenario = loadScenario(configPath);
@@ -61,9 +83,8 @@ public class MatsimRunner {
         activeSimulations.put(simulationId, info);
 
         controler.addControlerListener(
-                (org.matsim.core.controler.listener.IterationStartsListener) event ->
-                        info.currentIteration = event.getIteration()
-        );
+                (org.matsim.core.controler.listener.IterationStartsListener) event -> info.currentIteration = event
+                        .getIteration());
 
         controler.run();
         logger.info("Simulation {} completed successfully", simulationId);
@@ -74,7 +95,8 @@ public class MatsimRunner {
         if (isInterruption(e)) {
             logger.info("Simulation {} was stopped by user request.", simulationId);
             SimulationInfo info = activeSimulations.get(simulationId);
-            if (info != null && SimulationState.STOPPED != info.status) info.status = SimulationState.STOPPED;
+            if (info != null && SimulationState.STOPPED != info.status)
+                info.status = SimulationState.STOPPED;
             statusCallback.onStatusChange(simulationId, SimulationState.STOPPED);
             return;
         }
@@ -102,7 +124,8 @@ public class MatsimRunner {
     private Scenario loadScenario(String configPath) {
         System.setProperty("matsim.preferLocalDtds", "true");
         Config config = ConfigUtils.loadConfig(configPath);
-        config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.overwriteExistingFiles);
+        config.controller()
+                .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.overwriteExistingFiles);
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
         new NetworkCleaner().run(scenario.getNetwork());
@@ -123,14 +146,14 @@ public class MatsimRunner {
         // Add SimWrapper module — generates dashboards automatically after simulation
         controler.addOverridingModule(new SimWrapperModule());
 
-        if (eventCallback == null) return;
+        if (eventCallback == null)
+            return;
 
         controler.addOverridingModule(new org.matsim.core.controler.AbstractModule() {
             @Override
             public void install() {
                 addEventHandlerBinding().toInstance(
-                        new EventHandler(eventCallback, 1, scenario.getNetwork())
-                );
+                        new EventHandler(eventCallback, 1, scenario.getNetwork()));
             }
         });
     }
@@ -143,9 +166,15 @@ public class MatsimRunner {
         void onStatusChange(String simulationId, SimulationState status);
     }
 
+    /**
+     * Attempts to forcefully stop a running simulation by interrupting its thread.
+     *
+     * @param simulationId the simulation ID to stop
+     */
     public void stopSimulation(String simulationId) {
         SimulationInfo info = activeSimulations.get(simulationId);
-        if (info == null) throw new IllegalArgumentException("Simulation not found: " + simulationId);
+        if (info == null)
+            throw new IllegalArgumentException("Simulation not found: " + simulationId);
 
         if (info.thread != null && info.thread.isAlive()) {
             info.thread.interrupt();
@@ -153,9 +182,16 @@ public class MatsimRunner {
         }
     }
 
+    /**
+     * Retrieves the latest known status of a given simulation run.
+     *
+     * @param simulationId the simulation ID
+     * @return the SimulationStatus, or null if not found
+     */
     public SimulationStatus getSimulationStatus(String simulationId) {
         SimulationInfo info = activeSimulations.get(simulationId);
-        if (info == null) return null;
+        if (info == null)
+            return null;
         return new SimulationStatus(simulationId, info.status, info.error, info.currentIteration);
     }
 

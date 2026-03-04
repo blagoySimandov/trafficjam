@@ -17,6 +17,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+/**
+ * Service orchestrating the MATSim simulation lifecycle.
+ * Integrates MATSim execution with real-time NATS event streaming and
+ * SimWrapper data publishing.
+ */
 @Service
 public class SimulationService {
 
@@ -30,15 +35,41 @@ public class SimulationService {
   @Value("${matsim.output.directory}")
   private String outputDirectory;
 
+  /**
+   * Constructs the SimulationService.
+   *
+   * @param natsClient              the NATS JetStream client for publishing
+   *                                events
+   * @param simWrapperNatsPublisher publisher for SimWrapper output data
+   */
   public SimulationService(NatsJetStreamClient natsClient, SimWrapperNatsPublisher simWrapperNatsPublisher) {
     this.matsimRunner = new MatsimRunner();
     this.natsClient = natsClient;
     this.simWrapperNatsPublisher = simWrapperNatsPublisher;
   }
 
+  /**
+   * Represents the result of starting a simulation.
+   *
+   * @param simulationId the internal MATSim engine simulation ID
+   * @param scenarioId   the related scenario
+   * @param runId        the run identifier
+   */
   public record SimulationStartResult(String simulationId, String scenarioId, String runId) {
   }
 
+  /**
+   * Starts a simulation run asynchronously.
+   *
+   * @param networkFile the MATSim network XML
+   * @param plansFile   the MATSim plans/population XML
+   * @param iterations  the number of iterations to run
+   * @param randomSeed  the random seed for reproducibility
+   * @param scenarioId  the scenario ID, generated if null
+   * @param runId       the run ID, generated if null
+   * @return the result containing IDs
+   * @throws IOException if file preparation fails
+   */
   public SimulationStartResult startSimulation(MultipartFile networkFile, MultipartFile plansFile, Integer iterations,
       Long randomSeed, String scenarioId, String runId) throws IOException {
     if (!natsClient.isConnected()) {
@@ -68,6 +99,18 @@ public class SimulationService {
     return new SimulationStartResult(actualSimId, finalScenarioId, finalRunId);
   }
 
+  /**
+   * Prepares the simulation config and temporary files by extracting uploaded
+   * files.
+   *
+   * @param scenarioId  the scenario ID used as the directory name
+   * @param networkFile the uploaded network file
+   * @param plansFile   the uploaded plans file
+   * @param iterations  the iteration count
+   * @param randomSeed  the random seed
+   * @return the path to the generated config.xml
+   * @throws IOException if disk operations fail
+   */
   private Path prepareSimulationFiles(String scenarioId, MultipartFile networkFile, MultipartFile plansFile,
       Integer iterations, Long randomSeed) throws IOException {
     Path simDir = Paths.get(tempDirectory, scenarioId);
@@ -96,6 +139,13 @@ public class SimulationService {
     return configPath;
   }
 
+  /**
+   * Handles MATSim events by publishing them to the JetStream message broker.
+   *
+   * @param scenarioId the scenario ID
+   * @param runId      the run ID
+   * @param event      the transformed MATSim event
+   */
   private void handleOutputEvent(String scenarioId, String runId, EventHandler.TransformedEvent event) {
     natsClient.publishEvent(scenarioId, runId, event);
   }
