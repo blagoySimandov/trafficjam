@@ -81,7 +81,7 @@ export function useNodeAdd({
       map.dragPan.disable();
     }
 
-    return true; 
+    return true;
   }, [editorMode, network, mapRef, minZoom, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
 
   const handleMouseMove = useCallback(

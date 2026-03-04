@@ -4,6 +4,14 @@ import type { Building, Network } from "../../types";
 import { BUILDING_TYPE_LABELS } from "../../constants";
 import styles from "./building-attribute-panel.module.css";
 
+const ALL_AGENT_TYPES = ["employed_adult", "non_employed_adult", "elderly", "older_child"] as const;
+const AGENT_TYPE_LABELS: Record<string, string> = {
+  employed_adult: "Employed adults",
+  non_employed_adult: "Non-employed adults",
+  elderly: "Elderly (65+)",
+  older_child: "Students (12+)",
+};
+
 interface BuildingAttributePanelProps {
   building: Building;
   network: Network | null;
@@ -25,7 +33,17 @@ export function BuildingAttributePanel({
   const [dwellTime, setDwellTime] = useState(
     String(building.hotspot?.dwellTimeMinutes ?? 60)
   );
-  const [errors, setErrors] = useState<{ trafficPct?: string; dwellTime?: string }>({});
+  const [startTime, setStartTime] = useState(building.hotspot?.startTime ?? "");
+  const [endTime, setEndTime] = useState(building.hotspot?.endTime ?? "");
+  const [agentTypes, setAgentTypes] = useState<string[]>(
+    building.hotspot?.agentTypes?.length ? building.hotspot.agentTypes : [...ALL_AGENT_TYPES]
+  );
+  const [errors, setErrors] = useState<{
+    trafficPct?: string;
+    dwellTime?: string;
+    startTime?: string;
+    endTime?: string;
+  }>({});
 
   const handleSave = () => {
     if (!network) return;
@@ -45,6 +63,10 @@ export function BuildingAttributePanel({
         newErrors.trafficPct = `Total hotspot % would be ${otherTotal + parsedTraffic}% — must not exceed 100%`;
       if (!dwellTime || isNaN(parsedDwell) || parsedDwell < 5)
         newErrors.dwellTime = "Must be at least 5 minutes";
+      if (endTime && !startTime)
+        newErrors.endTime = "Start time is required";
+      else if (startTime && endTime && endTime <= startTime)
+        newErrors.endTime = "End time must be after start time";
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
@@ -54,7 +76,14 @@ export function BuildingAttributePanel({
 
       const updatedBuilding: Building = {
         ...building,
-        hotspot: { label, trafficPercentage: parsedTraffic, dwellTimeMinutes: parsedDwell },
+        hotspot: {
+          label,
+          trafficPercentage: parsedTraffic,
+          dwellTimeMinutes: parsedDwell,
+          startTime: startTime || undefined,
+          endTime: endTime || undefined,
+          agentTypes: agentTypes.length === ALL_AGENT_TYPES.length ? [] : agentTypes,
+        },
       };
       const updatedBuildings = new Map(network.buildings);
       updatedBuildings.set(building.id, updatedBuilding);
@@ -69,6 +98,21 @@ export function BuildingAttributePanel({
     onSave({ ...network, buildings: updatedBuildings }, "Updated building hotspot");
     onClose();
   };
+
+  const toggleAgentType = (type: string) => {
+    setAgentTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
+  const computedDuration = (() => {
+    if (!startTime || !endTime) return null;
+    const [sh, sm] = startTime.split(":").map(Number);
+    const [eh, em] = endTime.split(":").map(Number);
+    const diff = eh * 60 + em - (sh * 60 + sm);
+    if (diff <= 0) return null;
+    return `Duration: ${Math.floor(diff / 60)}h ${diff % 60}min`;
+  })();
 
   const buildingName = building.tags.name ?? BUILDING_TYPE_LABELS[building.type];
   const typeLabel = BUILDING_TYPE_LABELS[building.type];
@@ -107,6 +151,59 @@ export function BuildingAttributePanel({
                 placeholder="e.g. Concert, Shopping Event"
               />
             </div>
+
+            <div className={styles.attributeSection}>
+              <label className={styles.attributeLabel}>Time Window</label>
+              <div className={styles.timeRow}>
+                <div>
+                  <label className={styles.attributeLabel}>Start Time</label>
+                  <input
+                    type="time"
+                    className={styles.attributeInput}
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                  {errors.startTime && (
+                    <span className={styles.fieldError}>{errors.startTime}</span>
+                  )}
+                </div>
+                <div>
+                  <label className={styles.attributeLabel}>End Time (optional)</label>
+                  <input
+                    type="time"
+                    className={styles.attributeInput}
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                  {errors.endTime && (
+                    <span className={styles.fieldError}>{errors.endTime}</span>
+                  )}
+                </div>
+              </div>
+              {computedDuration && (
+                <span className={styles.computedDuration}>{computedDuration}</span>
+              )}
+            </div>
+
+            <div className={styles.attributeSection}>
+              <label className={styles.attributeLabel}>Interested Agents</label>
+              <div className={styles.agentTypeGrid}>
+                {ALL_AGENT_TYPES.map((type) => (
+                  <label key={type} className={styles.agentTypeCheckbox}>
+                    <input
+                      type="checkbox"
+                      checked={agentTypes.includes(type)}
+                      onChange={() => toggleAgentType(type)}
+                    />
+                    {AGENT_TYPE_LABELS[type]}
+                  </label>
+                ))}
+              </div>
+              {agentTypes.length === ALL_AGENT_TYPES.length && (
+                <span className={styles.fieldHint}>Applies to all agent types</span>
+              )}
+            </div>
+
             <div className={styles.attributeSection}>
               <label className={styles.attributeLabel}>Traffic % (1–100)</label>
               <input
@@ -120,6 +217,7 @@ export function BuildingAttributePanel({
                 <span className={styles.fieldError}>{errors.trafficPct}</span>
               )}
             </div>
+
             <div className={styles.attributeSection}>
               <label className={styles.attributeLabel}>Dwell Time (minutes)</label>
               <input
@@ -132,6 +230,7 @@ export function BuildingAttributePanel({
               {errors.dwellTime && (
                 <span className={styles.fieldError}>{errors.dwellTime}</span>
               )}
+              <span className={styles.fieldHint}>Used when no end time is set</span>
             </div>
           </div>
         )}

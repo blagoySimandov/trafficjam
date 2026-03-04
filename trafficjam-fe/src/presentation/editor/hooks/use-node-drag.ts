@@ -75,6 +75,7 @@ export function useNodeDrag({
     const nodes = new Map<string, TrafficNode>();
     const links = new Map<string, TrafficLink>();
 
+
     const draggedNode = network.nodes.get(draggedNodeId);
     if (draggedNode) {
       nodes.set(draggedNodeId, { ...draggedNode, position: tempDragPosition });
@@ -125,7 +126,6 @@ export function useNodeDrag({
         const feature = features[0];
         nodeId = (feature.properties?.id || feature.id)?.toString() || null;
       } else {
-        // Fallback to data-model snap check if visual query fails
         const snapResult = findSnapPoint(
           [e.lngLat.lat, e.lngLat.lng],
           network,

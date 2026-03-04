@@ -58,7 +58,9 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
         String eventType = event.getEventType();
 
         String agentId = extractAgentId(attrs);
-        String linkId = attrs.get("link");
+        String linkId = (eventType.equals("PersonEntersVehicle") || eventType.equals("PersonLeavesVehicle"))
+                ? attrs.get("vehicle")
+                : attrs.get("link");
         Double[] coords = resolveCoordinates(attrs, linkId, eventType);
 
         return new TransformedEvent(

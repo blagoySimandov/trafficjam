@@ -14,7 +14,7 @@ interface BackendScenarioSummary {
   id: string;
   name: string;
   description: string | null;
-  plan_params: string;
+  plan_params: Record<string, unknown> | string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,10 +24,10 @@ interface BackendScenario extends BackendScenarioSummary {
   matsim_config: Record<string, unknown> | null;
 }
 
-function parseAgentConfig(planParams: string): AgentConfig {
-  return planParams
-    ? (JSON.parse(planParams) as AgentConfig)
-    : DEFAULT_AGENT_CONFIG;
+function parseAgentConfig(planParams: Record<string, unknown> | string | null): AgentConfig {
+  if (!planParams) return DEFAULT_AGENT_CONFIG;
+  if (typeof planParams === "string") return JSON.parse(planParams) as AgentConfig;
+  return planParams as unknown as AgentConfig;
 }
 
 function toScenarioSummary(s: BackendScenarioSummary): Scenario {
@@ -81,8 +81,8 @@ async function createScenario(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name,
-      plan_params: JSON.stringify(config),
-      network_config: {},
+      plan_params: config,
+      network_config: null,
     }),
   });
   await assertOk(response);
@@ -97,7 +97,7 @@ async function updateScenario(
   if (updates.name !== undefined) body.name = updates.name;
   if (updates.description !== undefined) body.description = updates.description;
   if (updates.agentConfig !== undefined)
-    body.plan_params = JSON.stringify(updates.agentConfig);
+    body.plan_params = updates.agentConfig;
 
   const response = await fetch(`${BASE_URL}/scenarios/${id}`, {
     method: "PUT",

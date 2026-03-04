@@ -1,15 +1,16 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
 from datetime import time
-
-from .config import config as _env_config
 
 
 class HotspotConfig(BaseModel):
     label: str = ""
     trafficPercentage: float = 0
-    dwellTimeMinutes: int = 0
+    dwellTimeMinutes: int = 60
+    startTime: str | None = None
+    endTime: str | None = None
+    agentTypes: list[str] = []
 
 
 class Building(BaseModel):
@@ -64,12 +65,19 @@ class DailyPlan(BaseModel):
         if self.activities and leg_mode:
             self.transport.append(Legs(mode=leg_mode))
         self.activities.append(activity)
-        self._sort_activities()
 
-    def _sort_activities(self) -> None:
-        self.activities.sort(
-            key=lambda a: (a.end_time is None, a.end_time or time(23, 59, 59))
-        )
+    def prepend_activity_after_home(self, activity: Activity, new_departure: time, leg_mode: str) -> None:
+        home = self.activities[0]
+        self.activities[0] = Activity(type=home.type, location=home.location, end_time=new_departure)
+        self.activities.insert(1, activity)
+        self.transport.insert(0, Legs(mode=leg_mode))
+
+    def append_evening_visit(self, activity: Activity, departure_time: time, leg_mode: str) -> None:
+        final_home = self.activities.pop()
+        self.transport.pop()
+        self.add_activity(Activity(type=ActivityType.HOME, location=final_home.location, end_time=departure_time), leg_mode)
+        self.add_activity(activity, leg_mode)
+        self.add_activity(Activity(type=ActivityType.HOME, location=final_home.location), leg_mode)
 
 
 class TransportMode(str, Enum):
@@ -102,22 +110,3 @@ class Adult(Agent):
     needs_to_dropoff_children: bool = False
 
 
-class PlannerConfig(BaseModel):
-    population_density: int = _env_config.default_population_density
-    shopping_probability: float = _env_config.shopping_probability
-    max_shopping_distance_km: float = _env_config.max_shopping_distance_km
-    healthcare_chance: float = _env_config.healthcare_chance
-    elderly_age_threshold: int = _env_config.elderly_age_threshold
-    kindergarten_age: int = _env_config.kindergarten_age
-    min_independent_school_age: int = _env_config.min_independent_school_age
-    errand_min_minutes: int = _env_config.errand_min_minutes
-    errand_max_minutes: int = _env_config.errand_max_minutes
-    child_dropoff_min_minutes: int = _env_config.child_dropoff_min_minutes
-    child_dropoff_max_minutes: int = _env_config.child_dropoff_max_minutes
-
-
-class PlanCreationRequest(BaseModel):
-    bounds: dict[str, float]
-    buildings: list[Building]
-    country_code: str = "IRL"
-    config: PlannerConfig = Field(default_factory=lambda: PlannerConfig())

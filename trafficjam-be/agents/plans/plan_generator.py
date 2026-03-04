@@ -8,11 +8,11 @@ from ..models import (
     Adult,
     Child,
     Building,
+    HotspotConfig,
     TransportMode,
     Activity,
     DailyPlan,
     ActivityType,
-    PlannerConfig,
 )
 from .activity_scheduler import (
     generate_departure_time_adult,
@@ -23,6 +23,7 @@ from .activity_scheduler import (
     generate_errand_duration,
     should_go_shopping,
 )
+from ..config import AgentConfig
 from constants import SHOP_TYPES
 
 
@@ -55,24 +56,8 @@ def _minutes_to_time(minutes: int) -> time:
     return time(hour=minutes // 60, minute=minutes % 60)
 
 
-def _maybe_visit_hotspot(buildings: list[Building]) -> tuple[Building, int] | None:
-    hotspots = [b for b in buildings if b.hotspot and b.hotspot.trafficPercentage > 0]
-    if not hotspots:
-        return None
-    total = sum(b.hotspot.trafficPercentage for b in hotspots if b.hotspot) / 100.0
-    if random.random() > min(total, 1.0):
-        return None
-    weights = [b.hotspot.trafficPercentage for b in hotspots if b.hotspot]
-    selected = random.choices(hotspots, weights=weights)[0]
-    dwell_raw = (
-        selected.hotspot.dwellTimeMinutes if selected.hotspot else 0
-    ) + random.randint(-20, 20)
-    dwell = max(5, dwell_raw)
-    return selected, dwell
-
-
 def _find_nearby_shopping(
-    home: Building, buildings: list[Building], config: PlannerConfig
+    home: Building, buildings: list[Building], agent_config: AgentConfig
 ) -> Building | None:
     home_pos = (home.position[1], home.position[0])
 
@@ -83,7 +68,7 @@ def _find_nearby_shopping(
         if is_shop or has_tag:
             b_pos = (b.position[1], b.position[0])
             dist = haversine(home_pos, b_pos)
-            if dist <= config.max_shopping_distance_km:
+            if dist <= agent_config.max_shopping_distance_km:
                 shops.append((b, dist))
 
     if not shops:
@@ -93,7 +78,7 @@ def _find_nearby_shopping(
     return random.choice(shops[: min(5, len(shops))])[0]
 
 
-def generate_plan_adult_dropoff_work(adult: Adult, config: PlannerConfig) -> DailyPlan:
+def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) -> DailyPlan:
     child = adult.children[0]
     mode = _get_mode(adult)
     plan = DailyPlan()
@@ -105,19 +90,14 @@ def generate_plan_adult_dropoff_work(adult: Adult, config: PlannerConfig) -> Dai
         plan,
         ActivityType.HOME,
         adult.home.position,
-        end_time=generate_departure_time_school(child.age, config),
-    )
-    dropoff_duration = time(
-        minute=random.randint(
-            config.child_dropoff_min_minutes, config.child_dropoff_max_minutes
-        )
+        end_time=generate_departure_time_school(child.age, agent_config),
     )
     _add(
         plan,
         ActivityType.EDUCATION,
         child.school.position,
         mode,
-        duration=dropoff_duration,
+        duration=time(minute=random.randint(agent_config.child_dropoff_min_minutes, agent_config.child_dropoff_max_minutes)),
     )
     _add(
         plan,
@@ -131,7 +111,7 @@ def generate_plan_adult_dropoff_work(adult: Adult, config: PlannerConfig) -> Dai
         ActivityType.EDUCATION,
         child.school.position,
         mode,
-        duration=dropoff_duration,
+        duration=time(minute=random.randint(agent_config.child_dropoff_min_minutes, agent_config.child_dropoff_max_minutes)),
     )
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
@@ -139,10 +119,7 @@ def generate_plan_adult_dropoff_work(adult: Adult, config: PlannerConfig) -> Dai
 
 
 def generate_plan_adult_work(
-    adult: Adult,
-    buildings: list[Building],
-    config: PlannerConfig,
-    with_shopping: bool = True,
+    adult: Adult, buildings: list[Building], agent_config: AgentConfig, with_shopping: bool = True
 ) -> DailyPlan | None:
     if not adult.employed or not adult.work:
         return None
@@ -164,25 +141,15 @@ def generate_plan_adult_work(
         duration=generate_work_duration(),
     )
 
-    hotspot_result = _maybe_visit_hotspot(buildings)
-    if hotspot_result:
-        hotspot_building, dwell_minutes = hotspot_result
-        _add(
-            plan,
-            ActivityType.LEISURE,
-            hotspot_building.position,
-            mode,
-            duration=_minutes_to_time(dwell_minutes),
-        )
-    elif with_shopping and should_go_shopping(config):
-        shop = _find_nearby_shopping(adult.home, buildings, config)
+    if with_shopping and should_go_shopping(agent_config):
+        shop = _find_nearby_shopping(adult.home, buildings, agent_config)
         if shop:
             _add(
                 plan,
                 ActivityType.SHOPPING,
                 shop.position,
                 mode,
-                duration=generate_errand_duration(config),
+                duration=generate_errand_duration(agent_config),
             )
 
     _add(plan, ActivityType.HOME, adult.home.position, mode)
@@ -190,11 +157,14 @@ def generate_plan_adult_work(
     return plan
 
 
-def generate_plan_child(child: Child, config: PlannerConfig) -> DailyPlan | None:
+def generate_plan_child(
+    child: Child,
+    agent_config: AgentConfig,
+) -> DailyPlan | None:
     if (
         child.needs_dropoff
         or not child.school
-        or child.age < config.min_independent_school_age
+        or child.age < agent_config.min_independent_school_age
     ):
         return None
 
@@ -205,14 +175,14 @@ def generate_plan_child(child: Child, config: PlannerConfig) -> DailyPlan | None
         plan,
         ActivityType.HOME,
         child.home.position,
-        end_time=generate_departure_time_school(child.age, config),
+        end_time=generate_departure_time_school(child.age, agent_config),
     )
     _add(
         plan,
         ActivityType.EDUCATION,
         child.school.position,
         mode,
-        duration=generate_school_duration(child.age, config),
+        duration=generate_school_duration(child.age, agent_config),
     )
     _add(plan, ActivityType.HOME, child.home.position, mode)
 
@@ -222,7 +192,7 @@ def generate_plan_child(child: Child, config: PlannerConfig) -> DailyPlan | None
 def _generate_errand_plan(
     adult: Adult,
     buildings: list[Building],
-    config: PlannerConfig,
+    agent_config: AgentConfig,
     healthcare_chance: float = 0.0,
 ) -> DailyPlan:
     mode = _get_mode(adult)
@@ -235,31 +205,20 @@ def _generate_errand_plan(
         end_time=generate_departure_time_elderly(),
     )
 
-    hotspot_result = _maybe_visit_hotspot(buildings)
-    if hotspot_result:
-        hotspot_building, dwell_minutes = hotspot_result
+    shop = _find_nearby_shopping(adult.home, buildings, agent_config)
+    if shop:
+        act_type = (
+            ActivityType.HEALTHCARE
+            if healthcare_chance > 0 and random.random() < healthcare_chance
+            else ActivityType.SHOPPING
+        )
         _add(
             plan,
-            ActivityType.LEISURE,
-            hotspot_building.position,
+            act_type,
+            shop.position,
             mode,
-            duration=_minutes_to_time(dwell_minutes),
+            duration=generate_errand_duration(agent_config),
         )
-    else:
-        shop = _find_nearby_shopping(adult.home, buildings, config)
-        if shop:
-            act_type = (
-                ActivityType.HEALTHCARE
-                if healthcare_chance > 0 and random.random() < healthcare_chance
-                else ActivityType.SHOPPING
-            )
-            _add(
-                plan,
-                act_type,
-                shop.position,
-                mode,
-                duration=generate_errand_duration(config),
-            )
 
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
@@ -267,41 +226,137 @@ def _generate_errand_plan(
 
 
 def generate_plan_non_employed(
-    adult: Adult, buildings: list[Building], config: PlannerConfig
+    adult: Adult, buildings: list[Building], agent_config: AgentConfig
 ) -> DailyPlan | None:
-    if adult.employed or adult.age >= config.elderly_age_threshold:
+    if adult.employed or adult.age >= agent_config.elderly_age_threshold:
         return None
-    return _generate_errand_plan(adult, buildings, config)
+    return _generate_errand_plan(adult, buildings, agent_config)
 
 
 def generate_plan_elderly(
-    adult: Adult, buildings: list[Building], config: PlannerConfig
+    adult: Adult, buildings: list[Building], agent_config: AgentConfig
 ) -> DailyPlan | None:
-    if adult.age < config.elderly_age_threshold:
+    if adult.age < agent_config.elderly_age_threshold:
         return None
     return _generate_errand_plan(
-        adult, buildings, config, healthcare_chance=config.healthcare_chance
+        adult, buildings, agent_config, healthcare_chance=agent_config.healthcare_chance
     )
 
 
-def generate_plan_for_agent(
-    agent: Agent, buildings: list[Building], config: PlannerConfig
-) -> DailyPlan | None:
+def _get_agent_type(agent: Agent, agent_config: AgentConfig) -> str:
     if isinstance(agent, Child):
-        return generate_plan_child(agent, config)
+        return "older_child"
+    assert isinstance(agent, Adult)
+    if agent.age >= agent_config.elderly_age_threshold:
+        return "elderly"
+    if agent.employed:
+        return "employed_adult"
+    return "non_employed_adult"
 
-    if isinstance(agent, Adult):
+
+def _get_hotspot_timing(agent_type: str, start_time_str: str | None) -> str | None:
+    if start_time_str is None:
+        return "evening"
+    h, m = map(int, start_time_str.split(":"))
+    mins = h * 60 + m
+    if agent_type == "employed_adult":
+        if mins < 7 * 60 + 30:
+            return "morning"
+        if mins >= 16 * 60:
+            return "evening"
+        return None
+    if agent_type == "older_child":
+        if mins < 7 * 60 + 30:
+            return "morning"
+        if mins >= 14 * 60 + 30:
+            return "evening"
+        return None
+    if mins < 9 * 60:
+        return "morning"
+    if mins < 17 * 60:
+        return "daytime"
+    return "evening"
+
+
+def _compute_departure_time(hotspot: HotspotConfig) -> time:
+    if hotspot.startTime:
+        h, m = map(int, hotspot.startTime.split(":"))
+        departure_mins = max(0, h * 60 + m - random.randint(15, 45))
+        return _minutes_to_time(departure_mins)
+    return _minutes_to_time(random.randint(17 * 60, 20 * 60))
+
+
+def _compute_dwell_time(hotspot: HotspotConfig) -> time:
+    if hotspot.startTime and hotspot.endTime:
+        sh, sm = map(int, hotspot.startTime.split(":"))
+        eh, em = map(int, hotspot.endTime.split(":"))
+        dwell = max(5, (eh * 60 + em) - (sh * 60 + sm))
+    else:
+        dwell = max(5, hotspot.dwellTimeMinutes + random.randint(-20, 20))
+    return _minutes_to_time(dwell)
+
+
+def _insert_hotspot_into_plan(
+    plan: DailyPlan, building: Building, hotspot: HotspotConfig, mode: str, timing: str
+) -> None:
+    departure = _compute_departure_time(hotspot)
+    dwell = _compute_dwell_time(hotspot)
+    activity = Activity(type=ActivityType.LEISURE, location=building.position, duration=dwell)
+    if timing in ("morning", "daytime"):
+        plan.prepend_activity_after_home(activity, departure, mode)
+    elif timing == "evening":
+        plan.append_evening_visit(activity, departure, mode)
+
+
+def _append_hotspot_visit(
+    plan: DailyPlan, buildings: list[Building], agent_type: str, mode: str
+) -> None:
+    eligible: list[tuple[Building, str]] = []
+    for b in buildings:
+        if not b.hotspot or b.hotspot.trafficPercentage <= 0:
+            continue
+        if b.hotspot.agentTypes and agent_type not in b.hotspot.agentTypes:
+            continue
+        timing = _get_hotspot_timing(agent_type, b.hotspot.startTime)
+        if timing is None:
+            continue
+        eligible.append((b, timing))
+    if not eligible:
+        return
+    total = sum(b.hotspot.trafficPercentage for b, _ in eligible if b.hotspot) / 100.0
+    if random.random() > min(total, 1.0):
+        return
+    weights = [b.hotspot.trafficPercentage for b, _ in eligible if b.hotspot]
+    selected_building, selected_timing = random.choices(eligible, weights=weights)[0]
+    if selected_building.hotspot:
+        _insert_hotspot_into_plan(plan, selected_building, selected_building.hotspot, mode, selected_timing)
+
+
+def generate_plan_for_agent(
+    agent: Agent, buildings: list[Building], agent_config: AgentConfig
+) -> DailyPlan | None:
+    plan: DailyPlan | None = None
+
+    if isinstance(agent, Child):
+        plan = generate_plan_child(agent, agent_config)
+    elif isinstance(agent, Adult):
         if (
             agent.needs_to_dropoff_children
             and agent.employed
             and agent.children
             and agent.children[0].school
         ):
-            return generate_plan_adult_dropoff_work(agent, config)
-        if agent.age >= config.elderly_age_threshold:
-            return generate_plan_elderly(agent, buildings, config)
-        if agent.employed:
-            return generate_plan_adult_work(agent, buildings, config)
-        return generate_plan_non_employed(agent, buildings, config)
+            plan = generate_plan_adult_dropoff_work(agent, agent_config)
+        elif agent.age >= agent_config.elderly_age_threshold:
+            plan = generate_plan_elderly(agent, buildings, agent_config)
+        elif agent.employed:
+            plan = generate_plan_adult_work(agent, buildings, agent_config)
+        else:
+            plan = generate_plan_non_employed(agent, buildings, agent_config)
 
-    return None
+    if plan is not None:
+        mode = _get_mode(agent)
+        agent_type = _get_agent_type(agent, agent_config)
+        _append_hotspot_visit(plan, buildings, agent_type, mode)
+
+    return plan
