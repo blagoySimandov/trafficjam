@@ -25,7 +25,7 @@ class ScenarioSummary(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None
-    plan_params: dict[str, Any]
+    plan_params: dict[str, Any] | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -37,7 +37,7 @@ class ScenarioResponse(BaseModel):
     name: str
     description: str | None
     network_config: dict[str, Any] | None
-    plan_params: dict[str, Any]
+    plan_params: dict[str, Any] | None = None
     matsim_config: dict[str, Any] | None
     created_at: datetime
     updated_at: datetime

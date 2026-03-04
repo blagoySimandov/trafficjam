@@ -13,7 +13,7 @@ interface BackendScenarioSummary {
   id: string;
   name: string;
   description: string | null;
-  plan_params: Record<string, unknown>;
+  plan_params: Record<string, unknown> | string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,8 +23,10 @@ interface BackendScenario extends BackendScenarioSummary {
   matsim_config: Record<string, unknown> | null;
 }
 
-function parseAgentConfig(planParams: Record<string, unknown>): AgentConfig {
-  return planParams ? (planParams as unknown as AgentConfig) : DEFAULT_AGENT_CONFIG;
+function parseAgentConfig(planParams: Record<string, unknown> | string | null): AgentConfig {
+  if (!planParams) return DEFAULT_AGENT_CONFIG;
+  if (typeof planParams === "string") return JSON.parse(planParams) as AgentConfig;
+  return planParams as unknown as AgentConfig;
 }
 
 function toScenarioSummary(s: BackendScenarioSummary): Scenario {

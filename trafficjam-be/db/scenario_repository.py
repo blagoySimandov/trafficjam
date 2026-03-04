@@ -1,3 +1,4 @@
+import json
 import uuid
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -33,11 +34,11 @@ class ScenarioRepository:
             scenario = await session.get(Scenario, scenario_id)
             if scenario:
                 if isinstance(scenario.network_config, str):
-                    import json
                     scenario.network_config = json.loads(scenario.network_config)
                 if isinstance(scenario.matsim_config, str):
-                    import json
                     scenario.matsim_config = json.loads(scenario.matsim_config)
+                if isinstance(scenario.plan_params, str):
+                    scenario.plan_params = json.loads(scenario.plan_params)
             return scenario
 
     async def list_scenarios(self) -> list[Scenario]:
@@ -51,7 +52,13 @@ class ScenarioRepository:
         ]
         async with self.session_factory() as session:
             result = await session.execute(select(*summary_columns))
-            return [row._mapping for row in result.all()]
+            rows = []
+            for row in result.all():
+                d = dict(row._mapping)
+                if isinstance(d.get("plan_params"), str):
+                    d["plan_params"] = json.loads(d["plan_params"])
+                rows.append(d)
+            return rows
 
     async def update_scenario(
         self,

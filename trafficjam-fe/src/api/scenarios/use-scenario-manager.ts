@@ -58,6 +58,14 @@ export function useScenarioManager() {
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) =>
       scenariosApi.updateScenario(id, updates),
     onSuccess: (_data, variables) => {
+      queryClient.setQueryData<Scenario | null>(
+        ["scenario", variables.id],
+        (old) => (old ? { ...old, ...variables.updates } : old),
+      );
+      queryClient.setQueryData<Scenario[]>(
+        ["scenarios"],
+        (old) => old?.map((s) => (s.id === variables.id ? { ...s, ...variables.updates } : s)),
+      );
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
       queryClient.invalidateQueries({ queryKey: ["scenario", variables.id] });
     },
