@@ -1,9 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
 from datetime import time
-
-from .config import config as _env_config
 
 
 class Building(BaseModel):
@@ -95,22 +93,3 @@ class Adult(Agent):
     needs_to_dropoff_children: bool = False
 
 
-class PlannerConfig(BaseModel):
-    population_density: int = _env_config.default_population_density
-    shopping_probability: float = _env_config.shopping_probability
-    max_shopping_distance_km: float = _env_config.max_shopping_distance_km
-    healthcare_chance: float = _env_config.healthcare_chance
-    elderly_age_threshold: int = _env_config.elderly_age_threshold
-    kindergarten_age: int = _env_config.kindergarten_age
-    min_independent_school_age: int = _env_config.min_independent_school_age
-    errand_min_minutes: int = _env_config.errand_min_minutes
-    errand_max_minutes: int = _env_config.errand_max_minutes
-    child_dropoff_min_minutes: int = _env_config.child_dropoff_min_minutes
-    child_dropoff_max_minutes: int = _env_config.child_dropoff_max_minutes
-
-
-class PlanCreationRequest(BaseModel):
-    bounds: dict[str, float]
-    buildings: list[Building]
-    country_code: str = "IRL"
-    config: PlannerConfig = Field(default_factory=lambda: PlannerConfig())

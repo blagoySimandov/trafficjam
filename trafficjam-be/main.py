@@ -1,7 +1,7 @@
 import asyncio
+import json
 import uuid
 import logging
-import json
 from contextlib import asynccontextmanager
 from io import StringIO
 from typing import List, Optional
@@ -14,12 +14,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette import EventSourceResponse
 
 from pydantic import BaseModel
-from agents.models import PlanCreationRequest, PlannerConfig, Building as AgentBuilding
+from agents.models import Building as AgentBuilding
 from agents.plans import generate_plan_for_agent, MATSimXMLWriter
 from agents.agent_creation import create_agents_from_network
+from agents.config import AgentConfig
 from config import get_settings
 from consumers import EventConsumer
-from db import engine, async_session_factory, RunRepository, RunStatus
+from db import (
+    engine,
+    async_session_factory,
+    RunRepository,
+    RunStatus,
+    ScenarioRepository,
+)
 from api.scenarios import router as scenarios_router
 
 MAX_AGENTS = 1000
@@ -69,7 +76,7 @@ async def _monitor_all_statuses(js):
     consumer = EventConsumer(js, "*", "*")
     while True:
         try:
-            async for scenario_id, run_id, status_raw in consumer.listen_all_statuses():
+            async for _, run_id, status_raw in consumer.listen_all_statuses():
                 try:
                     status_msg = StatusMessage.model_validate(status_raw)
                     parsed_run_id = uuid.UUID(run_id)
@@ -135,8 +142,28 @@ async def create_run(scenario_id: str, run_id: str | None = None):
     }
 
 
-def _generate_plans_xml(bounds: dict, buildings: List[AgentBuilding]) -> str:
-    config = PlannerConfig()
+def _agent_config_from_plan_params(plan_params: dict) -> AgentConfig:
+    return AgentConfig(
+        default_population_density=plan_params.get("populationDensity", 100),
+        shopping_probability=plan_params.get("shoppingProbability", 0.40),
+        max_shopping_distance_km=plan_params.get("maxShoppingDistanceKm", 5.0),
+        healthcare_chance=plan_params.get("healthcareChance", 0.30),
+        elderly_age_threshold=plan_params.get("elderlyAgeThreshold", 65),
+        kindergarten_age=plan_params.get("kindergartenAge", 6),
+        min_independent_school_age=plan_params.get("minIndependentSchoolAge", 12),
+        errand_min_minutes=plan_params.get("errandMinMinutes", 30),
+        errand_max_minutes=plan_params.get("errandMaxMinutes", 120),
+        child_dropoff_min_minutes=plan_params.get("childDropoffMinMinutes", 5),
+        child_dropoff_max_minutes=plan_params.get("childDropoffMaxMinutes", 10),
+    )
+
+
+def _generate_plans_xml(
+    bounds: dict,
+    buildings: List[AgentBuilding],
+    agent_config: AgentConfig,
+    max_agents: int,
+) -> str:
     writer = MATSimXMLWriter()
     writer.create_plans_document()
 
@@ -145,14 +172,12 @@ def _generate_plans_xml(bounds: dict, buildings: List[AgentBuilding]) -> str:
         buildings=buildings,
         transport_routes=[],
         country_code="IRL",
-        config=config,
+        agent_config=agent_config,
+        max_agents=max_agents,
     )
 
-    if len(agents) > MAX_AGENTS:
-        agents = agents[:MAX_AGENTS]
-
     for agent in agents:
-        plan = generate_plan_for_agent(agent, buildings, config)
+        plan = generate_plan_for_agent(agent, buildings, agent_config)
         if plan:
             writer.add_person_plan(agent.id, plan)
 
@@ -199,10 +224,16 @@ async def start_run(
             detail="Buildings and bounds are required for plan generation.",
         )
 
+    scenario_repo = ScenarioRepository(async_session_factory)
+    scenario = await scenario_repo.get_scenario(parsed_scenario_id)
+    plan_params = (scenario.plan_params or {}) if scenario else {}
+    agent_config = _agent_config_from_plan_params(plan_params)
+    max_agents = plan_params.get("maxAgents", 1000)
+
     try:
         buildings_list, bounds_dict = _parse_buildings_and_bounds(buildings, bounds)
         plans_xml = await asyncio.to_thread(
-            _generate_plans_xml, bounds_dict, buildings_list
+            _generate_plans_xml, bounds_dict, buildings_list, agent_config, max_agents
         )
     except Exception as e:
         logger.error(f"Failed to generate plans: {e}")
@@ -268,36 +299,6 @@ async def _submit_to_simengine(
         "simulation_id": sim_data.get("simulationId"),
         "status": "RUNNING",
     }
-
-
-@app.post("/plan_creation")
-async def plan_creation(request: PlanCreationRequest):
-    writer = MATSimXMLWriter()
-    writer.create_plans_document()
-
-    agents = create_agents_from_network(
-        bounds=request.bounds,
-        buildings=request.buildings,
-        transport_routes=[],
-        country_code=request.country_code,
-        config=request.config,
-    )
-
-    if len(agents) > MAX_AGENTS:
-        agents = agents[:MAX_AGENTS]
-
-    for agent in agents:
-        plan = generate_plan_for_agent(agent, request.buildings, request.config)
-        if plan:
-            writer.add_person_plan(agent.id, plan)
-
-    stream = StringIO()
-    writer.write_to_stream(stream)
-    xml_content = stream.getvalue()
-
-    with open("output/test.xml", "w", encoding="utf-8") as f:
-        f.write(xml_content)
-    return
 
 
 @app.get("/scenarios/{scenario_id}/runs/{run_id}/events/stream")

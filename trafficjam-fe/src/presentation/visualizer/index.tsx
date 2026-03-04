@@ -38,7 +38,7 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
     }),
 
     new ScatterplotLayer({
-      id: "cars",
+      id: "agents",
       data: getVehiclePositions(trips, simulation.time),
       getPosition: (d: [number, number]) => d,
       getFillColor: [255, 220, 0],

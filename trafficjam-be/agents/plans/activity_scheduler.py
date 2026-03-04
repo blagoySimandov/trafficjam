@@ -2,6 +2,7 @@ import random
 from datetime import time
 
 from ..config import (
+    AgentConfig,
     ADULT_DEPARTURE_CUMULATIVE_PROBS,
     ELDERLY_DEPARTURE_HOURS,
     ELDERLY_DEPARTURE_WEIGHTS,
@@ -11,7 +12,6 @@ from ..config import (
     SCHOOL_DEPARTURE_HOURS,
     SCHOOL_DEPARTURE_WEIGHTS,
 )
-from ..models import PlannerConfig
 
 
 def generate_departure_time_adult() -> time:
@@ -41,8 +41,8 @@ def generate_departure_time_elderly() -> time:
     return time(hour, random.randint(0, 59))
 
 
-def generate_departure_time_school(age: int, config: PlannerConfig) -> time:
-    if age < config.min_independent_school_age:
+def generate_departure_time_school(age: int, agent_config: AgentConfig) -> time:
+    if age < agent_config.min_independent_school_age:
         hour, minute = 8, random.randint(0, 30)
     else:
         hour = random.choices(SCHOOL_DEPARTURE_HOURS, weights=SCHOOL_DEPARTURE_WEIGHTS)[0]
@@ -57,10 +57,10 @@ def generate_work_duration() -> time:
     return time(hours, minutes)
 
 
-def generate_school_duration(age: int, config: PlannerConfig) -> time:
-    if age < config.kindergarten_age:
+def generate_school_duration(age: int, agent_config: AgentConfig) -> time:
+    if age < agent_config.kindergarten_age:
         hours = random.randint(4, 6)
-    elif age < config.min_independent_school_age:
+    elif age < agent_config.min_independent_school_age:
         hours = random.randint(5, 6)
     else:
         hours = random.randint(6, 7)
@@ -68,10 +68,10 @@ def generate_school_duration(age: int, config: PlannerConfig) -> time:
     return time(hours, random.choice([0, 30]))
 
 
-def generate_errand_duration(config: PlannerConfig) -> time:
-    total_minutes = random.randint(config.errand_min_minutes, config.errand_max_minutes)
+def generate_errand_duration(agent_config: AgentConfig) -> time:
+    total_minutes = random.randint(agent_config.errand_min_minutes, agent_config.errand_max_minutes)
     return time(total_minutes // 60, total_minutes % 60)
 
 
-def should_go_shopping(config: PlannerConfig) -> bool:
-    return random.random() < config.shopping_probability
+def should_go_shopping(agent_config: AgentConfig) -> bool:
+    return random.random() < agent_config.shopping_probability

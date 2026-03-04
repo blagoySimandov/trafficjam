@@ -25,7 +25,7 @@ class Scenario(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     network_config: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    plan_params: Mapped[str] = mapped_column(Text, nullable=False)
+    plan_params: Mapped[dict] = mapped_column(JSONB, nullable=False)
     matsim_config: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
