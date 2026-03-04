@@ -30,9 +30,6 @@ export function BuildingAttributePanel({
   const [trafficPct, setTrafficPct] = useState(
     String(building.hotspot?.trafficPercentage ?? 10)
   );
-  const [dwellTime, setDwellTime] = useState(
-    String(building.hotspot?.dwellTimeMinutes ?? 60)
-  );
   const [startTime, setStartTime] = useState(building.hotspot?.startTime ?? "");
   const [endTime, setEndTime] = useState(building.hotspot?.endTime ?? "");
   const [agentTypes, setAgentTypes] = useState<string[]>(
@@ -40,7 +37,6 @@ export function BuildingAttributePanel({
   );
   const [errors, setErrors] = useState<{
     trafficPct?: string;
-    dwellTime?: string;
     startTime?: string;
     endTime?: string;
   }>({});
@@ -51,7 +47,6 @@ export function BuildingAttributePanel({
     if (isHotspot) {
       const newErrors: typeof errors = {};
       const parsedTraffic = Number(trafficPct);
-      const parsedDwell = Number(dwellTime);
 
       const otherTotal = [...(network.buildings?.values() ?? [])]
         .filter((b) => b.id !== building.id && b.hotspot)
@@ -61,11 +56,11 @@ export function BuildingAttributePanel({
         newErrors.trafficPct = "Must be between 1 and 100";
       else if (otherTotal + parsedTraffic > 100)
         newErrors.trafficPct = `Total hotspot % would be ${otherTotal + parsedTraffic}% — must not exceed 100%`;
-      if (!dwellTime || isNaN(parsedDwell) || parsedDwell < 5)
-        newErrors.dwellTime = "Must be at least 5 minutes";
-      if (endTime && !startTime)
-        newErrors.endTime = "Start time is required";
-      else if (startTime && endTime && endTime <= startTime)
+      if (!startTime)
+        newErrors.startTime = "Required";
+      if (!endTime)
+        newErrors.endTime = "Required";
+      else if (startTime && endTime <= startTime)
         newErrors.endTime = "End time must be after start time";
 
       if (Object.keys(newErrors).length > 0) {
@@ -79,7 +74,6 @@ export function BuildingAttributePanel({
         hotspot: {
           label,
           trafficPercentage: parsedTraffic,
-          dwellTimeMinutes: parsedDwell,
           startTime: startTime || undefined,
           endTime: endTime || undefined,
           agentTypes: agentTypes.length === ALL_AGENT_TYPES.length ? [] : agentTypes,
@@ -168,7 +162,7 @@ export function BuildingAttributePanel({
                   )}
                 </div>
                 <div>
-                  <label className={styles.attributeLabel}>End Time (optional)</label>
+                  <label className={styles.attributeLabel}>End Time</label>
                   <input
                     type="time"
                     className={styles.attributeInput}
@@ -218,20 +212,6 @@ export function BuildingAttributePanel({
               )}
             </div>
 
-            <div className={styles.attributeSection}>
-              <label className={styles.attributeLabel}>Dwell Time (minutes)</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                className={styles.attributeInput}
-                value={dwellTime}
-                onChange={(e) => setDwellTime(e.target.value.replace(/[^0-9]/g, ""))}
-              />
-              {errors.dwellTime && (
-                <span className={styles.fieldError}>{errors.dwellTime}</span>
-              )}
-              <span className={styles.fieldHint}>Used when no end time is set</span>
-            </div>
           </div>
         )}
       </div>

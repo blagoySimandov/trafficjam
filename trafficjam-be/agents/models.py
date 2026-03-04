@@ -7,7 +7,6 @@ from datetime import time
 class HotspotConfig(BaseModel):
     label: str = ""
     trafficPercentage: float = 0
-    dwellTimeMinutes: int = 60
     startTime: str | None = None
     endTime: str | None = None
     agentTypes: list[str] = []

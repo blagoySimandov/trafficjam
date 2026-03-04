@@ -39,7 +39,6 @@ export type BuildingType = "retail" | "apartments" | "supermarket" | "school" | 
 export interface BuildingHotspot {
   label: string;
   trafficPercentage: number;
-  dwellTimeMinutes: number;
   startTime?: string;
   endTime?: string;
   agentTypes: string[];

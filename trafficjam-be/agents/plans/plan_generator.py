@@ -256,7 +256,7 @@ def _get_agent_type(agent: Agent, agent_config: AgentConfig) -> str:
 
 def _get_hotspot_timing(agent_type: str, start_time_str: str | None) -> str | None:
     if start_time_str is None:
-        return "evening"
+        return None
     h, m = map(int, start_time_str.split(":"))
     mins = h * 60 + m
     if agent_type == "employed_adult":
@@ -279,21 +279,15 @@ def _get_hotspot_timing(agent_type: str, start_time_str: str | None) -> str | No
 
 
 def _compute_departure_time(hotspot: HotspotConfig) -> time:
-    if hotspot.startTime:
-        h, m = map(int, hotspot.startTime.split(":"))
-        departure_mins = max(0, h * 60 + m - random.randint(15, 45))
-        return _minutes_to_time(departure_mins)
-    return _minutes_to_time(random.randint(17 * 60, 20 * 60))
+    h, m = map(int, hotspot.startTime.split(":"))  # type: ignore[union-attr]
+    departure_mins = max(0, h * 60 + m - random.randint(15, 45))
+    return _minutes_to_time(departure_mins)
 
 
 def _compute_dwell_time(hotspot: HotspotConfig) -> time:
-    if hotspot.startTime and hotspot.endTime:
-        sh, sm = map(int, hotspot.startTime.split(":"))
-        eh, em = map(int, hotspot.endTime.split(":"))
-        dwell = max(5, (eh * 60 + em) - (sh * 60 + sm))
-    else:
-        dwell = max(5, hotspot.dwellTimeMinutes + random.randint(-20, 20))
-    return _minutes_to_time(dwell)
+    sh, sm = map(int, hotspot.startTime.split(":"))   # type: ignore[union-attr]
+    eh, em = map(int, hotspot.endTime.split(":"))     # type: ignore[union-attr]
+    return _minutes_to_time(max(5, (eh * 60 + em) - (sh * 60 + sm)))
 
 
 def _insert_hotspot_into_plan(
@@ -314,6 +308,8 @@ def _append_hotspot_visit(
     eligible: list[tuple[Building, str]] = []
     for b in buildings:
         if not b.hotspot or b.hotspot.trafficPercentage <= 0:
+            continue
+        if not b.hotspot.startTime or not b.hotspot.endTime:
             continue
         if b.hotspot.agentTypes and agent_type not in b.hotspot.agentTypes:
             continue
