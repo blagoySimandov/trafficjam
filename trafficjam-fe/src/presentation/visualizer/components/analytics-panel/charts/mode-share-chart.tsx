@@ -23,10 +23,13 @@ function toChartData(data: ModeUser[]) {
 }
 
 export function ModeShareChart({ data, isLoading }: ModeShareChartProps) {
+  const chartData = useMemo(() => {
+    if (!data?.length) return [];
+    return toChartData(data);
+  }, [data]);
+
   if (isLoading) return <ChartSkeleton />;
   if (!data?.length) return null;
-
-  const chartData = useMemo(() => toChartData(data), [data]);
 
   return (
     <PieChart width={340} height={220}>
