@@ -29,6 +29,8 @@ export default function App() {
   } = useScenarioManager();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [isNamingOpen, setIsNamingOpen] = useState(false);
+  const [pendingScenarioName, setPendingScenarioName] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
   const [runInfo, setRunInfo] = useState<{
@@ -65,15 +67,23 @@ export default function App() {
     setDeleteTarget(null);
   }, [deleteTarget, deleteScenario]);
 
+  const handleConfirmScenarioName = useCallback((name: string) => {
+    setIsNamingOpen(false);
+    setPendingScenarioName(name);
+    setIsCreateOpen(true);
+  }, []);
+
   const handleSaveNewScenario = useCallback(async (config: AgentConfig) => {
     setIsCreateOpen(false);
-    const { created, scenario } = await createScenario(DEFAULT_CITY, config);
+    const name = pendingScenarioName!;
+    setPendingScenarioName(null);
+    const { created, scenario } = await createScenario(name, config);
     if (!created) {
       setDuplicateName(scenario.name);
     } else {
       setMode("editor");
     }
-  }, [createScenario]);
+  }, [createScenario, pendingScenarioName]);
 
   return (
     <div style={{ display: "flex", width: "100vw", height: "100vh", overflow: "hidden" }}>
@@ -86,7 +96,7 @@ export default function App() {
           setMode("editor");
         }}
         onPrefetchScenario={prefetchScenario}
-        onCreateScenario={() => setIsCreateOpen(true)}
+        onCreateScenario={() => setIsNamingOpen(true)}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
         onRenameScenario={handleRenameScenario}
@@ -122,11 +132,23 @@ export default function App() {
         />
       )}
 
-      {isCreateOpen && (
+      {isNamingOpen && (
+        <ConfirmDialog
+          title="New Scenario"
+          message="Enter a name for your new scenario."
+          confirmLabel="Next"
+          variant="primary"
+          input={{ placeholder: "Scenario name" }}
+          onConfirm={handleConfirmScenarioName}
+          onClose={() => setIsNamingOpen(false)}
+        />
+      )}
+
+      {isCreateOpen && pendingScenarioName && (
         <AgentConfigModal
-          scenario={{ id: "", name: "", agentConfig: DEFAULT_AGENT_CONFIG, createdAt: "", updatedAt: "" }}
+          scenario={{ id: "", name: pendingScenarioName, agentConfig: DEFAULT_AGENT_CONFIG, createdAt: "", updatedAt: "" }}
           saveLabel="Create Scenario"
-          onClose={() => setIsCreateOpen(false)}
+          onClose={() => { setIsCreateOpen(false); setPendingScenarioName(null); }}
           onSave={handleSaveNewScenario}
         />
       )}
