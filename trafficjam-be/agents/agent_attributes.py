@@ -2,7 +2,8 @@ import random
 
 from geopy.distance import geodesic
 from haversine import haversine, Unit
-from .models import Building, PlannerConfig
+from .models import Building
+from .config import AgentConfig
 
 DEFAULT_AMENITY_RADIUS_KM = 2
 
@@ -53,7 +54,7 @@ def generate_child_age() -> int:
     return random.randint(0, 17)
 
 
-def generate_adult_age(config: PlannerConfig) -> int:
+def generate_adult_age(config: AgentConfig) -> int:
     return random.choices(
         [
             random.randint(18, config.elderly_age_threshold - 1),
@@ -63,7 +64,7 @@ def generate_adult_age(config: PlannerConfig) -> int:
     )[0]
 
 
-def determine_employment_status(age: int, config: PlannerConfig) -> tuple[bool, bool]:
+def determine_employment_status(age: int, config: AgentConfig) -> tuple[bool, bool]:
     if 18 <= age < config.elderly_age_threshold:
         employed = random.random() > 0.1
         is_student = 18 <= age <= 25 and random.random() > 0.3
@@ -76,7 +77,7 @@ def determine_transport_preferences(
     employed: bool,
     has_transport: bool,
     needs_to_dropoff: bool,
-    config: PlannerConfig,
+    config: AgentConfig,
 ) -> tuple[bool, bool]:
     if 16 <= age <= 25:
         uses_public_transport = has_transport and random.random() > 0.4

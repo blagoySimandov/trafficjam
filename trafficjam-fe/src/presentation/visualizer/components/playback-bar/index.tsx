@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Play, Pause } from "lucide-react";
 import { cn } from "../../../../utils/cn";
 import { formatSimulationTime } from "../../utils/format-time";
@@ -13,7 +14,8 @@ function PlayPauseButton({ isPlaying, toggle }: { isPlaying: boolean; toggle: ()
   );
 }
 
-function TimeScrubber({ time, range, seekTo }: Pick<SimulationTimeState, "time" | "range" | "seekTo">) {
+function TimeScrubber({ time, range, seekTo, pause, play, isPlaying }: Pick<SimulationTimeState, "time" | "range" | "seekTo" | "pause" | "play" | "isPlaying">) {
+  const wasPlayingRef = useRef(false);
   return (
     <input
       className={styles.scrubber}
@@ -22,7 +24,9 @@ function TimeScrubber({ time, range, seekTo }: Pick<SimulationTimeState, "time" 
       max={range[1]}
       step={1}
       value={time}
+      onPointerDown={() => { wasPlayingRef.current = isPlaying; pause(); }}
       onChange={(e) => seekTo(Number(e.target.value))}
+      onPointerUp={() => { if (wasPlayingRef.current) play(); }}
     />
   );
 }
@@ -51,7 +55,7 @@ export function PlaybackBar({ simulation }: { simulation: SimulationTimeState })
   return (
     <div className={styles.bar}>
       <PlayPauseButton isPlaying={simulation.isPlaying} toggle={simulation.togglePlayback} />
-      <TimeScrubber time={simulation.time} range={simulation.range} seekTo={simulation.seekTo} />
+      <TimeScrubber time={simulation.time} range={simulation.range} seekTo={simulation.seekTo} pause={simulation.pause} play={simulation.play} isPlaying={simulation.isPlaying} />
       <SpeedSelector speed={simulation.speed} setSpeed={simulation.setSpeed} />
       <TimeDisplay time={simulation.time} />
     </div>

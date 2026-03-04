@@ -11,12 +11,14 @@ import styles from "./agent-config-modal.module.css";
 
 interface AgentConfigModalProps {
   scenario: Scenario;
+  saveLabel?: string;
   onSave: (config: AgentConfig) => void;
   onClose: () => void;
 }
 
 export function AgentConfigModal({
   scenario,
+  saveLabel = "Save Changes",
   onSave,
   onClose,
 }: AgentConfigModalProps) {
@@ -36,7 +38,7 @@ export function AgentConfigModal({
   const dialogTitle = (
     <div className={styles.titleInfo}>
       <h2 className={styles.title}>Agent Planner Config</h2>
-      <span className={styles.subtitle}>{scenario.name}</span>
+      {scenario.name && <span className={styles.subtitle}>{scenario.name}</span>}
     </div>
   );
 
@@ -54,7 +56,7 @@ export function AgentConfigModal({
           className={styles.saveBtn}
           onClick={handleSubmit(onSave)}
         >
-          <Save size={16} /> Save Changes
+          <Save size={16} /> {saveLabel}
         </button>
       </div>
     </>
@@ -79,7 +81,8 @@ export function AgentConfigModal({
               <input
                 type="number"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.populationDensity}
-                {...register("populationDensity", { valueAsNumber: true })}
+                {...register("populationDensity", { valueAsNumber: true, min: 0 })}
+                min={0}
               />
             </div>
             <div className={styles.field}>
@@ -88,7 +91,8 @@ export function AgentConfigModal({
                 type="number"
                 step="0.1"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.maxShoppingDistanceKm}
-                {...register("maxShoppingDistanceKm", { valueAsNumber: true })}
+                {...register("maxShoppingDistanceKm", { valueAsNumber: true, min: 0 })}
+                min={0}
               />
             </div>
           </div>
@@ -140,7 +144,8 @@ export function AgentConfigModal({
               <input
                 type="number"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.elderlyAgeThreshold}
-                {...register("elderlyAgeThreshold", { valueAsNumber: true })}
+                {...register("elderlyAgeThreshold", { valueAsNumber: true, min: 0 })}
+                min={0}
               />
             </div>
             <div className={styles.field}>
@@ -148,7 +153,8 @@ export function AgentConfigModal({
               <input
                 type="number"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.kindergartenAge}
-                {...register("kindergartenAge", { valueAsNumber: true })}
+                {...register("kindergartenAge", { valueAsNumber: true, min: 0 })}
+                min={0}
               />
             </div>
           </div>
@@ -168,7 +174,8 @@ export function AgentConfigModal({
                   <input
                     type="number"
                     placeholder={AGENT_CONFIG_PLACEHOLDERS.errandMinMinutes}
-                    {...register("errandMinMinutes", { valueAsNumber: true })}
+                    {...register("errandMinMinutes", { valueAsNumber: true, min: 0 })}
+                    min={0}
                   />
                 </div>
                 <div className={styles.inputWrapper}>
@@ -176,7 +183,8 @@ export function AgentConfigModal({
                   <input
                     type="number"
                     placeholder={AGENT_CONFIG_PLACEHOLDERS.errandMaxMinutes}
-                    {...register("errandMaxMinutes", { valueAsNumber: true })}
+                    {...register("errandMaxMinutes", { valueAsNumber: true, min: 0 })}
+                    min={0}
                   />
                 </div>
               </div>
@@ -193,7 +201,9 @@ export function AgentConfigModal({
                     }
                     {...register("childDropoffMinMinutes", {
                       valueAsNumber: true,
+                      min: 0,
                     })}
+                    min={0}
                   />
                 </div>
                 <div className={styles.inputWrapper}>
@@ -205,7 +215,9 @@ export function AgentConfigModal({
                     }
                     {...register("childDropoffMaxMinutes", {
                       valueAsNumber: true,
+                      min: 0,
                     })}
+                    min={0}
                   />
                 </div>
               </div>
