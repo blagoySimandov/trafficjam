@@ -3,9 +3,14 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
 } from "firebase/auth";
 import { auth } from "./firebase";
 import { simulationApi } from "../api/trafficjam-be";
+
+export async function signOut() {
+  return firebaseSignOut(auth);
+}
 
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();

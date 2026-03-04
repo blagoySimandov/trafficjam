@@ -8,10 +8,16 @@ import { AgentConfigModal } from "./presentation/editor/components/agent-config-
 import { useScenarioManager, DEFAULT_AGENT_CONFIG } from "./api/scenarios";
 import { DEFAULT_CITY } from "./constants/cities";
 import type { Run, AgentConfig } from "./api/scenarios";
+import { useAuth } from "./auth/use-auth";
+import { LoginScreen } from "./auth/login-screen";
+import { AccessDenied } from "./auth/access-denied";
+import { signOut } from "./auth";
+import { LoadingScreen } from "./components/loading-screen";
 
 type Mode = "editor" | "visualizer";
 
 export default function App() {
+  const { user, loading, isAdmin } = useAuth();
   const [mode, setMode] = useState<Mode>("editor");
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const {
@@ -81,6 +87,18 @@ export default function App() {
     }
   }, [createScenario]);
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
+  if (!isAdmin) {
+    return <AccessDenied email={user.email} />;
+  }
+
   return (
     <div
       style={{
@@ -91,6 +109,8 @@ export default function App() {
       }}
     >
       <Sidebar
+        userEmail={user.email}
+        onSignOut={signOut}
         scenarios={scenarios}
         activeScenarioId={activeScenarioId}
         isLoadingScenarios={isLoadingScenarios}

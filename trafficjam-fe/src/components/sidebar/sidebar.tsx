@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History, Trash2, RotateCcw, Clock, Pencil } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History, Trash2, RotateCcw, Clock, Pencil, LogOut, User as UserIcon } from "lucide-react";
 import type { Scenario, Run } from "../../api/scenarios";
 import styles from "./sidebar.module.css";
 
 interface SidebarProps {
+  userEmail?: string | null;
+  onSignOut?: () => void;
   scenarios: Scenario[];
   activeScenarioId: string | null;
   isLoadingScenarios?: boolean;
@@ -77,6 +79,8 @@ function RunStatusIcon({ status }: { status: string }) {
 }
 
 export function Sidebar({
+  userEmail,
+  onSignOut,
   scenarios,
   activeScenarioId,
   isLoadingScenarios,
@@ -192,6 +196,22 @@ export function Sidebar({
           <ScrollArea.Thumb className={styles.thumb} />
         </ScrollArea.Scrollbar>
       </ScrollArea.Root>
+
+      {userEmail && (
+        <footer className={styles.footer}>
+          <div className={styles.userProfile}>
+            <div className={styles.userIcon}>
+              <UserIcon size={16} />
+            </div>
+            <div className={styles.userInfo}>
+              <div className={styles.userEmail}>{userEmail}</div>
+            </div>
+            <button className={styles.signOutBtn} onClick={onSignOut} title="Sign Out">
+              <LogOut size={16} />
+            </button>
+          </div>
+        </footer>
+      )}
     </aside>
   );
 }
