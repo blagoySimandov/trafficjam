@@ -57,7 +57,9 @@ export function useScenarioManager() {
   const updateScenarioMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) =>
       scenariosApi.updateScenario(id, updates),
-    onSuccess: (_data, variables) => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["scenario", variables.id] });
+      const previous = queryClient.getQueryData<Scenario>(["scenario", variables.id]);
       queryClient.setQueryData<Scenario | null>(
         ["scenario", variables.id],
         (old) => (old ? { ...old, ...variables.updates } : old),
@@ -66,6 +68,14 @@ export function useScenarioManager() {
         ["scenarios"],
         (old) => old?.map((s) => (s.id === variables.id ? { ...s, ...variables.updates } : s)),
       );
+      return { previous };
+    },
+    onError: (_error, variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["scenario", variables.id], context.previous);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
       queryClient.invalidateQueries({ queryKey: ["scenario", variables.id] });
     },
