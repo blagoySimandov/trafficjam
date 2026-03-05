@@ -49,7 +49,8 @@ export function useScenarioManager() {
     mutationFn: ({ name, config }: { name: string; config: AgentConfig }) =>
       scenariosApi.createScenario(name, config),
     onSuccess: (newScenario) => {
-      queryClient.invalidateQueries({ queryKey: ["scenarios"] });
+      queryClient.setQueryData<Scenario[]>(["scenarios"], (old) => [...(old ?? []), newScenario]);
+      queryClient.setQueryData(["scenario", newScenario.id], newScenario);
       setActiveScenarioId(newScenario.id);
     },
   });
