@@ -93,7 +93,7 @@ function useStaticLayers(show: boolean, linkVolume?: LinkVolumeParsed[]) {
 }
 
 export function Visualizer({ scenarioId, runId, onBack }: VisualizerProps) {
-  const [showLinkVolume, setShowLinkVolume] = useState(true);
+  const [showLinkVolume, setShowLinkVolume] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   const { trips: liveTrips } = useLiveSimulation(scenarioId, runId);
