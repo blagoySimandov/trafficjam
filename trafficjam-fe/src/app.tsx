@@ -29,9 +29,8 @@ export default function App() {
   } = useScenarioManager();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [isNamingOpen, setIsNamingOpen] = useState(false);
-  const [pendingScenarioName, setPendingScenarioName] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [pendingScenarioName, setPendingScenarioName] = useState<string | null>(null);
   const [duplicateName, setDuplicateName] = useState<string | null>(null);
   const [runInfo, setRunInfo] = useState<{
     scenarioId: string;
@@ -68,16 +67,14 @@ export default function App() {
   }, [deleteTarget, deleteScenario]);
 
   const handleConfirmScenarioName = useCallback((name: string) => {
-    setIsNamingOpen(false);
     setPendingScenarioName(name);
-    setIsCreateOpen(true);
   }, []);
 
   const handleSaveNewScenario = useCallback(async (config: AgentConfig) => {
-    setIsCreateOpen(false);
     const name = pendingScenarioName!;
+    setIsCreateOpen(false);
     setPendingScenarioName(null);
-    const { created, scenario } = await createScenario(name, config);
+    const { created, scenario } = await createScenario({ ...DEFAULT_CITY, name }, config);
     if (!created) {
       setDuplicateName(scenario.name);
     } else {
@@ -96,7 +93,7 @@ export default function App() {
           setMode("editor");
         }}
         onPrefetchScenario={prefetchScenario}
-        onCreateScenario={() => setIsNamingOpen(true)}
+        onCreateScenario={() => setIsCreateOpen(true)}
         onOpenAgentConfig={() => setIsConfigOpen(true)}
         onDeleteScenario={setDeleteTarget}
         onRenameScenario={handleRenameScenario}
@@ -132,7 +129,7 @@ export default function App() {
         />
       )}
 
-      {isNamingOpen && (
+      {isCreateOpen && !pendingScenarioName && (
         <ConfirmDialog
           title="New Scenario"
           message="Enter a name for your new scenario."
@@ -140,7 +137,7 @@ export default function App() {
           variant="primary"
           input={{ placeholder: "Scenario name" }}
           onConfirm={handleConfirmScenarioName}
-          onClose={() => setIsNamingOpen(false)}
+          onClose={() => setIsCreateOpen(false)}
         />
       )}
 

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tansta
 import { scenariosApi } from "./client";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 import type { Scenario, AgentConfig } from "./types";
+import type { CityConfig } from "../../constants/cities";
 
 export function useScenarioManager() {
   const queryClient = useQueryClient();
@@ -88,8 +89,8 @@ export function useScenarioManager() {
   });
 
   const createScenario = useCallback(
-    async (name: string, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
-      const scenario = await createScenarioMutation.mutateAsync({ name, config });
+    async (city: CityConfig, config: AgentConfig = DEFAULT_AGENT_CONFIG) => {
+      const scenario = await createScenarioMutation.mutateAsync({ name: city.name, config });
       return { scenario, created: true };
     },
     [createScenarioMutation],
