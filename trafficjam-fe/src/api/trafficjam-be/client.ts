@@ -23,6 +23,7 @@ function buildFormData(params: StartRunParams): FormData {
       geometry: b.geometry || [b.position],
       type: b.type,
       tags: b.tags,
+      hotspot: b.hotspot,
     }));
     formData.append("buildings", JSON.stringify(buildingsData));
   }
