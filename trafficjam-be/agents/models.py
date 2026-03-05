@@ -4,6 +4,14 @@ from enum import Enum
 from datetime import time
 
 
+class HotspotConfig(BaseModel):
+    label: str = ""
+    trafficPercentage: float = 0
+    startTime: str | None = None
+    endTime: str | None = None
+    agentTypes: list[str] = []
+
+
 class Building(BaseModel):
     id: str
     osm_id: int
@@ -11,6 +19,7 @@ class Building(BaseModel):
     geometry: list[tuple[float, float]]
     type: Optional[str] = None
     tags: dict[str, str]
+    hotspot: Optional[HotspotConfig] = None
 
     def get_tag(self, key: str) -> Optional[str]:
         return self.tags.get(key)
@@ -55,12 +64,19 @@ class DailyPlan(BaseModel):
         if self.activities and leg_mode:
             self.transport.append(Legs(mode=leg_mode))
         self.activities.append(activity)
-        self._sort_activities()
 
-    def _sort_activities(self) -> None:
-        self.activities.sort(
-            key=lambda a: (a.end_time is None, a.end_time or time(23, 59, 59))
-        )
+    def prepend_activity_after_home(self, activity: Activity, new_departure: time, leg_mode: str) -> None:
+        home = self.activities[0]
+        self.activities[0] = Activity(type=home.type, location=home.location, end_time=new_departure)
+        self.activities.insert(1, activity)
+        self.transport.insert(0, Legs(mode=leg_mode))
+
+    def append_evening_visit(self, activity: Activity, departure_time: time, leg_mode: str) -> None:
+        final_home = self.activities.pop()
+        self.transport.pop()
+        self.add_activity(Activity(type=ActivityType.HOME, location=final_home.location, end_time=departure_time), leg_mode)
+        self.add_activity(activity, leg_mode)
+        self.add_activity(Activity(type=ActivityType.HOME, location=final_home.location), leg_mode)
 
 
 class TransportMode(str, Enum):

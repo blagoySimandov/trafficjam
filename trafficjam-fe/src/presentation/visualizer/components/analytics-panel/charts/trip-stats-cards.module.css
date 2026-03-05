@@ -1,0 +1,31 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  font-family: system-ui, sans-serif;
+}
+
+.label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-family: system-ui, sans-serif;
+}

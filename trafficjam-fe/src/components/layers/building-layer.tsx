@@ -6,6 +6,8 @@ import {
   BUILDING_SOURCE_ID,
   BUILDING_FILL_LAYER,
   BUILDING_OUTLINE_LAYER,
+  BUILDING_HOTSPOT_FILL_LAYER,
+  BUILDING_HOTSPOT_OUTLINE_LAYER,
 } from "../../constants";
 
 interface BuildingLayerProps {
@@ -19,6 +21,8 @@ export function BuildingLayer({ buildings }: BuildingLayerProps) {
     <Source id={BUILDING_SOURCE_ID} type="geojson" data={geojson}>
       <Layer {...BUILDING_FILL_LAYER} />
       <Layer {...BUILDING_OUTLINE_LAYER} />
+      <Layer {...BUILDING_HOTSPOT_FILL_LAYER} />
+      <Layer {...BUILDING_HOTSPOT_OUTLINE_LAYER} />
     </Source>
   );
 }

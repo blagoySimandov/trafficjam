@@ -38,10 +38,13 @@ export default function App() {
   } | null>(null);
   const [rerunSource, setRerunSource] = useState<Run | null>(null);
 
-  const handleRunSimulation = useCallback((info: { scenarioId: string; runId: string }) => {
-    setRunInfo(info);
-    setMode("visualizer");
-  }, []);
+  const handleRunSimulation = useCallback(
+    (info: { scenarioId: string; runId: string }) => {
+      setRunInfo(info);
+      setMode("visualizer");
+    },
+    [],
+  );
 
   const handleSelectRun = useCallback((run: Run) => {
     setRunInfo({ scenarioId: run.scenarioId, runId: run.id });
@@ -57,9 +60,12 @@ export default function App() {
     setMode("editor");
   }, []);
 
-  const handleRenameScenario = useCallback((id: string, newName: string) => {
-    updateScenario(id, { name: newName });
-  }, [updateScenario]);
+  const handleRenameScenario = useCallback(
+    (id: string, newName: string) => {
+      updateScenario(id, { name: newName });
+    },
+    [updateScenario],
+  );
 
   const handleConfirmDelete = useCallback(() => {
     if (deleteTarget) deleteScenario(deleteTarget);
@@ -83,7 +89,14 @@ export default function App() {
   }, [createScenario, pendingScenarioName]);
 
   return (
-    <div style={{ display: "flex", width: "100vw", height: "100vh", overflow: "hidden" }}>
+    <div
+      style={{
+        display: "flex",
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
       <Sidebar
         scenarios={scenarios}
         activeScenarioId={activeScenarioId}
@@ -112,11 +125,13 @@ export default function App() {
             onClearRerun={() => setRerunSource(null)}
           />
         ) : (
-          <Visualizer
-            scenarioId={runInfo?.scenarioId}
-            runId={runInfo?.runId}
-            onBack={handleBackToEditor}
-          />
+          runInfo && (
+            <Visualizer
+              scenarioId={runInfo.scenarioId}
+              runId={runInfo.runId}
+              onBack={handleBackToEditor}
+            />
+          )
         )}
       </main>
 
