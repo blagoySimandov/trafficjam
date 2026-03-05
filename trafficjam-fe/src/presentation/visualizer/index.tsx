@@ -2,8 +2,8 @@ import { DeckGL, TripsLayer, ScatterplotLayer, PathLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MAPBOX_TOKEN } from "../../constants/map";
-import { getVehiclePositions } from "../../event-processing";
-import type { Trip } from "../../event-processing";
+import { buildTripIndex, getPositionsFromIndex } from "../../event-processing";
+import type { Trip, TripIndex } from "../../event-processing";
 import {
   useSimulationTime,
   type SimulationTimeState,
@@ -16,7 +16,7 @@ import { AnalyticsPanel } from "./components/analytics-panel";
 import { useLiveSimulation } from "../../hooks/use-live-simulation";
 import { useLinkVolumes } from "../../hooks";
 import type { LinkVolumeParsed } from "../../hooks/use-link-volumes";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface VisualizerProps {
   scenarioId: string;
@@ -24,11 +24,16 @@ interface VisualizerProps {
   onBack: () => void;
 }
 
-function useLayers(trips: Trip[], simulation: SimulationTimeState) {
+function useLayers(index: TripIndex, simulation: SimulationTimeState) {
+  const agentPositions = useMemo(
+    () => getPositionsFromIndex(index, simulation.time),
+    [index, simulation.time],
+  );
+
   return [
     new TripsLayer({
       id: "trails",
-      data: trips,
+      data: index.trips,
       getPath: (d: Trip) => d.path,
       getTimestamps: (d: Trip) => d.timestamps,
       getColor: [253, 128, 93],
@@ -39,7 +44,7 @@ function useLayers(trips: Trip[], simulation: SimulationTimeState) {
 
     new ScatterplotLayer({
       id: "agents",
-      data: getVehiclePositions(trips, simulation.time),
+      data: agentPositions,
       getPosition: (d: [number, number]) => d,
       getFillColor: [255, 220, 0],
       getRadius: 30,
@@ -95,8 +100,11 @@ export function Visualizer({ scenarioId, runId, onBack }: VisualizerProps) {
   const simulation = useSimulationTime(liveTrips);
   const { data: linkVolume } = useLinkVolumes(scenarioId, runId);
 
+  // Build sorted index once per trips change — not every frame
+  const tripIndex = useMemo(() => buildTripIndex(liveTrips), [liveTrips]);
+
   const staticLayers = useStaticLayers(showLinkVolume, linkVolume);
-  const layers = [...staticLayers, ...useLayers(liveTrips, simulation)];
+  const layers = [...staticLayers, ...useLayers(tripIndex, simulation)];
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
