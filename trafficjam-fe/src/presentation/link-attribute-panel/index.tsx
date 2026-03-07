@@ -58,7 +58,7 @@ export function LinkAttributePanel({
       maxspeed: !hasUniqueMaxspeed,
       oneway: !hasUniqueOneway,
     };
-  }, [links]);
+  }, [links, isSingleLink]);
 
   const getDisplayValue = (field: keyof TrafficLink["tags"]) => {
     if (field in editedValues) {

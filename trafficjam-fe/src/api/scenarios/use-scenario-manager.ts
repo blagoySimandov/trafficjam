@@ -53,7 +53,7 @@ export function useScenarioManager() {
       queryClient.setQueryData(["scenario", newScenario.id], newScenario);
       setActiveScenarioId(newScenario.id);
     },
-    onSettled: (_data, _error, _variables) => {
+    onSettled: (_data) => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
       if (_data) {
         queryClient.invalidateQueries({ queryKey: ["scenario", _data.id] });
