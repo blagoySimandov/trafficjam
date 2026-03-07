@@ -1,9 +1,10 @@
 import type { Scenario, Run, AgentConfig } from "./types";
-import type { Network, TrafficLink } from "../../types";
+import type { Network, TrafficLink, Building } from "../../types";
 import { DEFAULT_AGENT_CONFIG } from "./constants";
 import {
   isNonEmptyNetworkConfig,
   computeLinksDiff,
+  computeBuildingsDiff,
 } from "./network-serializer";
 
 const BASE_URL =
@@ -45,6 +46,9 @@ function toFullScenario(s: BackendScenario): Scenario {
     ...toScenarioSummary(s),
     linksDiff: isNonEmptyNetworkConfig(s.network_config)
       ? (s.network_config!.links as Record<string, TrafficLink>) ?? {}
+      : undefined,
+    buildingsDiff: isNonEmptyNetworkConfig(s.network_config)
+      ? (s.network_config!.buildings as Record<string, Building>) ?? undefined
       : undefined,
   };
 }
@@ -140,11 +144,15 @@ async function updateScenario(
  * @param edited - The new state of the network after UI modifications.
  */
 async function saveNetwork(id: string, base: Network, edited: Network): Promise<void> {
-  const diff = computeLinksDiff(base, edited);
+  const links = computeLinksDiff(base, edited);
+  const buildings = computeBuildingsDiff(base, edited);
   const response = await fetch(`${BASE_URL}/scenarios/${id}/network`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ links: diff }),
+    body: JSON.stringify({
+      links,
+      buildings: Object.keys(buildings).length > 0 ? buildings : undefined,
+    }),
   });
   await assertOk(response);
 }

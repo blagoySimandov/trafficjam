@@ -3,6 +3,7 @@ import { EditorMapView } from "./components/editor-map-view";
 import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
 import { LinkAttributePanel } from "../link-attribute-panel";
+import { BuildingAttributePanel } from "../building-attribute-panel";
 import { StatusBar } from "../../components/status-bar";
 import { SaveIndicator } from "../../components/save-indicator/save-indicator";
 import { LoadingScreen } from "../../components/loading-screen";
@@ -10,8 +11,8 @@ import { useUndoStack } from "./hooks/use-undo-stack";
 import { useNetworkPersistence } from "./hooks/use-network-persistence";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
-import { applyLinksDiff } from "../../api/scenarios/network-serializer";
-import type { TrafficLink, Network } from "../../types";
+import { applyLinksDiff, applyBuildingsDiff } from "../../api/scenarios/network-serializer";
+import type { TrafficLink, Network, Building } from "../../types";
 import type { Scenario, Run } from "../../api/scenarios";
 import type { CityConfig } from "../../constants/cities";
 
@@ -47,12 +48,14 @@ export function Editor({
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
   const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   if (prevScenarioIdRef.current !== activeScenario?.id) {
     prevScenarioIdRef.current = activeScenario?.id;
     setNetwork(null);
     setSelectedLinks([]);
+    setSelectedBuilding(null);
   }
 
   const rerunInitialValues = useMemo(() => {
@@ -65,8 +68,12 @@ export function Editor({
   }, [rerunSource]);
 
   const scenarioNetwork = useMemo(() => {
-    if (!autoNetwork || !activeScenario?.linksDiff) return null;
-    return applyLinksDiff(autoNetwork, activeScenario.linksDiff);
+    if (!autoNetwork) return null;
+    const { linksDiff, buildingsDiff } = activeScenario ?? {};
+    if (!linksDiff && !buildingsDiff) return null;
+    let net = linksDiff ? applyLinksDiff(autoNetwork, linksDiff) : autoNetwork;
+    if (buildingsDiff) net = applyBuildingsDiff(net, buildingsDiff);
+    return net;
   }, [autoNetwork, activeScenario]);
 
   const activeNetwork = useMemo(
@@ -128,6 +135,27 @@ export function Editor({
     setSelectedLinks([]);
   }, []);
 
+  const handleBuildingClick = useCallback((building: Building) => {
+    setSelectedBuilding(building);
+    setSelectedLinks([]);
+  }, []);
+
+  const handleBuildingSave = useCallback(
+    (updatedNetwork: Network, message: string) => {
+      if (activeNetwork) {
+        pushToUndoStack(activeNetwork);
+      }
+      setNetwork(updatedNetwork);
+      setStatus(message);
+      markDirty();
+    },
+    [activeNetwork, pushToUndoStack, markDirty],
+  );
+
+  const handleBuildingClose = useCallback(() => {
+    setSelectedBuilding(null);
+  }, []);
+
   const handleLaunch = useCallback(
     (info: { scenarioId: string; runId: string }) => {
       setDialogOpen(false);
@@ -172,6 +200,7 @@ export function Editor({
         onNetworkSave={handleLinkSave}
         onStatusChange={setStatus}
         onLinkClick={handleLinkClick}
+        onBuildingClick={handleBuildingClick}
         onUndo={handleUndo}
         onClear={handleClear}
         canUndo={canUndo}
@@ -187,24 +216,40 @@ export function Editor({
           onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
+      {
+        selectedBuilding && (
+          <BuildingAttributePanel
+            key={selectedBuilding.id}
+            building={selectedBuilding}
+            network={activeNetwork}
+            onClose={handleBuildingClose}
+            onSave={handleBuildingSave}
+          />
+        )
+      }
+      <SaveIndicator isDirty={isDirty} isSaving={isSaving} showSaved={showSaved} />
       <SaveIndicator
         isDirty={isDirty}
         isSaving={isSaving}
         showSaved={showSaved}
       />
-      {status && !isDirty && !isSaving && !showSaved && (
-        <StatusBar message={status} />
-      )}
+      {
+        status && !isDirty && !isSaving && !showSaved && (
+          <StatusBar message={status} />
+        )
+      }
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
-      {showDialog && (
-        <LaunchDialog
-          activeScenario={activeScenario}
-          network={activeNetwork}
-          onLaunch={handleLaunch}
-          onClose={handleCloseDialog}
-          initialValues={rerunInitialValues}
-        />
-      )}
+      {
+        showDialog && (
+          <LaunchDialog
+            activeScenario={activeScenario}
+            network={activeNetwork}
+            onLaunch={handleLaunch}
+            onClose={handleCloseDialog}
+            initialValues={rerunInitialValues}
+          />
+        )
+      }
     </>
   );
 }

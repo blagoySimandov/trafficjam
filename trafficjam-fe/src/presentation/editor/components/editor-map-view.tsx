@@ -3,12 +3,13 @@ import Map from "react-map-gl";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
 import { useHotkeys } from "react-hotkeys-hook";
 import "mapbox-gl/dist/mapbox-gl.css";
-import type { Network, TrafficLink } from "../../../types";
+import type { Network, TrafficLink, Building } from "../../../types";
 import {
   MAP_STYLE,
   MAPBOX_TOKEN,
   INTERACTIVE_LAYER_IDS,
   MIN_EDIT_ZOOM,
+  HOTSPOT_PATTERN_ID,
   type CityConfig,
 } from "../../../constants";
 import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
@@ -30,6 +31,7 @@ interface EditorMapViewProps {
   onNetworkSave: (network: Network, message: string) => void;
   onStatusChange: (status: string) => void;
   onLinkClick: (link: TrafficLink, modKey: boolean) => void;
+  onBuildingClick?: (building: Building) => void;
   onUndo: () => void;
   onClear: () => void;
   canUndo: boolean;
@@ -41,6 +43,7 @@ export function EditorMapView({
   city,
   onStatusChange,
   onLinkClick,
+  onBuildingClick,
   onNetworkSave,
   onUndo,
   onClear,
@@ -70,6 +73,7 @@ export function EditorMapView({
     network,
     mapRef,
     onLinkClick: handleLinkClickLocal,
+    onBuildingClick,
     editorMode,
   });
 
@@ -128,6 +132,21 @@ export function EditorMapView({
     mapRef.current = ref;
   }, []);
 
+  const handleMapLoad = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || map.hasImage(HOTSPOT_PATTERN_ID)) return;
+    const size = 8;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = "#FF6B00";
+    ctx.fillRect(0, 0, size, 4);
+    const { data } = ctx.getImageData(0, 0, size, size);
+    map.addImage(HOTSPOT_PATTERN_ID, { width: size, height: size, data });
+  }, []);
+
   const toggleBuildings = useCallback(() => {
     setShowBuildings((prev) => !prev);
   }, [setShowBuildings]);
@@ -170,6 +189,7 @@ export function EditorMapView({
   return (
     <Map
       ref={handleMapRef}
+      onLoad={handleMapLoad}
       initialViewState={{
         longitude: city.center[0],
         latitude: city.center[1],

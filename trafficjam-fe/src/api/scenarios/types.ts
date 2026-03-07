@@ -1,4 +1,4 @@
-import type { TrafficLink } from "../../types";
+import type { TrafficLink, Building } from "../../types";
 
 export interface AgentConfig {
   populationDensity: number;
@@ -33,6 +33,7 @@ export interface Scenario {
   description?: string;
   agentConfig: AgentConfig;
   linksDiff?: Record<string, TrafficLink>;
+  buildingsDiff?: Record<string, Building>;
   createdAt: string;
   updatedAt: string;
 }

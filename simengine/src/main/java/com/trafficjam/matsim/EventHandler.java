@@ -5,6 +5,8 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
     private final int bufferSize;
     private final MatsimRunner.EventCallback callback;
     private final Network network;
+    private final CoordinateTransformation transformation;
 
     /**
      * Constructs the EventHandler.
@@ -44,6 +47,8 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
         this.bufferSize = bufferSize;
         this.network = network;
         this.eventBuffer = new ArrayList<>();
+        this.transformation = TransformationFactory.getCoordinateTransformation(
+                coordinateSystem, TransformationFactory.WGS84);
     }
 
     @Override
