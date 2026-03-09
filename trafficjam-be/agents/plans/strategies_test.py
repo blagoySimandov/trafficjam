@@ -1,13 +1,9 @@
-import pytest
-
 from agents.config import AgentConfig
 from agents.models import (
-    Activity,
     ActivityType,
     Adult,
     Building,
     Child,
-    DailyPlan,
     TransportMode,
 )
 from agents.plans.plan_generator import (
@@ -47,7 +43,9 @@ WORK = Building(
 )
 
 
-def make_child(*, age: int = 14, school: Building | None = SCHOOL, needs_dropoff: bool = False) -> Child:
+def make_child(
+    *, age: int = 14, school: Building | None = SCHOOL, needs_dropoff: bool = False
+) -> Child:
     return Child(
         id="child1",
         age=age,
@@ -114,7 +112,9 @@ class TestAdultDropoffWorkStrategy:
     def _dropoff_adult(self) -> Adult:
         child = make_child(needs_dropoff=True, school=SCHOOL)
         child.needs_dropoff = True
-        return make_adult(needs_to_dropoff_children=True, employed=True, children=[child])
+        return make_adult(
+            needs_to_dropoff_children=True, employed=True, children=[child]
+        )
 
     def test_supports_adult_with_dropoff_and_work(self):
         assert self.strategy.supports(self._dropoff_adult(), CONFIG) is True
@@ -128,12 +128,16 @@ class TestAdultDropoffWorkStrategy:
 
     def test_does_not_support_unemployed_adult_with_dropoff(self):
         child = make_child(needs_dropoff=True)
-        adult = make_adult(employed=False, needs_to_dropoff_children=True, children=[child])
+        adult = make_adult(
+            employed=False, needs_to_dropoff_children=True, children=[child]
+        )
         assert self.strategy.supports(adult, CONFIG) is False
 
     def test_does_not_support_adult_with_child_without_school(self):
         child = make_child(needs_dropoff=True, school=None)
-        adult = make_adult(needs_to_dropoff_children=True, employed=True, children=[child])
+        adult = make_adult(
+            needs_to_dropoff_children=True, employed=True, children=[child]
+        )
         assert self.strategy.supports(adult, CONFIG) is False
 
     def test_generate_plan_contains_education_and_work(self):
@@ -211,18 +215,38 @@ class TestNonEmployedAdultStrategy:
 
 class TestPlanStrategyRegistry:
     def test_registry_order_child_before_adults(self):
-        child_idx = next(i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, ChildPlanStrategy))
-        adult_idx = next(i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, EmployedAdultStrategy))
+        child_idx = next(
+            i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, ChildPlanStrategy)
+        )
+        adult_idx = next(
+            i
+            for i, s in enumerate(PLAN_STRATEGIES)
+            if isinstance(s, EmployedAdultStrategy)
+        )
         assert child_idx < adult_idx
 
     def test_dropoff_strategy_before_employed_strategy(self):
-        dropoff_idx = next(i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, AdultDropoffWorkStrategy))
-        employed_idx = next(i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, EmployedAdultStrategy))
+        dropoff_idx = next(
+            i
+            for i, s in enumerate(PLAN_STRATEGIES)
+            if isinstance(s, AdultDropoffWorkStrategy)
+        )
+        employed_idx = next(
+            i
+            for i, s in enumerate(PLAN_STRATEGIES)
+            if isinstance(s, EmployedAdultStrategy)
+        )
         assert dropoff_idx < employed_idx
 
     def test_elderly_strategy_before_employed_strategy(self):
-        elderly_idx = next(i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, ElderlyStrategy))
-        employed_idx = next(i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, EmployedAdultStrategy))
+        elderly_idx = next(
+            i for i, s in enumerate(PLAN_STRATEGIES) if isinstance(s, ElderlyStrategy)
+        )
+        employed_idx = next(
+            i
+            for i, s in enumerate(PLAN_STRATEGIES)
+            if isinstance(s, EmployedAdultStrategy)
+        )
         assert elderly_idx < employed_idx
 
     def test_non_employed_strategy_is_last(self):
@@ -267,7 +291,9 @@ class TestGeneratePlanForAgent:
         assert ActivityType.WORK in [a.type for a in plan.activities]
 
     def test_independent_child_below_min_age_returns_none(self):
-        child = make_child(age=CONFIG.min_independent_school_age - 1, needs_dropoff=False)
+        child = make_child(
+            age=CONFIG.min_independent_school_age - 1, needs_dropoff=False
+        )
         plan = generate_plan_for_agent(child, [], CONFIG)
         assert plan is None
 
