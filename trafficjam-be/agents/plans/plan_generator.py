@@ -79,7 +79,9 @@ def _find_nearby_shopping(
     return random.choice(shops[: min(5, len(shops))])[0]
 
 
-def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) -> DailyPlan:
+def generate_plan_adult_dropoff_work(
+    adult: Adult, agent_config: AgentConfig
+) -> DailyPlan:
     child = adult.children[0]
     mode = _get_mode(adult)
     plan = DailyPlan()
@@ -98,7 +100,12 @@ def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) ->
         ActivityType.EDUCATION,
         child.school.position,
         mode,
-        duration=time(minute=random.randint(agent_config.child_dropoff_min_minutes, agent_config.child_dropoff_max_minutes)),
+        duration=time(
+            minute=random.randint(
+                agent_config.child_dropoff_min_minutes,
+                agent_config.child_dropoff_max_minutes,
+            )
+        ),
     )
     _add(
         plan,
@@ -112,7 +119,12 @@ def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) ->
         ActivityType.EDUCATION,
         child.school.position,
         mode,
-        duration=time(minute=random.randint(agent_config.child_dropoff_min_minutes, agent_config.child_dropoff_max_minutes)),
+        duration=time(
+            minute=random.randint(
+                agent_config.child_dropoff_min_minutes,
+                agent_config.child_dropoff_max_minutes,
+            )
+        ),
     )
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
@@ -120,7 +132,10 @@ def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) ->
 
 
 def generate_plan_adult_work(
-    adult: Adult, buildings: list[Building], agent_config: AgentConfig, with_shopping: bool = True
+    adult: Adult,
+    buildings: list[Building],
+    agent_config: AgentConfig,
+    with_shopping: bool = True,
 ) -> DailyPlan | None:
     if not adult.employed or not adult.work:
         return None
@@ -286,8 +301,8 @@ def _compute_departure_time(hotspot: HotspotConfig) -> time:
 
 
 def _compute_dwell_time(hotspot: HotspotConfig) -> time:
-    sh, sm = map(int, hotspot.startTime.split(":"))   # type: ignore[union-attr]
-    eh, em = map(int, hotspot.endTime.split(":"))     # type: ignore[union-attr]
+    sh, sm = map(int, hotspot.startTime.split(":"))  # type: ignore[union-attr]
+    eh, em = map(int, hotspot.endTime.split(":"))  # type: ignore[union-attr]
     return _minutes_to_time(max(5, (eh * 60 + em) - (sh * 60 + sm)))
 
 
@@ -296,7 +311,9 @@ def _insert_hotspot_into_plan(
 ) -> None:
     departure = _compute_departure_time(hotspot)
     dwell = _compute_dwell_time(hotspot)
-    activity = Activity(type=ActivityType.LEISURE, location=building.position, duration=dwell)
+    activity = Activity(
+        type=ActivityType.LEISURE, location=building.position, duration=dwell
+    )
     if timing in ("morning", "daytime"):
         plan.prepend_activity_after_home(activity, departure, mode)
     elif timing == "evening":
@@ -326,7 +343,9 @@ def _append_hotspot_visit(
     weights = [b.hotspot.trafficPercentage for b, _ in eligible if b.hotspot]
     selected_building, selected_timing = random.choices(eligible, weights=weights)[0]
     if selected_building.hotspot:
-        _insert_hotspot_into_plan(plan, selected_building, selected_building.hotspot, mode, selected_timing)
+        _insert_hotspot_into_plan(
+            plan, selected_building, selected_building.hotspot, mode, selected_timing
+        )
 
 
 class ChildPlanStrategy:
