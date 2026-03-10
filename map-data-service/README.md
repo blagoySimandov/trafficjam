@@ -27,3 +27,11 @@ fastapi dev
 ```
 
 The API will be available at `http://localhost:8000`.
+
+## API Docs
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8000/docs` | Interactive Swagger UI — try endpoints directly in the browser |
+| `http://localhost:8000/redoc` | ReDoc — clean reference documentation |
+| `http://localhost:8000/openapi.json` | Raw OpenAPI schema |
