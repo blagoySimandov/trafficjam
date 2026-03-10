@@ -20,6 +20,22 @@ class AgentConfig(BaseSettings):
     child_dropoff_min_minutes: int = 5
     child_dropoff_max_minutes: int = 10
 
+    @classmethod
+    def from_plan_params(cls, plan_params: dict) -> "AgentConfig":
+        return cls(
+            default_population_density=plan_params.get("populationDensity", 100),
+            shopping_probability=plan_params.get("shoppingProbability", 0.40),
+            max_shopping_distance_km=plan_params.get("maxShoppingDistanceKm", 5.0),
+            healthcare_chance=plan_params.get("healthcareChance", 0.30),
+            elderly_age_threshold=plan_params.get("elderlyAgeThreshold", 65),
+            kindergarten_age=plan_params.get("kindergartenAge", 6),
+            min_independent_school_age=plan_params.get("minIndependentSchoolAge", 12),
+            errand_min_minutes=plan_params.get("errandMinMinutes", 30),
+            errand_max_minutes=plan_params.get("errandMaxMinutes", 120),
+            child_dropoff_min_minutes=plan_params.get("childDropoffMinMinutes", 5),
+            child_dropoff_max_minutes=plan_params.get("childDropoffMaxMinutes", 10),
+        )
+
 
 config = AgentConfig()
 

@@ -25,7 +25,7 @@ from .activity_scheduler import (
 )
 from ..config import AgentConfig
 from .strategies import PlanStrategy
-from constants import SHOP_TYPES
+from ..constants import SHOP_TYPES
 
 
 def _get_mode(agent: Agent) -> str:
