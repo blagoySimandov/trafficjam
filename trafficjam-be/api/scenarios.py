@@ -1,9 +1,10 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from db import async_session_factory, ScenarioRepository
+from db import ScenarioRepository
+from dependencies import get_scenario_repo
 from schemas import ScenarioCreate, ScenarioUpdate, ScenarioResponse, ScenarioSummary
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
@@ -11,14 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=list[ScenarioSummary])
-async def list_scenarios():
-    repo = ScenarioRepository(async_session_factory)
+async def list_scenarios(repo: ScenarioRepository = Depends(get_scenario_repo)):
     return await repo.list_scenarios()
 
 
 @router.get("/{scenario_id}", response_model=ScenarioResponse)
-async def get_scenario(scenario_id: uuid.UUID):
-    repo = ScenarioRepository(async_session_factory)
+async def get_scenario(
+    scenario_id: uuid.UUID,
+    repo: ScenarioRepository = Depends(get_scenario_repo),
+):
     scenario = await repo.get_scenario(scenario_id)
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -26,8 +28,10 @@ async def get_scenario(scenario_id: uuid.UUID):
 
 
 @router.post("", response_model=ScenarioResponse, status_code=201)
-async def create_scenario(body: ScenarioCreate):
-    repo = ScenarioRepository(async_session_factory)
+async def create_scenario(
+    body: ScenarioCreate,
+    repo: ScenarioRepository = Depends(get_scenario_repo),
+):
     return await repo.create_scenario(
         name=body.name,
         description=body.description,
@@ -38,8 +42,11 @@ async def create_scenario(body: ScenarioCreate):
 
 
 @router.put("/{scenario_id}", response_model=ScenarioSummary)
-async def update_scenario(scenario_id: uuid.UUID, body: ScenarioUpdate):
-    repo = ScenarioRepository(async_session_factory)
+async def update_scenario(
+    scenario_id: uuid.UUID,
+    body: ScenarioUpdate,
+    repo: ScenarioRepository = Depends(get_scenario_repo),
+):
     scenario = await repo.update_scenario(
         scenario_id=scenario_id,
         name=body.name,
@@ -52,8 +59,11 @@ async def update_scenario(scenario_id: uuid.UUID, body: ScenarioUpdate):
 
 
 @router.put("/{scenario_id}/network", status_code=204)
-async def update_network(scenario_id: uuid.UUID, body: dict):
-    repo = ScenarioRepository(async_session_factory)
+async def update_network(
+    scenario_id: uuid.UUID,
+    body: dict,
+    repo: ScenarioRepository = Depends(get_scenario_repo),
+):
     updated = await repo.update_network_config(scenario_id, body)
     if not updated:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -67,9 +77,12 @@ async def _purge_nats_messages(js, scenario_id: uuid.UUID):
 
 
 @router.delete("/{scenario_id}", status_code=204)
-async def delete_scenario(scenario_id: uuid.UUID, request: Request):
+async def delete_scenario(
+    scenario_id: uuid.UUID,
+    request: Request,
+    repo: ScenarioRepository = Depends(get_scenario_repo),
+):
     await _purge_nats_messages(request.app.state.js, scenario_id)
-    repo = ScenarioRepository(async_session_factory)
     deleted = await repo.delete_scenario(scenario_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Scenario not found")
