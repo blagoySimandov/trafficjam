@@ -79,7 +79,9 @@ def _find_nearby_shopping(
     return random.choice(shops[: min(5, len(shops))])[0]
 
 
-def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) -> DailyPlan:
+def generate_plan_adult_dropoff_work(
+    adult: Adult, agent_config: AgentConfig
+) -> DailyPlan:
     child = adult.children[0]
     mode = _get_mode(adult)
     plan = DailyPlan()
@@ -98,7 +100,12 @@ def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) ->
         ActivityType.EDUCATION,
         child.school.position,
         mode,
-        duration=time(minute=random.randint(agent_config.child_dropoff_min_minutes, agent_config.child_dropoff_max_minutes)),
+        duration=time(
+            minute=random.randint(
+                agent_config.child_dropoff_min_minutes,
+                agent_config.child_dropoff_max_minutes,
+            )
+        ),
     )
     _add(
         plan,
@@ -112,7 +119,12 @@ def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) ->
         ActivityType.EDUCATION,
         child.school.position,
         mode,
-        duration=time(minute=random.randint(agent_config.child_dropoff_min_minutes, agent_config.child_dropoff_max_minutes)),
+        duration=time(
+            minute=random.randint(
+                agent_config.child_dropoff_min_minutes,
+                agent_config.child_dropoff_max_minutes,
+            )
+        ),
     )
     _add(plan, ActivityType.HOME, adult.home.position, mode)
 
@@ -120,7 +132,10 @@ def generate_plan_adult_dropoff_work(adult: Adult, agent_config: AgentConfig) ->
 
 
 def generate_plan_adult_work(
-    adult: Adult, buildings: list[Building], agent_config: AgentConfig, with_shopping: bool = True
+    adult: Adult,
+    buildings: list[Building],
+    agent_config: AgentConfig,
+    with_shopping: bool = True,
 ) -> DailyPlan | None:
     if not adult.employed or not adult.work:
         return None
@@ -286,8 +301,8 @@ def _compute_departure_time(hotspot: HotspotConfig) -> time:
 
 
 def _compute_dwell_time(hotspot: HotspotConfig) -> time:
-    sh, sm = map(int, hotspot.startTime.split(":"))   # type: ignore[union-attr]
-    eh, em = map(int, hotspot.endTime.split(":"))     # type: ignore[union-attr]
+    sh, sm = map(int, hotspot.startTime.split(":"))  # type: ignore[union-attr]
+    eh, em = map(int, hotspot.endTime.split(":"))  # type: ignore[union-attr]
     return _minutes_to_time(max(5, (eh * 60 + em) - (sh * 60 + sm)))
 
 
@@ -296,7 +311,9 @@ def _insert_hotspot_into_plan(
 ) -> None:
     departure = _compute_departure_time(hotspot)
     dwell = _compute_dwell_time(hotspot)
-    activity = Activity(type=ActivityType.LEISURE, location=building.position, duration=dwell)
+    activity = Activity(
+        type=ActivityType.LEISURE, location=building.position, duration=dwell
+    )
     if timing in ("morning", "daytime"):
         plan.prepend_activity_after_home(activity, departure, mode)
     elif timing == "evening":
@@ -326,14 +343,18 @@ def _append_hotspot_visit(
     weights = [b.hotspot.trafficPercentage for b, _ in eligible if b.hotspot]
     selected_building, selected_timing = random.choices(eligible, weights=weights)[0]
     if selected_building.hotspot:
-        _insert_hotspot_into_plan(plan, selected_building, selected_building.hotspot, mode, selected_timing)
+        _insert_hotspot_into_plan(
+            plan, selected_building, selected_building.hotspot, mode, selected_timing
+        )
 
 
 class ChildPlanStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Child)
 
-    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
+    def generate(
+        self, agent: Agent, buildings: list[Building], config: AgentConfig
+    ) -> DailyPlan | None:
         return generate_plan_child(agent, config)  # type: ignore[arg-type]
 
 
@@ -347,7 +368,9 @@ class AdultDropoffWorkStrategy:
             and agent.children[0].school is not None
         )
 
-    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
+    def generate(
+        self, agent: Agent, buildings: list[Building], config: AgentConfig
+    ) -> DailyPlan | None:
         return generate_plan_adult_dropoff_work(agent, config)  # type: ignore[arg-type]
 
 
@@ -355,7 +378,9 @@ class ElderlyStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Adult) and agent.age >= config.elderly_age_threshold
 
-    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
+    def generate(
+        self, agent: Agent, buildings: list[Building], config: AgentConfig
+    ) -> DailyPlan | None:
         return generate_plan_elderly(agent, buildings, config)  # type: ignore[arg-type]
 
 
@@ -363,7 +388,9 @@ class EmployedAdultStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Adult) and agent.employed
 
-    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
+    def generate(
+        self, agent: Agent, buildings: list[Building], config: AgentConfig
+    ) -> DailyPlan | None:
         return generate_plan_adult_work(agent, buildings, config)  # type: ignore[arg-type]
 
 
@@ -371,7 +398,9 @@ class NonEmployedAdultStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Adult)
 
-    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
+    def generate(
+        self, agent: Agent, buildings: list[Building], config: AgentConfig
+    ) -> DailyPlan | None:
         return generate_plan_non_employed(agent, buildings, config)  # type: ignore[arg-type]
 
 
@@ -387,8 +416,12 @@ PLAN_STRATEGIES: list[PlanStrategy] = [
 def generate_plan_for_agent(
     agent: Agent, buildings: list[Building], agent_config: AgentConfig
 ) -> DailyPlan | None:
-    strategy = next((s for s in PLAN_STRATEGIES if s.supports(agent, agent_config)), None)
+    strategy = next(
+        (s for s in PLAN_STRATEGIES if s.supports(agent, agent_config)), None
+    )
     plan = strategy.generate(agent, buildings, agent_config) if strategy else None
     if plan is not None:
-        _append_hotspot_visit(plan, buildings, _get_agent_type(agent, agent_config), _get_mode(agent))
+        _append_hotspot_visit(
+            plan, buildings, _get_agent_type(agent, agent_config), _get_mode(agent)
+        )
     return plan
