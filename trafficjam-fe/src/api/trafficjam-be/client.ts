@@ -124,9 +124,20 @@ async function getSimwrapperFile<T>(
   return (await response.text()) as unknown as T;
 }
 
+async function syncUser(email: string): Promise<{ id: string; email: string; role: string }> {
+  const response = await fetch(`${BASE_URL}/users/sync`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  assertOk(response);
+  return await response.json();
+}
+
 export const simulationApi = {
   createRun,
   startRun,
   streamEvents,
   getSimwrapperFile,
+  syncUser,
 };

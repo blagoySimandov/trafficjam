@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from db.models import Run, RunStatus
+from db.models import Run, RunStatus, User
 
 
 class RunRepository:
@@ -74,3 +74,20 @@ class RunRepository:
             await session.commit()
             await session.refresh(run)
             return run
+
+
+class UserRepository:
+    def __init__(self, session_factory: async_sessionmaker):
+        self.session_factory = session_factory
+
+    async def get_or_create_user(self, email: str) -> User:
+        async with self.session_factory() as session:
+            stmt = select(User).where(User.email == email)
+            result = await session.execute(stmt)
+            user = result.scalar_one_or_none()
+            if not user:
+                user = User(email=email, role="user")
+                session.add(user)
+                await session.commit()
+                await session.refresh(user)
+            return user

@@ -26,6 +26,7 @@ from db import (
     RunRepository,
     RunStatus,
     ScenarioRepository,
+    UserRepository,
 )
 from api.scenarios import router as scenarios_router
 
@@ -105,6 +106,28 @@ def _map_status(status: str) -> RunStatus | None:
 @app.get("/")
 def root():
     return {"message": "Hello World! This is the main page."}
+
+
+@app.post("/users/sync")
+async def sync_user(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "Invalid JSON body")
+        
+    email = body.get("email")
+    if not email:
+        raise HTTPException(400, "Email is required")
+        
+    repo = UserRepository(async_session_factory)
+    user = await repo.get_or_create_user(email)
+    
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "role": user.role,
+        "createdAt": user.created_at.isoformat() if user.created_at else None,
+    }
 
 
 @app.get("/scenarios/{scenario_id}/runs")
