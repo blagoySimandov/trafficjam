@@ -352,9 +352,7 @@ class ChildPlanStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Child)
 
-    def generate(
-        self, agent: Agent, buildings: list[Building], config: AgentConfig
-    ) -> DailyPlan | None:
+    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
         return generate_plan_child(agent, config)  # type: ignore[arg-type]
 
 
@@ -368,9 +366,7 @@ class AdultDropoffWorkStrategy:
             and agent.children[0].school is not None
         )
 
-    def generate(
-        self, agent: Agent, buildings: list[Building], config: AgentConfig
-    ) -> DailyPlan | None:
+    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
         return generate_plan_adult_dropoff_work(agent, config)  # type: ignore[arg-type]
 
 
@@ -378,9 +374,7 @@ class ElderlyStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Adult) and agent.age >= config.elderly_age_threshold
 
-    def generate(
-        self, agent: Agent, buildings: list[Building], config: AgentConfig
-    ) -> DailyPlan | None:
+    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
         return generate_plan_elderly(agent, buildings, config)  # type: ignore[arg-type]
 
 
@@ -388,9 +382,7 @@ class EmployedAdultStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Adult) and agent.employed
 
-    def generate(
-        self, agent: Agent, buildings: list[Building], config: AgentConfig
-    ) -> DailyPlan | None:
+    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
         return generate_plan_adult_work(agent, buildings, config)  # type: ignore[arg-type]
 
 
@@ -398,9 +390,7 @@ class NonEmployedAdultStrategy:
     def supports(self, agent: Agent, config: AgentConfig) -> bool:
         return isinstance(agent, Adult)
 
-    def generate(
-        self, agent: Agent, buildings: list[Building], config: AgentConfig
-    ) -> DailyPlan | None:
+    def generate(self, agent: Agent, buildings: list[Building], config: AgentConfig) -> DailyPlan | None:
         return generate_plan_non_employed(agent, buildings, config)  # type: ignore[arg-type]
 
 
@@ -416,12 +406,8 @@ PLAN_STRATEGIES: list[PlanStrategy] = [
 def generate_plan_for_agent(
     agent: Agent, buildings: list[Building], agent_config: AgentConfig
 ) -> DailyPlan | None:
-    strategy = next(
-        (s for s in PLAN_STRATEGIES if s.supports(agent, agent_config)), None
-    )
+    strategy = next((s for s in PLAN_STRATEGIES if s.supports(agent, agent_config)), None)
     plan = strategy.generate(agent, buildings, agent_config) if strategy else None
     if plan is not None:
-        _append_hotspot_visit(
-            plan, buildings, _get_agent_type(agent, agent_config), _get_mode(agent)
-        )
+        _append_hotspot_visit(plan, buildings, _get_agent_type(agent, agent_config), _get_mode(agent))
     return plan

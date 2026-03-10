@@ -11,12 +11,17 @@ router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("", response_model=list[ScenarioSummary])
+@router.get("", response_model=list[ScenarioSummary], summary="List all scenarios")
 async def list_scenarios(repo: ScenarioRepository = Depends(get_scenario_repo)):
     return await repo.list_scenarios()
 
 
-@router.get("/{scenario_id}", response_model=ScenarioResponse)
+@router.get(
+    "/{scenario_id}",
+    response_model=ScenarioResponse,
+    summary="Get a scenario",
+    response_description="Full scenario including network config and MATSim settings",
+)
 async def get_scenario(
     scenario_id: uuid.UUID,
     repo: ScenarioRepository = Depends(get_scenario_repo),
@@ -27,7 +32,13 @@ async def get_scenario(
     return scenario
 
 
-@router.post("", response_model=ScenarioResponse, status_code=201)
+@router.post(
+    "",
+    response_model=ScenarioResponse,
+    status_code=201,
+    summary="Create a scenario",
+    response_description="Newly created scenario",
+)
 async def create_scenario(
     body: ScenarioCreate,
     repo: ScenarioRepository = Depends(get_scenario_repo),
@@ -41,7 +52,12 @@ async def create_scenario(
     )
 
 
-@router.put("/{scenario_id}", response_model=ScenarioSummary)
+@router.put(
+    "/{scenario_id}",
+    response_model=ScenarioSummary,
+    summary="Update a scenario",
+    response_description="Updated scenario summary",
+)
 async def update_scenario(
     scenario_id: uuid.UUID,
     body: ScenarioUpdate,
@@ -58,7 +74,12 @@ async def update_scenario(
     return scenario
 
 
-@router.put("/{scenario_id}/network", status_code=204)
+@router.put(
+    "/{scenario_id}/network",
+    status_code=204,
+    summary="Update network config",
+    description="Replace the road network configuration for a scenario without affecting other fields.",
+)
 async def update_network(
     scenario_id: uuid.UUID,
     body: dict,
@@ -76,7 +97,12 @@ async def _purge_nats_messages(js, scenario_id: uuid.UUID):
         logger.warning(f"NATS purge failed for scenario {scenario_id}: {e}")
 
 
-@router.delete("/{scenario_id}", status_code=204)
+@router.delete(
+    "/{scenario_id}",
+    status_code=204,
+    summary="Delete a scenario",
+    description="Deletes the scenario and all its runs. Also purges all associated NATS messages from the `SIMULATIONS` stream.",
+)
 async def delete_scenario(
     scenario_id: uuid.UUID,
     request: Request,
