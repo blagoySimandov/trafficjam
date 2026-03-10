@@ -1,20 +1,16 @@
 # Map Data Service
 
-FastAPI service that provides map data for the Traffic Jam application from a Neon PostgreSQL database with PostGIS.
+FastAPI service that serves [OpenStreetMap](https://www.openstreetmap.org/) network data (nodes, links, buildings, transport routes) stored in a PostGIS-enabled PostgreSQL database.
 
 ## Setup
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate   # Linux/Mac
-.venv\Scripts\activate      # Windows
-
 pip install -r requirements.txt
 ```
 
-## Configuration
-
-Copy `.env.example` to `.env` and set your Neon database URL:
+Copy `.env.example` to `.env` and set your database URL:
 
 ```bash
 cp .env.example .env
@@ -26,4 +22,10 @@ cp .env.example .env
 fastapi dev
 ```
 
-The API will be available at `http://localhost:8000`.
+## API Docs
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8000/docs` | Swagger UI — interactive docs |
+| `http://localhost:8000/redoc` | ReDoc — reference docs |
+| `http://localhost:8000/openapi.json` | Raw OpenAPI schema |
