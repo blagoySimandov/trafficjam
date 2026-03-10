@@ -19,7 +19,11 @@ router = APIRouter(prefix="/scenarios", tags=["runs"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("/{scenario_id}/runs")
+@router.get(
+    "/{scenario_id}/runs",
+    summary="List runs",
+    response_description="All runs for the scenario, ordered by creation time",
+)
 async def list_runs(
     scenario_id: str,
     repo: RunRepository = Depends(get_run_repo),
@@ -43,7 +47,12 @@ async def list_runs(
     ]
 
 
-@router.post("/{scenario_id}/runs")
+@router.post(
+    "/{scenario_id}/runs",
+    summary="Create a run",
+    description="Creates a new run record in `PENDING` status without starting the simulation. Use `/start` to launch it.",
+    response_description="Created run with its assigned ID",
+)
 async def create_run(
     scenario_id: str,
     run_id: str | None = None,
@@ -59,15 +68,23 @@ async def create_run(
     }
 
 
-@router.post("/{scenario_id}/runs/start")
+@router.post(
+    "/{scenario_id}/runs/start",
+    summary="Start a simulation run",
+    description=(
+        "Generates a MATSim plans XML from `buildings` and `bounds`, then submits the network file "
+        "and plans to the simulation engine. The run streams events back via SSE once started."
+    ),
+    response_description="Started run with simulation engine ID",
+)
 async def start_run(
     scenario_id: str,
-    networkFile: UploadFile = File(...),
-    buildings: Optional[str] = Form(None),
-    bounds: Optional[str] = Form(None),
-    iterations: int = Form(1),
-    randomSeed: int | None = Form(None),
-    note: str | None = Form(None),
+    networkFile: UploadFile = File(..., description="MATSim-compatible network XML file"),
+    buildings: Optional[str] = Form(None, description="JSON array of building objects used for agent plan generation"),
+    bounds: Optional[str] = Form(None, description="JSON object with bounding box (minLat, minLng, maxLat, maxLng)"),
+    iterations: int = Form(1, description="Number of MATSim iterations"),
+    randomSeed: int | None = Form(None, description="Random seed for reproducibility"),
+    note: str | None = Form(None, description="Optional annotation for this run"),
     run_repo: RunRepository = Depends(get_run_repo),
     scenario_repo: ScenarioRepository = Depends(get_scenario_repo),
     sim_engine: SimulationEnginePort = Depends(get_sim_engine),
@@ -127,7 +144,15 @@ async def start_run(
     }
 
 
-@router.get("/{scenario_id}/runs/{run_id}/events/stream")
+@router.get(
+    "/{scenario_id}/runs/{run_id}/events/stream",
+    summary="Stream simulation events",
+    description=(
+        "Opens a Server-Sent Events (SSE) connection that replays all past events from NATS JetStream "
+        "and then streams new events as they arrive. Closes automatically when the run completes."
+    ),
+    response_description="Stream of simulation events (text/event-stream)",
+)
 async def stream_run_events(
     scenario_id: str,
     run_id: str,
@@ -147,7 +172,15 @@ async def stream_run_events(
     return EventSourceResponse(consumer.stream_events(request, run.status == RunStatus.COMPLETED))
 
 
-@router.get("/{scenario_id}/runs/{run_id}/simwrapper/{filename:path}")
+@router.get(
+    "/{scenario_id}/runs/{run_id}/simwrapper/{filename:path}",
+    summary="Get simulation output file",
+    description=(
+        "Retrieves a simulation output file (CSV, JSON, YAML, etc.) from the NATS Object Store "
+        "for the given run. Responses are cached for 1 hour."
+    ),
+    response_description="File contents with appropriate Content-Type",
+)
 async def get_simwrapper_file(
     scenario_id: str,
     run_id: str,

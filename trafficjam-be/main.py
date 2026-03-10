@@ -27,7 +27,28 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
-app = FastAPI(lifespan=lifespan)
+TAGS_METADATA = [
+    {
+        "name": "scenarios",
+        "description": "Manage simulation scenarios — named configurations combining a road network, agent plan parameters, and MATSim settings.",
+    },
+    {
+        "name": "runs",
+        "description": "Start and monitor simulation runs within a scenario. Events stream over SSE; output files are served from NATS Object Store.",
+    },
+]
+
+app = FastAPI(
+    title="TrafficJam Backend",
+    description=(
+        "Orchestrates traffic simulations powered by **MATSim**. "
+        "Scenarios define the road network and agent behaviour; runs execute the simulation "
+        "and stream events back to the frontend in real time via Server-Sent Events (SSE) over NATS JetStream."
+    ),
+    version="1.0.0",
+    openapi_tags=TAGS_METADATA,
+    lifespan=lifespan,
+)
 app.include_router(scenarios_router)
 app.include_router(runs_router)
 
