@@ -9,7 +9,10 @@ const MAP_DATA_URL =
 const BACKEND_URL =
   import.meta.env.VITE_TRAFFICJAM_BE_URL ?? "http://localhost:8001";
 
-// Routes endpoints across two services. TODO: replace with a proxy and a unified base URL.
+// Routes endpoints across two services
+// Any endpoint that is in  the set will be routed to the map data service
+// In the future we will likely have a singular proxy that will handle all routing
+// So this logic will not be needed.
 const MAP_DATA_KEYS = new Set<EndpointKey>(["network"]);
 
 function getBaseUrl(key: EndpointKey): string {
