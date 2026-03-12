@@ -43,12 +43,20 @@ async function listScenarios(): Promise<Scenario[]> {
   return toScenarioList(raw);
 }
 
-async function getScenario(id: string, signal?: AbortSignal): Promise<Scenario> {
-  const raw = await getJson<ApiScenario>(resolveUrl("getScenario", { id }), { signal });
+async function getScenario(
+  id: string,
+  signal?: AbortSignal,
+): Promise<Scenario> {
+  const raw = await getJson<ApiScenario>(resolveUrl("getScenario", { id }), {
+    signal,
+  });
   return toFullScenario(raw);
 }
 
-async function createScenario(name: string, config: AgentConfig): Promise<Scenario> {
+async function createScenario(
+  name: string,
+  config: AgentConfig,
+): Promise<Scenario> {
   const raw = await postJson<ApiScenario>(resolveUrl("createScenario"), {
     name,
     plan_params: config,
@@ -57,7 +65,10 @@ async function createScenario(name: string, config: AgentConfig): Promise<Scenar
   return toFullScenario(raw);
 }
 
-async function updateScenario(id: string, updates: Partial<Scenario>): Promise<void> {
+async function updateScenario(
+  id: string,
+  updates: Partial<Scenario>,
+): Promise<void> {
   const body: Record<string, unknown> = {};
   if (updates.name !== undefined) body.name = updates.name;
   if (updates.description !== undefined) body.description = updates.description;
@@ -65,7 +76,11 @@ async function updateScenario(id: string, updates: Partial<Scenario>): Promise<v
   await putJson(resolveUrl("updateScenario", { id }), body);
 }
 
-async function saveNetwork(id: string, base: Network, edited: Network): Promise<void> {
+async function saveNetwork(
+  id: string,
+  base: Network,
+  edited: Network,
+): Promise<void> {
   const links = computeLinksDiff(base, edited);
   const buildings = computeBuildingsDiff(base, edited);
   await putJson(resolveUrl("saveNetwork", { id }), {
