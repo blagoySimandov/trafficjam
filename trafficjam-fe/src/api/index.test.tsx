@@ -1,12 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createElement, type ReactNode } from "react";
-import { decodeEventStream } from "./trafficjam-be/decoder";
-import { simulationApi } from "./trafficjam-be/client";
-import { useSimulation } from "./index";
-import { mapNetworkResponse } from "./map-data-service/decoder";
-import { mapDataApi } from "./map-data-service/client";
+import { decodeEventStream, mapNetworkResponse } from "./decoders";
+import { api } from "./client";
 
 const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
@@ -29,14 +23,6 @@ function createSSEResponse(lines: string[]): Response {
   return new Response(stream, {
     headers: { "Content-Type": "text/event-stream" },
   });
-}
-
-function createWrapper() {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client }, children);
 }
 
 beforeEach(() => {
@@ -109,54 +95,54 @@ describe("decodeEventStream", () => {
   });
 });
 
-describe("simulationApi.startRun", () => {
-  it("sends POST with form data and returns response", async () => {
-    const expected = { scenario_id: "s1", run_id: "r1", simulation_id: "sim1", status: "RUNNING" };
-    mockFetch.mockResolvedValueOnce(jsonResponse(expected));
+describe("api.startRun", () => {
+  it("sends POST with form data and returns decoded response", async () => {
+    const raw = { scenario_id: "s1", run_id: "r1", simulation_id: "sim1", status: "RUNNING" };
+    mockFetch.mockResolvedValueOnce(jsonResponse(raw));
 
     const file = new File(["<network/>"], "network.xml", { type: "text/xml" });
-    const result = await simulationApi.startRun({ scenarioId: "s1", networkFile: file, iterations: 10 });
+    const result = await api.startRun({ scenarioId: "s1", networkFile: file, iterations: 10 });
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, init] = mockFetch.mock.calls[0];
     expect(url).toContain("/scenarios/s1/runs/start");
     expect(init.method).toBe("POST");
     expect(init.body).toBeInstanceOf(FormData);
-    expect(result).toEqual(expected);
+    expect(result).toEqual({ scenarioId: "s1", runId: "r1", simulationId: "sim1", status: "RUNNING" });
   });
 
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
     const file = new File([""], "network.xml");
-    await expect(simulationApi.startRun({ scenarioId: "s1", networkFile: file })).rejects.toThrow("500");
+    await expect(api.startRun({ scenarioId: "s1", networkFile: file })).rejects.toThrow("500");
   });
 });
 
-describe("simulationApi.createRun", () => {
-  it("sends POST and returns run", async () => {
-    const expected = { scenario_id: "s1", run_id: "r1", status: "PENDING" };
-    mockFetch.mockResolvedValueOnce(jsonResponse(expected));
+describe("api.createRun", () => {
+  it("sends POST and returns decoded run", async () => {
+    const raw = { scenario_id: "s1", run_id: "r1", status: "PENDING" };
+    mockFetch.mockResolvedValueOnce(jsonResponse(raw));
 
-    const result = await simulationApi.createRun("s1");
+    const result = await api.createRun("s1");
 
     expect(mockFetch).toHaveBeenCalledOnce();
     expect(mockFetch.mock.calls[0][0]).toContain("/scenarios/s1/runs");
-    expect(result).toEqual(expected);
+    expect(result).toEqual({ scenarioId: "s1", runId: "r1", status: "PENDING" });
   });
 
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
-    await expect(simulationApi.createRun("bad")).rejects.toThrow("404");
+    await expect(api.createRun("bad")).rejects.toThrow("404");
   });
 });
 
-describe("simulationApi.streamEvents", () => {
+describe("api.streamEvents", () => {
   it("fetches and yields decoded events", async () => {
     const event = { time: 100, type: "entered link", vehicle: "v1", link: "l1" };
     mockFetch.mockResolvedValueOnce(createSSEResponse([`data: ${JSON.stringify(event)}`]));
 
     const events = [];
-    for await (const e of simulationApi.streamEvents("s1", "r1")) events.push(e);
+    for await (const e of api.streamEvents("s1", "r1")) events.push(e);
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, init] = mockFetch.mock.calls[0];
@@ -167,25 +153,25 @@ describe("simulationApi.streamEvents", () => {
 
   it("throws on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
-    const gen = simulationApi.streamEvents("s1", "r1");
+    const gen = api.streamEvents("s1", "r1");
     await expect(gen.next()).rejects.toThrow("500");
   });
 });
 
 describe("mapNetworkResponse", () => {
   it("maps nodes with string id, swapped coords, and camelCase count", () => {
-    const api = {
+    const apiData = {
       nodes: [{ id: 1, position: [10.5, 52.3] as [number, number], connection_count: 3 }],
       links: [],
       buildings: [],
       transport_routes: [],
     };
-    const network = mapNetworkResponse(api);
+    const network = mapNetworkResponse(apiData);
     expect(network.nodes.get("1")).toEqual({ id: "1", position: [52.3, 10.5], connectionCount: 3 });
   });
 
   it("maps links with string ids, swapped geometry, and parsed tags", () => {
-    const api = {
+    const apiData = {
       nodes: [],
       links: [
         {
@@ -199,7 +185,7 @@ describe("mapNetworkResponse", () => {
       buildings: [],
       transport_routes: [],
     };
-    const network = mapNetworkResponse(api);
+    const network = mapNetworkResponse(apiData);
     expect(network.links.get("2")).toEqual({
       id: "2",
       from: "1",
@@ -210,18 +196,18 @@ describe("mapNetworkResponse", () => {
   });
 
   it("skips buildings with a null type", () => {
-    const api = {
+    const apiData = {
       nodes: [],
       links: [],
       buildings: [{ id: 5, position: [10.5, 52.3] as [number, number], geometry: [], type: null, tags: {} }],
       transport_routes: [],
     };
-    const network = mapNetworkResponse(api);
+    const network = mapNetworkResponse(apiData);
     expect(network.buildings?.size ?? 0).toBe(0);
   });
 
   it("maps buildings with a type and swapped coords", () => {
-    const api = {
+    const apiData = {
       nodes: [],
       links: [],
       buildings: [
@@ -235,7 +221,7 @@ describe("mapNetworkResponse", () => {
       ],
       transport_routes: [],
     };
-    const network = mapNetworkResponse(api);
+    const network = mapNetworkResponse(apiData);
     const building = network.buildings?.get("6");
     expect(building).toBeDefined();
     expect(building?.position).toEqual([52.3, 10.5]);
@@ -244,7 +230,7 @@ describe("mapNetworkResponse", () => {
   });
 
   it("maps transport routes with nested swapped geometry", () => {
-    const api = {
+    const apiData = {
       nodes: [],
       links: [],
       buildings: [],
@@ -256,7 +242,7 @@ describe("mapNetworkResponse", () => {
         },
       ],
     };
-    const network = mapNetworkResponse(api);
+    const network = mapNetworkResponse(apiData);
     expect(network.transportRoutes?.get("7")).toEqual({
       id: "7",
       geometry: [[[52.3, 10.5], [52.4, 10.6]]],
@@ -265,7 +251,7 @@ describe("mapNetworkResponse", () => {
   });
 });
 
-describe("mapDataApi.fetchNetworkData", () => {
+describe("api.fetchNetwork", () => {
   it("calls fetch with the correct URL and query params", async () => {
     const apiData = { nodes: [], links: [], buildings: [], transport_routes: [] };
     mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(apiData), { status: 200 }));
@@ -275,9 +261,9 @@ describe("mapDataApi.fetchNetworkData", () => {
       getNorth: () => 48.2,
       getWest: () => 11.5,
       getEast: () => 11.6,
-    } as unknown as Parameters<typeof mapDataApi.fetchNetworkData>[0];
+    } as unknown as Parameters<typeof api.fetchNetwork>[0];
 
-    await mapDataApi.fetchNetworkData(bounds);
+    await api.fetchNetwork(bounds);
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const url = mockFetch.mock.calls[0][0] as string;
@@ -296,9 +282,9 @@ describe("mapDataApi.fetchNetworkData", () => {
       getNorth: () => 1,
       getWest: () => 0,
       getEast: () => 1,
-    } as unknown as Parameters<typeof mapDataApi.fetchNetworkData>[0];
+    } as unknown as Parameters<typeof api.fetchNetwork>[0];
 
-    await expect(mapDataApi.fetchNetworkData(bounds)).rejects.toThrow("503");
+    await expect(api.fetchNetwork(bounds)).rejects.toThrow("503");
   });
 
   it("returns the decoded network", async () => {
@@ -315,40 +301,10 @@ describe("mapDataApi.fetchNetworkData", () => {
       getNorth: () => 1,
       getWest: () => 0,
       getEast: () => 1,
-    } as unknown as Parameters<typeof mapDataApi.fetchNetworkData>[0];
+    } as unknown as Parameters<typeof api.fetchNetwork>[0];
 
-    const network = await mapDataApi.fetchNetworkData(bounds);
+    const network = await api.fetchNetwork(bounds);
     expect(network.nodes.get("1")).toEqual({ id: "1", position: [52.3, 10.5], connectionCount: 2 });
   });
 });
 
-describe("useSimulation", () => {
-  it("start mutation calls simulationApi.startRun", async () => {
-    const response = { scenario_id: "s1", run_id: "r1", simulation_id: "sim1", status: "RUNNING" };
-    mockFetch.mockResolvedValueOnce(jsonResponse(response));
-
-    const { result } = renderHook(() => useSimulation("s1"), {
-      wrapper: createWrapper(),
-    });
-
-    const file = new File([""], "network.xml");
-    result.current.start.mutate({ scenarioId: "s1", networkFile: file });
-
-    await waitFor(() => expect(result.current.start.isSuccess).toBe(true));
-    expect(result.current.start.data).toEqual(response);
-  });
-
-  it("createRun mutation calls simulationApi.createRun", async () => {
-    const response = { scenario_id: "s1", run_id: "r1", status: "PENDING" };
-    mockFetch.mockResolvedValueOnce(jsonResponse(response));
-
-    const { result } = renderHook(() => useSimulation("s1"), {
-      wrapper: createWrapper(),
-    });
-
-    result.current.createRun.mutate("s1");
-
-    await waitFor(() => expect(result.current.createRun.isSuccess).toBe(true));
-    expect(result.current.createRun.data).toEqual(response);
-  });
-});

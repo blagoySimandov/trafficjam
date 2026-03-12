@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { simulationApi } from "../api/trafficjam-be";
+import { api } from "../api/client";
 
 // Raw data from API
 interface ModeShareByDistanceRaw {
@@ -47,7 +47,7 @@ export function useModeShareByDistance(scenarioId: string, runId: string) {
       "analysis/population/mode_share_per_dist.csv",
     ],
     queryFn: async ({ queryKey }) => {
-      const rawData = await simulationApi.getSimwrapperFile<
+      const rawData = await api.getSimwrapperFile<
         ModeShareByDistanceRaw[]
       >(queryKey[0] as string, queryKey[1] as string, queryKey[2] as string);
       return transformModeShareData(rawData);

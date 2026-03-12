@@ -1,4 +1,4 @@
-import type { AgentConfig } from "./types";
+import type { AgentConfig } from "../types";
 
 export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   populationDensity: 100,

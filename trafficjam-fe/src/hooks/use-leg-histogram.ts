@@ -1,4 +1,4 @@
-import { simulationApi } from "../api/trafficjam-be";
+import { api } from "../api/client";
 import { useQuery } from "@tanstack/react-query";
 import type { LegHistogramRow } from "../types";
 
@@ -26,7 +26,7 @@ export function useLegHistogram(scenarioId: string, runId: string) {
   return useQuery<LegHistogramRow[]>({
     queryKey: [scenarioId, runId, "ITERS/it.1/1.legHistogram.txt"],
     queryFn: async ({ queryKey }) => {
-      const raw = await simulationApi.getSimwrapperFile<RawLegHistogramRow[]>(
+      const raw = await api.getSimwrapperFile<RawLegHistogramRow[]>(
         queryKey[0] as string,
         queryKey[1] as string,
         queryKey[2] as string,

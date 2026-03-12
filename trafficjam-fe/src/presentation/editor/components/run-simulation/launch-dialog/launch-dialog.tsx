@@ -4,10 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Play, Loader2 } from "lucide-react";
 import { networkToMatsim } from "../../../../../osm/matsim";
 import { calculateBounds } from "../../../../../utils/network-bounds";
-import { useSimulation } from "../../../../../api";
+import { useSimulation } from "../../../../../hooks/use-simulation";
 import { Dialog } from "../../../../../components/dialog";
 import type { Network } from "../../../../../types";
-import type { Scenario } from "../../../../../api/scenarios";
+import type { Scenario } from "../../../../../api";
 import styles from "./launch-dialog.module.css";
 
 interface LaunchInitialValues {
@@ -40,7 +40,7 @@ function prepareSimulationData(network: Network) {
 
 export function LaunchDialog({ activeScenario, network, onLaunch, onClose, initialValues }: LaunchDialogProps) {
   const queryClient = useQueryClient();
-  const { start } = useSimulation(activeScenario?.id || "default");
+  const start = useSimulation();
   const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit } = useForm<LaunchForm>({
@@ -71,7 +71,7 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose, initi
         {
           onSuccess: (responseData) => {
             queryClient.invalidateQueries({ queryKey: ["runs"] });
-            onLaunch({ scenarioId: responseData.scenario_id, runId: responseData.run_id });
+            onLaunch({ scenarioId: responseData.scenarioId, runId: responseData.runId });
           },
           onError: (err) => setError(err instanceof Error ? err.message : "Failed to start simulation"),
         },

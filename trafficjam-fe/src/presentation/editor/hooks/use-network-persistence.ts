@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { scenariosApi } from "../../../api/scenarios";
-import { computeLinksDiff, computeBuildingsDiff } from "../../../api/scenarios/network-serializer";
+import { api } from "../../../api/client";
+import { computeLinksDiff, computeBuildingsDiff } from "../../../api/network-serializer";
 import type { Network } from "../../../types";
-import type { Scenario } from "../../../api/scenarios";
+import type { Scenario } from "../../../api";
 
 interface UseNetworkPersistenceOptions {
   activeScenario: Scenario | null;
@@ -20,7 +20,7 @@ export function useNetworkPersistence({ activeScenario, network, baseNetwork }: 
 
   const { mutateAsync, isPending: isSaving } = useMutation({
     mutationFn: ({ id, base, edited }: { id: string; base: Network; edited: Network }) =>
-      scenariosApi.saveNetwork(id, base, edited),
+      api.saveNetwork(id, base, edited),
   });
 
   const markDirty = useCallback(() => setIsDirty(true), []);

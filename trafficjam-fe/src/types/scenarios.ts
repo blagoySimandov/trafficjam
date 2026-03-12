@@ -1,4 +1,4 @@
-import type { TrafficLink, Building } from "../../types";
+import type { TrafficLink, Building } from "./network";
 
 export interface AgentConfig {
   populationDensity: number;

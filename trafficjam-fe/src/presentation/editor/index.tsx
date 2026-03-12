@@ -11,9 +11,9 @@ import { useUndoStack } from "./hooks/use-undo-stack";
 import { useNetworkPersistence } from "./hooks/use-network-persistence";
 import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
 import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
-import { applyLinksDiff, applyBuildingsDiff } from "../../api/scenarios/network-serializer";
+import { applyLinksDiff, applyBuildingsDiff } from "../../api/network-serializer";
 import type { TrafficLink, Network, Building } from "../../types";
-import type { Scenario, Run } from "../../api/scenarios";
+import type { Scenario, Run } from "../../api";
 import type { CityConfig } from "../../constants/cities";
 
 interface EditorProps {

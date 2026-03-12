@@ -1,2 +1,4 @@
-export { fetchNetworkData as fetchOSMData } from "../api/map-data-service";
+import { api } from "../api/client";
+
+export const fetchOSMData = api.fetchNetwork;
 export { networkToMatsim } from "./matsim";

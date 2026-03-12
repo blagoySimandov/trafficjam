@@ -1,4 +1,4 @@
-import { simulationApi } from "../api/trafficjam-be";
+import { api } from "../api/client";
 import { useQuery } from "@tanstack/react-query";
 import type { MatsimMode } from "../types";
 
@@ -34,7 +34,7 @@ export function useLinkVolumes(scenarioId: string, runId: string) {
   return useQuery<LinkVolumeParsed[]>({
     queryKey: [scenarioId, runId, "output_links.csv.gz"],
     queryFn: async ({ queryKey }) => {
-      const raw = await simulationApi.getSimwrapperFile<LinkVolume[]>(
+      const raw = await api.getSimwrapperFile<LinkVolume[]>(
         queryKey[0] as string,
         queryKey[1] as string,
         queryKey[2] as string,

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History, Trash2, RotateCcw, Clock, Pencil } from "lucide-react";
-import type { Scenario, Run } from "../../api/scenarios";
+import type { Scenario, Run } from "../../api";
 import styles from "./sidebar.module.css";
 
 interface SidebarProps {

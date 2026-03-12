@@ -1,4 +1,4 @@
-import { simulationApi } from "../api/trafficjam-be";
+import { api } from "../api/client";
 import { useQuery } from "@tanstack/react-query";
 import type { TripStat, PopulationTripStat } from "../types";
 
@@ -6,7 +6,7 @@ export function useTripStats(scenarioId: string, runId: string) {
   const tripStats = useQuery<TripStat[]>({
     queryKey: [scenarioId, runId, "analysis/population/trip_stats.csv"],
     queryFn: ({ queryKey }) =>
-      simulationApi.getSimwrapperFile<TripStat[]>(
+      api.getSimwrapperFile<TripStat[]>(
         queryKey[0] as string,
         queryKey[1] as string,
         queryKey[2] as string,
@@ -23,7 +23,7 @@ export function useTripStats(scenarioId: string, runId: string) {
       "analysis/population/population_trip_stats.csv",
     ],
     queryFn: ({ queryKey }) =>
-      simulationApi.getSimwrapperFile<PopulationTripStat[]>(
+      api.getSimwrapperFile<PopulationTripStat[]>(
         queryKey[0] as string,
         queryKey[1] as string,
         queryKey[2] as string,

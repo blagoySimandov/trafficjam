@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { scenariosApi } from "./client";
-import { DEFAULT_AGENT_CONFIG } from "./constants";
-import type { Scenario, AgentConfig } from "./types";
-import type { CityConfig } from "../../constants/cities";
+import { api } from "../api/client";
+import { DEFAULT_AGENT_CONFIG } from "../api/constants";
+import type { Scenario, AgentConfig } from "../types";
+import type { CityConfig } from "../constants/cities";
 
 export function useScenarioManager() {
   const queryClient = useQueryClient();
@@ -11,7 +11,7 @@ export function useScenarioManager() {
 
   const { data: scenarios = [], isLoading: isLoadingScenarios } = useQuery({
     queryKey: ["scenarios"],
-    queryFn: () => scenariosApi.listScenarios(),
+    queryFn: () => api.listScenarios(),
     staleTime: 5000,
   });
 
@@ -19,7 +19,7 @@ export function useScenarioManager() {
 
   const { data: activeScenario = null, isLoading: isLoadingActive, isFetching: isFetchingActive } = useQuery({
     queryKey: ["scenario", resolvedActiveId],
-    queryFn: ({ signal }) => scenariosApi.getScenario(resolvedActiveId!, signal),
+    queryFn: ({ signal }) => api.getScenario(resolvedActiveId!, signal),
     enabled: !!resolvedActiveId,
     staleTime: Infinity,
     gcTime: 1000 * 60 * 30,
@@ -30,7 +30,7 @@ export function useScenarioManager() {
     (id: string) => {
       queryClient.prefetchQuery({
         queryKey: ["scenario", id],
-        queryFn: ({ signal }) => scenariosApi.getScenario(id, signal),
+        queryFn: ({ signal }) => api.getScenario(id, signal),
         staleTime: Infinity,
       });
     },
@@ -39,7 +39,7 @@ export function useScenarioManager() {
 
   const { data: runs = [], isLoading: isLoadingRuns } = useQuery({
     queryKey: ["runs", resolvedActiveId],
-    queryFn: () => scenariosApi.listRuns(resolvedActiveId!),
+    queryFn: () => api.listRuns(resolvedActiveId!),
     enabled: !!resolvedActiveId,
     staleTime: 5000,
     refetchInterval: 5000,
@@ -47,7 +47,7 @@ export function useScenarioManager() {
 
   const createScenarioMutation = useMutation({
     mutationFn: ({ name, config }: { name: string; config: AgentConfig }) =>
-      scenariosApi.createScenario(name, config),
+      api.createScenario(name, config),
     onSuccess: (newScenario) => {
       queryClient.setQueryData<Scenario[]>(["scenarios"], (old) => [...(old ?? []), newScenario]);
       queryClient.setQueryData(["scenario", newScenario.id], newScenario);
@@ -63,7 +63,7 @@ export function useScenarioManager() {
 
   const updateScenarioMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Scenario> }) =>
-      scenariosApi.updateScenario(id, updates),
+      api.updateScenario(id, updates),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ["scenario", variables.id] });
       const previous = queryClient.getQueryData<Scenario>(["scenario", variables.id]);
@@ -89,7 +89,7 @@ export function useScenarioManager() {
   });
 
   const deleteScenarioMutation = useMutation({
-    mutationFn: (id: string) => scenariosApi.deleteScenario(id),
+    mutationFn: (id: string) => api.deleteScenario(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
     },
