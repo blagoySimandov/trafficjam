@@ -1,4 +1,4 @@
-import type { Network, TrafficNode, TrafficLink, TransportRoute, Building } from "../../types";
+import type { Network, TrafficNode, TrafficLink, TransportRoute, Building } from "../types";
 
 function mapToRecord<T>(map: Map<string, T>): Record<string, T> {
   return Object.fromEntries(map);
@@ -38,10 +38,7 @@ export function isNonEmptyNetworkConfig(config: Record<string, unknown> | null |
   return false;
 }
 
-export function computeLinksDiff(
-  base: Network,
-  edited: Network,
-): Record<string, TrafficLink> {
+export function computeLinksDiff(base: Network, edited: Network): Record<string, TrafficLink> {
   const diff: Record<string, TrafficLink> = {};
   for (const [id, link] of edited.links) {
     const baseLink = base.links.get(id);
@@ -52,10 +49,7 @@ export function computeLinksDiff(
   return diff;
 }
 
-export function applyLinksDiff(
-  base: Network,
-  diff: Record<string, TrafficLink>,
-): Network {
+export function applyLinksDiff(base: Network, diff: Record<string, TrafficLink>): Network {
   const mergedLinks = new Map(base.links);
   for (const [id, link] of Object.entries(diff)) {
     mergedLinks.set(id, link);
@@ -63,10 +57,7 @@ export function applyLinksDiff(
   return { ...base, links: mergedLinks };
 }
 
-export function computeBuildingsDiff(
-  base: Network,
-  edited: Network,
-): Record<string, Building> {
+export function computeBuildingsDiff(base: Network, edited: Network): Record<string, Building> {
   const diff: Record<string, Building> = {};
   if (!edited.buildings) return diff;
   for (const [id, building] of edited.buildings) {
@@ -78,10 +69,7 @@ export function computeBuildingsDiff(
   return diff;
 }
 
-export function applyBuildingsDiff(
-  base: Network,
-  diff: Record<string, Building>,
-): Network {
+export function applyBuildingsDiff(base: Network, diff: Record<string, Building>): Network {
   if (!base.buildings) return base;
   const mergedBuildings = new Map(base.buildings);
   for (const [id, building] of Object.entries(diff)) {

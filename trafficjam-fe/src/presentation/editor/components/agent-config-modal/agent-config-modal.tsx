@@ -5,8 +5,8 @@ import { Dialog } from "../../../../components/dialog";
 import {
   DEFAULT_AGENT_CONFIG,
   AGENT_CONFIG_PLACEHOLDERS,
-} from "../../../../api/scenarios";
-import type { AgentConfig, Scenario } from "../../../../api/scenarios";
+} from "../../../../api";
+import type { AgentConfig, Scenario } from "../../../../api";
 import styles from "./agent-config-modal.module.css";
 
 interface AgentConfigModalProps {

@@ -5,9 +5,9 @@ import { Sidebar } from "./components/sidebar/sidebar";
 import { ConfirmDialog } from "./components/confirm-dialog";
 import { Dialog } from "./components/dialog";
 import { AgentConfigModal } from "./presentation/editor/components/agent-config-modal/agent-config-modal";
-import { useScenarioManager, DEFAULT_AGENT_CONFIG } from "./api/scenarios";
+import { useScenarioManager, DEFAULT_AGENT_CONFIG } from "./api";
 import { DEFAULT_CITY } from "./constants/cities";
-import type { Run, AgentConfig } from "./api/scenarios";
+import type { Run, AgentConfig } from "./api";
 
 type Mode = "editor" | "visualizer";
 
