@@ -176,26 +176,5 @@ public class SimulationService {
         emitter.completeWithError(e);
       }
     }).start();
-  }}emitter.send(SseEmitter.event().name("status").data(statusText));
-
-  // Check if simulation finished
-  if(MatsimRunner.SimulationState.COMPLETED==currentState||MatsimRunner.SimulationState.FAILED==currentState||MatsimRunner.SimulationState.STOPPED==currentState){
-
-  // Send final message
-  emitter.send(SseEmitter.event().name("finished").data(currentState.name()));
-
-  emitter.complete();break;}
-
-  Thread.sleep(1000); // Poll every second
-  }}catch(
-
-  IOException e)
-  {
-    emitter.completeWithError(e);
-  }catch(
-  InterruptedException e)
-  {
-        Thread.currentThread().interrupt();
-        emitter.completeWithError(e);
-      }
-}).start();}}
+  }
+}
