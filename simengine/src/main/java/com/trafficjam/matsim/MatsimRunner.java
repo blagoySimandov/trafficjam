@@ -35,6 +35,28 @@ public class MatsimRunner {
         controler.run();
     }
 
+    /**
+     * Loads and executes a MATSim simulation asynchronously on a thread-pool
+     * worker.
+     *
+     * <p>
+     * The scenario is loaded synchronously on the calling thread (so config errors
+     * fail
+     * fast), then handed off to the executor. Callers are notified of state
+     * transitions
+     * via {@code statusCallback} and of individual link/person events via
+     * {@code eventCallback}.
+     * </p>
+     *
+     * @param configPath     path to the generated {@code config.xml} for this run
+     * @param eventCallback  receives every {@link EventHandler.TransformedEvent} as
+     *                       it
+     *                       occurs; may be {@code null} to skip real-time streaming
+     * @param statusCallback notified when the simulation transitions to
+     *                       {@code COMPLETED}, {@code FAILED}, or {@code STOPPED}
+     * @return a UUID string that uniquely identifies this simulation run and can be
+     *         passed to {@link #getSimulationStatus} or {@link #stopSimulation}
+     */
     public String runSimulationAsync(String configPath, EventCallback eventCallback, StatusCallback statusCallback) {
         String simulationId = UUID.randomUUID().toString();
         Scenario scenario = loadScenario(configPath);
@@ -69,6 +91,20 @@ public class MatsimRunner {
         info.status = SimulationState.COMPLETED;
     }
 
+    /**
+     * Handles an exception thrown inside a simulation worker thread.
+     *
+     * <p>
+     * An {@link InterruptedException} (or a cause thereof) is treated as a
+     * deliberate stop request and transitions the simulation to {@code STOPPED}
+     * rather than {@code FAILED}. All other exceptions are logged with their full
+     * cause chain and transition the simulation to {@code FAILED}.
+     * </p>
+     *
+     * @param simulationId   the ID of the simulation that threw the exception
+     * @param e              the exception caught by the executor submit wrapper
+     * @param statusCallback notified of the resulting terminal state
+     */
     private void handleSimulationFailure(String simulationId, Exception e, StatusCallback statusCallback) {
         if (isInterruption(e)) {
             logger.info("Simulation {} was stopped by user request.", simulationId);
@@ -99,6 +135,22 @@ public class MatsimRunner {
                 || (e.getCause() != null && e.getCause() instanceof InterruptedException);
     }
 
+    /**
+     * Loads a MATSim {@link Scenario} from the generated config file and runs
+     * {@link NetworkCleaner} to remove disconnected network components.
+     *
+     * <p>
+     * {@code matsim.preferLocalDtds} is set to {@code true} so that MATSim resolves
+     * DTD files from the JAR rather than attempting an outbound HTTP request, which
+     * would fail inside Docker with no internet access.
+     * </p>
+     *
+     * @param configPath absolute path to the {@code config.xml} written by
+     *                   {@link com.trafficjam.matsim.ConfigGenerator}
+     * @return a fully loaded and network-cleaned {@link Scenario} ready for
+     *         {@link Controler#run()}
+     * @throws RuntimeException if the network or population are empty after loading
+     */
     private Scenario loadScenario(String configPath) {
         System.setProperty("matsim.preferLocalDtds", "true");
         Config config = ConfigUtils.loadConfig(configPath);
@@ -120,6 +172,29 @@ public class MatsimRunner {
         }
     }
 
+    /**
+     * Wires the {@link SimWrapperModule} and, when streaming is active, the
+     * {@link EventHandler} into the MATSim {@link Controler}.
+     *
+     * <p>
+     * {@link SimWrapperModule} is always attached — it auto-generates
+     * analysis dashboards (mode share, trip distance histograms, etc.) in the
+     * output directory after the simulation finishes.
+     * </p>
+     *
+     * <p>
+     * The {@link EventHandler} is only attached when {@code eventCallback} is
+     * non-null. It converts raw MATSim events into WGS-84
+     * {@link EventHandler.TransformedEvent}
+     * objects and streams them to the NATS publisher in real time.
+     * </p>
+     *
+     * @param controler     the MATSim controler being configured
+     * @param eventCallback target for live event streaming; {@code null} disables
+     *                      streaming
+     * @param scenario      used to obtain the network (for coordinate lookup) and
+     *                      the CRS string (for coordinate transformation)
+     */
     private void registerEventHandlers(Controler controler, EventCallback eventCallback, Scenario scenario) {
         // Add SimWrapper module — generates dashboards automatically after simulation
         controler.addOverridingModule(new SimWrapperModule());
@@ -145,6 +220,19 @@ public class MatsimRunner {
         void onStatusChange(String simulationId, SimulationState status);
     }
 
+    /**
+     * Requests cooperative termination of a running simulation by interrupting
+     * its worker thread.
+     *
+     * <p>
+     * MATSim checks the thread's interrupted flag between iterations. The
+     * simulation will finish its current iteration before stopping, so there may
+     * be a short delay before the state transitions to {@code STOPPED}.
+     * </p>
+     *
+     * @param simulationId the ID returned by {@link #runSimulationAsync}
+     * @throws IllegalArgumentException if no simulation with that ID is tracked
+     */
     public void stopSimulation(String simulationId) {
         SimulationInfo info = activeSimulations.get(simulationId);
         if (info == null)
