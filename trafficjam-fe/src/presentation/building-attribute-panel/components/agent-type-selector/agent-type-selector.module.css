@@ -1,0 +1,17 @@
+.agentTypeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.agentTypeCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.agentTypeCheckbox input {
+  accent-color: #ff6b00;
+}
