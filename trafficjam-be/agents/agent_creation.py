@@ -21,20 +21,6 @@ logger = logging.getLogger(__name__)
 def calculate_population_from_bounds(
     bounds: dict[str, float], agent_config: AgentConfig
 ) -> int:
-    """
-    Estimates the total population size for a geographic bounding box.
-
-    Uses the configured `default_population_density` multiplied by the 
-    calculated squared kilometer area.
-
-    Args:
-        bounds (dict[str, float]): A dictionary containing 'minLat', 'minLng', 
-            'maxLat', and 'maxLng' coordinates.
-        agent_config (AgentConfig): The dynamic parameters controlling demographic generation.
-
-    Returns:
-        int: The estimated raw number of people residing in the area.
-    """
     area_km2 = calculate_area_wgs84(bounds)
     return estimate_population(area_km2, agent_config)
 
@@ -44,21 +30,6 @@ def create_child(
     schools: list[Building],
     kindergartens: list[Building],
 ) -> Child:
-    """
-    Instantiates a single synthetic Child agent.
-
-    A child is deterministically assigned an age via a probability distribution,
-    which dictates whether they are assigned to a Kindergarten or a typical School.
-    Children default to walking for their `preferred_transport`.
-
-    Args:
-        home (Building): The residential building assigned to the household.
-        schools (list[Building]): All available generic education amenities in the network.
-        kindergartens (list[Building]): All available early-years amenities.
-
-    Returns:
-        Child: A populated `Child` instance with an assigned school location. 
-    """
     age = generate_child_age()
 
     child = Child(
@@ -81,24 +52,6 @@ def create_adult(
     children_ids: list[Child],
     cfg: AgentConfig,
 ) -> Adult:
-    """
-    Instantiates a complex adult demographic agent and assigns their daily routines.
-
-    This function determines age-driven employment (student vs worker vs retired), calculates 
-    car availability thresholds, and assigns specific work locations for employed agents based on 
-    proximity heuristics.
-
-    Args:
-        home (Building): The residential base for the agent.
-        buildings (list[Building]): All commercial, industrial, or retail buildings for work assignment.
-        has_transport (bool): Whether the city network has any valid public transport routes.
-        needs_to_dropoff_children (bool): If True, the agent receives a modified morning routine to stop at a school. 
-        children_ids (list[Child]): Pointers to the specific children this adult is responsible for dropping off.
-        cfg (AgentConfig): Scenario demographic rules (e.g., retirement age).
-
-    Returns:
-        Adult: An `Adult` agent ready to have their physical daily plan generated.
-    """
     age = generate_adult_age(cfg)
     employed, is_student = determine_employment_status(age, cfg)
     uses_pt, has_car = determine_transport_preferences(
@@ -172,29 +125,6 @@ def create_agents_from_network(
     agent_config: AgentConfig | None = None,
     max_agents: int = 1000,
 ) -> list[Agent]:
-    """
-    The main macro-entrypoint for synthesizing a MATSim population from a static network.
-
-    1. Scans the network geometries for residential spaces to act as 'homes'.
-    2. Scans for educational facilities (`schools`, `kindergartens`).
-    3. Iteratively generates households of randomized sizes (Adults + Children) targeting
-       the `max_agents` limit or the calculated geographical density limit (whichever is lower).
-    
-    This function acts as the bridge between standard GIS data (like OpenStreetMap points)
-    and the required statistical behavioural inputs for a traffic simulation.
-
-    Args:
-        bounds (dict[str, float]): The geographical lat/lng bounding box of the selected map.
-        buildings (list[Building]): Flattened list of all buildings with their functional tags.
-        transport_routes (list): Array of parsed public transport line identifiers.
-        country_code (str, optional): Currently unused, but positioned for census-based localized demographics. Defaults to "IRL".
-        agent_config (AgentConfig | None, optional): Override the default probabilities. Defaults to None.
-        max_agents (int, optional): The upper cap of agents to prevent JVM memory exhaustion on the server. Defaults to 1000.
-
-    Returns:
-        list[Agent]: A flat list containing every generated `Child` and `Adult` instance, complete 
-            with their assigned homes, workplaces, transport modes, and dependents.
-    """
     cfg = agent_config or default_config
     total_population = calculate_population_from_bounds(bounds, cfg)
     total_population = min(total_population, max_agents)

@@ -18,13 +18,6 @@ function haversineMeters(a: [number, number], b: [number, number]) {
   return R * c;
 }
 
-/**
- * Extracts and converts the theoretical maximum speed from OSM tags.
- * Default is an assumed 50 km/h if unlabelled.
- * 
- * @param link - The map link containing the OpenStreetMap tag payload.
- * @returns The freespeed in meters per second, required by the MATSim standard.
- */
 function getFreespeedMs(link: TrafficLink) {
   return (link.tags.maxspeed ?? 50) / 3.6;
 }
@@ -33,26 +26,10 @@ function getLanes(link: TrafficLink) {
   return link.tags.lanes ?? 1;
 }
 
-/**
- * Approximates the flow capacity of a road link per hour based on lane count.
- * 
- * @param link - The internal traffic link representation.
- * @returns An integer capacity estimate (e.g., 1200 vehicles/hr per lane).
- */
 function calculateCapacity(link: TrafficLink) {
   return Math.round(1200 * getLanes(link));
 }
 
-/**
- * Dynamically injects intermediate 'geometry' nodes onto long, curved paths.
- * 
- * MATSim only calculates physics *between* nodes. For long, curved rural or 
- * highway road links, we insert pseudo-nodes every 4th lat/lng point so MATSim 
- * agents actually follow the physical curve instead of cutting straight through it.
- * 
- * @param link - The original long OSM link containing an array of curved lat/lng vectors.
- * @returns An array of new synthetic SubNodes to inject into the XML network.
- */
 function buildGeomNodes(link: TrafficLink) {
   return link.geometry.slice(1, -1).filter((_, i) => i % 4 === 0).map(([lat, lng], i) => ({
     id: `${link.id}_g${i}`,
@@ -93,16 +70,6 @@ function buildRevSubLinks(link: TrafficLink, allIds: string[]): string[] {
   });
 }
 
-/**
- * Mutates the string accumulators to add MATSim XML strings for a translated `TrafficLink`.
- * Handles the logic required for breaking a link via `buildGeomNodes` and creating
- * reverse traffic flows for bidirectional (non-oneway) streets.
- * 
- * @param l - The link to process.
- * @param network - The overall Network object confirming node existence.
- * @param nodesXml - A mutable array gathering all raw `<node>` XML strings.
- * @param linksXml - A mutable array gathering all raw `<link>` XML strings.
- */
 function expandLink(l: TrafficLink, network: Network, nodesXml: string[], linksXml: string[]) {
   if (!network.nodes.has(l.from) || !network.nodes.has(l.to)) return;
   const geomNodes = buildGeomNodes(l);
@@ -116,17 +83,6 @@ function expandLink(l: TrafficLink, network: Network, nodesXml: string[], linksX
   }
 }
 
-/**
- * The master translation pipeline converts the frontend's internal geographic `Network`
- * state directly into the raw XML `network.xml` required by the Java MATSim Engine.
- * 
- * Uses memory-efficient array accumulation to avoid large string concatenations 
- * impacting the main browser UI thread.
- * 
- * @param network - The frontend Network representation (derived from OpenStreetMap).
- * @param crs - Coordinate Reference System, defaulted to WebMercator (WGS84) `EPSG:4326`.
- * @returns The fully formatted, DTD-compliant raw XML string for `network.xml`.
- */
 export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
   const nodesArr = Array.from(network.nodes.values());
   const linksArr = Array.from(network.links.values());

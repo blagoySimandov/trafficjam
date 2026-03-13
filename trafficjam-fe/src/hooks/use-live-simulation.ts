@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { simulationApi } from "../api/trafficjam-be";
+import { api } from "../api/client";
 import type { Trip } from "../event-processing";
-import type { StreamedEvent } from "../api/trafficjam-be/types";
+import type { StreamedEvent } from "../api/raw-types";
 
 const BATCH_SIZE = 50;
 
@@ -47,7 +47,7 @@ export function useLiveSimulation(scenarioId?: string, runId?: string) {
       const vehicleToPersonMap = new Map<string, string>();
       let eventCount = 0;
 
-      for await (const event of simulationApi.streamEvents(
+      for await (const event of api.streamEvents(
         scenarioId!,
         runId!,
         signal,

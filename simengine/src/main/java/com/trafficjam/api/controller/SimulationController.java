@@ -31,26 +31,10 @@ public class SimulationController {
 
   private final SimulationService simulationService;
 
-  /**
-   * Constructs the controller with the necessary simulation service.
-   *
-   * @param simulationService the service for managing simulations
-   */
   public SimulationController(SimulationService simulationService) {
     this.simulationService = simulationService;
   }
 
-  /**
-   * Starts a new MatSim simulation run.
-   *
-   * @param networkFile the XML network file
-   * @param plansFile   the XML plans file
-   * @param iterations  the number of iterations to run (default 1)
-   * @param randomSeed  an optional random seed
-   * @param scenarioId  the related scenario
-   * @param runId       the run identifier
-   * @return a response indicating the simulation has started, containing its ID
-   */
   @Operation(summary = "Start a new simulation", description = "Uploads a network file and starts a new MatSim simulation.")
   @ApiResponse(responseCode = "200", description = "Simulation started successfully", content = @Content(schema = @Schema(implementation = SimulationResponse.class)))
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -85,9 +69,6 @@ public class SimulationController {
 
   /**
    * Gets the current status of a simulation.
-   *
-   * @param id the simulation ID
-   * @return a 200 OK response with the status, or a 404 response if not found
    */
   @Operation(summary = "Get simulation status", description = "Retrieves the current status of a simulation by its ID.")
   @ApiResponse(responseCode = "200", description = "Status retrieved successfully")
@@ -112,9 +93,6 @@ public class SimulationController {
 
   /**
    * Streams simulation events in real-time via Server-Sent Events.
-   *
-   * @param id the simulation ID
-   * @return a Server-Sent Events emitter
    */
   @Operation(summary = "Stream simulation events", description = "Connects to a real-time stream of simulation events using Server-Sent Events (SSE).")
   @GetMapping(value = "/{id}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -128,6 +106,25 @@ public class SimulationController {
 
     return emitter;
   }
+
+  /**
+   * Stops a running simulation.
+   */
+  @Operation(summary = "Stop a simulation", description = "Terminates a running simulation process.")
+  @ApiResponse(responseCode = "204", description = "Simulation stopped")
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void stopSimulation(
+      @Parameter(description = "Unique simulation ID") @PathVariable String id) {
+    simulationService.stopSimulation(id);
+  }
+
+}
+
+  // Start streaming (service handles the actual streaming logic)
+  simulationService.streamEvents(id,emitter);
+
+  return emitter;}
 
   /**
    * Stops a running simulation.
