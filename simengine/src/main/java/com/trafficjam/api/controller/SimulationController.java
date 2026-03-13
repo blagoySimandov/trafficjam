@@ -120,23 +120,3 @@ public class SimulationController {
   }
 
 }
-
-  // Start streaming (service handles the actual streaming logic)
-  simulationService.streamEvents(id,emitter);
-
-  return emitter;}
-
-  /**
-   * Stops a running simulation.
-   *
-   * @param id the simulation ID
-   */
-  @Operation(summary = "Stop a simulation", description = "Terminates a running simulation process.")
-  @ApiResponse(responseCode = "204", description = "Simulation stopped")
-  @DeleteMapping("/{id}")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void stopSimulation(
-      @Parameter(description = "Unique simulation ID") @PathVariable String id) {
-    simulationService.stopSimulation(id);
-  }
-}
