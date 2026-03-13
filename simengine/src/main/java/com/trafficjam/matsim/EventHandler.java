@@ -30,6 +30,20 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
     private final Network network;
     private final CoordinateTransformation transformation;
 
+    /**
+     * Creates an event handler that translates raw MATSim events into WGS-84
+     * {@link TransformedEvent} objects and forwards them to the caller.
+     *
+     * @param callback         receives each transformed event; called once per
+     *                         event
+     *                         when the internal buffer flushes
+     * @param bufferSize       number of events to accumulate before flushing;
+     *                         use {@code 1} to flush after every event
+     * @param network          the loaded MATSim network, used to look up node
+     *                         coordinates for link-based events
+     * @param coordinateSystem the CRS of the network (e.g. {@code "EPSG:4326"}),
+     *                         used to transform simulation coordinates to WGS-84
+     */
     public EventHandler(MatsimRunner.EventCallback callback, int bufferSize, Network network, String coordinateSystem) {
         this.callback = callback;
         this.bufferSize = bufferSize;
@@ -59,6 +73,21 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
         }
     }
 
+    /**
+     * Converts a raw MATSim {@link Event} into a {@link TransformedEvent} with
+     * WGS-84 coordinates.
+     *
+     * <p>
+     * For {@code PersonEntersVehicle} / {@code PersonLeavesVehicle}, the
+     * {@code linkId} field is intentionally set to the vehicle ID instead of a
+     * road link — the frontend uses this to associate passengers with their bus
+     * vehicle for PT visualisation.
+     * </p>
+     *
+     * @param event the raw event emitted by the MATSim simulation engine
+     * @return the transformed, frontend-ready event, or {@code null} if coordinates
+     *         cannot be resolved and the event should be silently dropped
+     */
     private TransformedEvent transformEvent(Event event) {
         Map<String, String> attrs = event.getAttributes();
         String eventType = event.getEventType();
@@ -84,6 +113,21 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
         return attrs.get("vehicle");
     }
 
+    /**
+     * Resolves WGS-84 coordinates for an event using two fallback strategies:
+     * <ol>
+     * <li>Parse {@code x}/{@code y} directly from the event attributes (set on
+     * activity events like {@code actstart}/{@code actend}).</li>
+     * <li>Look up the from-node or to-node of the referenced network link
+     * (used for link-traversal events like {@code entered link}).</li>
+     * </ol>
+     *
+     * @param attrs     the raw event attribute map from MATSim
+     * @param linkId    the road link or vehicle ID associated with the event
+     * @param eventType the MATSim event type string
+     * @return a two-element array {@code [x, y]} in WGS-84, with {@code null}
+     *         elements if coordinates could not be determined
+     */
     private Double[] resolveCoordinates(Map<String, String> attrs, String linkId, String eventType) {
         Double[] fromAttrs = parseCoordinatesFromAttrs(attrs);
         if (fromAttrs != null)
@@ -114,6 +158,22 @@ public class EventHandler implements org.matsim.core.events.handler.BasicEventHa
         }
     }
 
+    /**
+     * Looks up the coordinate for a network link from the in-memory
+     * {@link Network} object.
+     *
+     * <p>
+     * The coordinate returned depends on the event type: entry events use
+     * the link's from-node, exit events use the to-node, and all others use
+     * the link midpoint. This ensures agents appear to move smoothly through
+     * each link rather than jumping to the midpoint on entry and exit.
+     * </p>
+     *
+     * @param linkId    the MATSim link ID string to look up
+     * @param eventType the MATSim event type, used to pick from-node vs to-node
+     * @return raw simulation-CRS coordinates {@code [x, y]}, or {@code null} if
+     *         the link does not exist in the network
+     */
     private Double[] lookupCoordinatesFromNetwork(String linkId, String eventType) {
         if (linkId == null || network == null)
             return null;
