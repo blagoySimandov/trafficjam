@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Optional
 
-import nats as nats_lib
+import nats.js.errors as jserrors
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 import fastapi.responses
 from sse_starlette import EventSourceResponse
@@ -79,9 +79,17 @@ async def create_run(
 )
 async def start_run(
     scenario_id: str,
-    networkFile: UploadFile = File(..., description="MATSim-compatible network XML file"),
-    buildings: Optional[str] = Form(None, description="JSON array of building objects used for agent plan generation"),
-    bounds: Optional[str] = Form(None, description="JSON object with bounding box (minLat, minLng, maxLat, maxLng)"),
+    networkFile: UploadFile = File(
+        ..., description="MATSim-compatible network XML file"
+    ),
+    buildings: Optional[str] = Form(
+        None,
+        description="JSON array of building objects used for agent plan generation",
+    ),
+    bounds: Optional[str] = Form(
+        None,
+        description="JSON object with bounding box (minLat, minLng, maxLat, maxLng)",
+    ),
     iterations: int = Form(1, description="Number of MATSim iterations"),
     randomSeed: int | None = Form(None, description="Random seed for reproducibility"),
     note: str | None = Form(None, description="Optional annotation for this run"),
@@ -102,7 +110,9 @@ async def start_run(
     )
 
     if not buildings or not bounds:
-        raise HTTPException(400, "Buildings and bounds are required for plan generation.")
+        raise HTTPException(
+            400, "Buildings and bounds are required for plan generation."
+        )
 
     scenario = await scenario_repo.get_scenario(parsed_scenario_id)
     plan_params = (scenario.plan_params or {}) if scenario else {}
@@ -120,6 +130,12 @@ async def start_run(
         raise HTTPException(500, f"Plan generation failed: {e}")
 
     run_id = str(run.id)
+
+    if not networkFile.filename:
+        raise HTTPException(400, "Network file is required")
+    if not networkFile.content_type:
+        raise HTTPException(400, "Network file content type is required")
+
     try:
         result = await sim_engine.start(
             scenario_id=scenario_id,
@@ -169,7 +185,8 @@ async def stream_run_events(
         raise HTTPException(404, "Run not found")
 
     consumer = EventConsumer(request.app.state.js, scenario_id, str(parsed_id))
-    return EventSourceResponse(consumer.stream_events(request, run.status == RunStatus.COMPLETED))
+    is_replay = run.status in (RunStatus.COMPLETED, RunStatus.FAILED)
+    return EventSourceResponse(consumer.stream_events(request, is_replay))
 
 
 @router.get(
@@ -209,7 +226,7 @@ async def get_simwrapper_file(
                 "Cache-Control": "public, max-age=3600",
             },
         )
-    except nats_lib.js.errors.NotFoundError:
+    except jserrors.NotFoundError:
         raise HTTPException(404, f"File {filename} not found in Object Store")
     except Exception as e:
         logger.error(f"Error fetching simwrapper file {filename}: {e}")
