@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import type { TrafficLink } from "../../../types";
 import { AttributeField, AttributeValue } from "./attribute-field";
 import styles from "../link-attribute-panel.module.css";
+import type { TrafficLink } from "@/types";
 
 interface DevToolsSectionProps {
   links: TrafficLink[];
@@ -53,3 +53,4 @@ export function DevToolsSection({ links }: DevToolsSectionProps) {
     </div>
   );
 }
+

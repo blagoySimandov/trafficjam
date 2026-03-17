@@ -6,8 +6,8 @@ import {
   DEFAULT_AGENT_CONFIG,
   AGENT_CONFIG_PLACEHOLDERS,
 } from "../../../../api";
-import type { AgentConfig, Scenario } from "../../../../api";
 import styles from "./agent-config-modal.module.css";
+import type { Scenario, AgentConfig } from "@/types";
 
 interface AgentConfigModalProps {
   scenario: Scenario;
@@ -26,7 +26,10 @@ export function AgentConfigModal({
     defaultValues: { ...scenario.agentConfig },
   });
 
-  const shoppingProbability = useWatch({ control, name: "shoppingProbability" });
+  const shoppingProbability = useWatch({
+    control,
+    name: "shoppingProbability",
+  });
   const healthcareChance = useWatch({ control, name: "healthcareChance" });
 
   const handleReset = () => {
@@ -38,7 +41,9 @@ export function AgentConfigModal({
   const dialogTitle = (
     <div className={styles.titleInfo}>
       <h2 className={styles.title}>Agent Planner Config</h2>
-      {scenario.name && <span className={styles.subtitle}>{scenario.name}</span>}
+      {scenario.name && (
+        <span className={styles.subtitle}>{scenario.name}</span>
+      )}
     </div>
   );
 
@@ -81,7 +86,10 @@ export function AgentConfigModal({
               <input
                 type="number"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.populationDensity}
-                {...register("populationDensity", { valueAsNumber: true, min: 0 })}
+                {...register("populationDensity", {
+                  valueAsNumber: true,
+                  min: 0,
+                })}
                 min={0}
               />
             </div>
@@ -91,7 +99,10 @@ export function AgentConfigModal({
                 type="number"
                 step="0.1"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.maxShoppingDistanceKm}
-                {...register("maxShoppingDistanceKm", { valueAsNumber: true, min: 0 })}
+                {...register("maxShoppingDistanceKm", {
+                  valueAsNumber: true,
+                  min: 0,
+                })}
                 min={0}
               />
             </div>
@@ -144,7 +155,10 @@ export function AgentConfigModal({
               <input
                 type="number"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.elderlyAgeThreshold}
-                {...register("elderlyAgeThreshold", { valueAsNumber: true, min: 0 })}
+                {...register("elderlyAgeThreshold", {
+                  valueAsNumber: true,
+                  min: 0,
+                })}
                 min={0}
               />
             </div>
@@ -153,7 +167,10 @@ export function AgentConfigModal({
               <input
                 type="number"
                 placeholder={AGENT_CONFIG_PLACEHOLDERS.kindergartenAge}
-                {...register("kindergartenAge", { valueAsNumber: true, min: 0 })}
+                {...register("kindergartenAge", {
+                  valueAsNumber: true,
+                  min: 0,
+                })}
                 min={0}
               />
             </div>
@@ -174,7 +191,10 @@ export function AgentConfigModal({
                   <input
                     type="number"
                     placeholder={AGENT_CONFIG_PLACEHOLDERS.errandMinMinutes}
-                    {...register("errandMinMinutes", { valueAsNumber: true, min: 0 })}
+                    {...register("errandMinMinutes", {
+                      valueAsNumber: true,
+                      min: 0,
+                    })}
                     min={0}
                   />
                 </div>
@@ -183,7 +203,10 @@ export function AgentConfigModal({
                   <input
                     type="number"
                     placeholder={AGENT_CONFIG_PLACEHOLDERS.errandMaxMinutes}
-                    {...register("errandMaxMinutes", { valueAsNumber: true, min: 0 })}
+                    {...register("errandMaxMinutes", {
+                      valueAsNumber: true,
+                      min: 0,
+                    })}
                     min={0}
                   />
                 </div>
