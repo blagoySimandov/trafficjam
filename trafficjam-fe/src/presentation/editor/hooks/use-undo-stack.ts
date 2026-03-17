@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import type { Network } from "../../../types";
 import { useHistoryState } from "@uidotdev/usehooks";
+import type { Network } from "@/types";
 
 interface UseUndoStackResult {
   pushToUndoStack: (network: Network) => void;
@@ -14,7 +14,9 @@ function deepCopyNetwork(network: Network): Network {
   return {
     nodes: new Map(network.nodes),
     links: new Map(network.links),
-    transportRoutes: network.transportRoutes ? new Map(network.transportRoutes) : new Map(),
+    transportRoutes: network.transportRoutes
+      ? new Map(network.transportRoutes)
+      : new Map(),
     buildings: network.buildings ? new Map(network.buildings) : new Map(),
   };
 }
@@ -33,12 +35,12 @@ export function useUndoStack(): UseUndoStackResult {
       const copy = deepCopyNetwork(network);
       setPresent(copy);
     },
-    [setPresent]
+    [setPresent],
   );
 
   const undo = useCallback((): Network | null => {
     // call the underlying undo; if it returns a value, return that, otherwise return present as a fallback
-    const result = (historyUndo as unknown as (() => Network | undefined))?.();
+    const result = (historyUndo as unknown as () => Network | undefined)?.();
     if (result) return result;
     return present ?? null;
   }, [historyUndo, present]);

@@ -1,9 +1,8 @@
 import { useRef, useState, useEffect, useCallback, memo } from "react";
 import { BookOpen } from "lucide-react";
-import { Dialog } from "../../../components/dialog/dialog";
-import { Tooltip } from "../../../components/tooltip/tooltip";
 import { ROAD_TYPE_INFO, type RoadTypeInfo } from "../constants";
 import styles from "../link-attribute-panel.module.css";
+import { Dialog, Tooltip } from "@/components";
 
 type RoadTypeCardProps = {
   typeKey: string;
@@ -12,7 +11,12 @@ type RoadTypeCardProps = {
   onSelect: () => void;
 };
 
-const RoadTypeCard = memo(function RoadTypeCard({ typeKey, info, isActive, onSelect }: RoadTypeCardProps) {
+const RoadTypeCard = memo(function RoadTypeCard({
+  typeKey,
+  info,
+  isActive,
+  onSelect,
+}: RoadTypeCardProps) {
   return (
     <button
       className={`${styles.rtCard} ${isActive ? styles.rtCardActive : ""}`}
@@ -38,12 +42,23 @@ function SpeedBar({ pct }: { pct: number }) {
   );
 }
 
-function RoadTypeDetail({ typeKey, info }: { typeKey: string; info: RoadTypeInfo }) {
+function RoadTypeDetail({
+  typeKey,
+  info,
+}: {
+  typeKey: string;
+  info: RoadTypeInfo;
+}) {
   return (
-    <div className={styles.rtDetail} style={{ "--rt-color": info.color } as React.CSSProperties}>
+    <div
+      className={styles.rtDetail}
+      style={{ "--rt-color": info.color } as React.CSSProperties}
+    >
       <div className={styles.rtDetailHeader}>
         <span className={styles.rtDetailDot} />
-        <span className={styles.rtDetailTitle}>{typeKey.replace(/_/g, " ")}</span>
+        <span className={styles.rtDetailTitle}>
+          {typeKey.replace(/_/g, " ")}
+        </span>
       </div>
       <div className={styles.rtDetailGrid}>
         <div>
@@ -73,9 +88,9 @@ const FREESPEED_STEPS = [
     num: 1,
     body: (
       <>
-        <strong>OSM maxspeed tag present?</strong> If <code>maxspeed=*</code> is explicitly set in
-        OSM, MATSim uses that value directly as freespeed. mph values are automatically converted
-        to km/h.
+        <strong>OSM maxspeed tag present?</strong> If <code>maxspeed=*</code> is
+        explicitly set in OSM, MATSim uses that value directly as freespeed. mph
+        values are automatically converted to km/h.
       </>
     ),
   },
@@ -83,8 +98,9 @@ const FREESPEED_STEPS = [
     num: 2,
     body: (
       <>
-        <strong>Walk-only links</strong> fall back to <strong>4 km/h</strong> (1.111 m/s), except
-        for steps which use <strong>2 km/h</strong> (0.556 m/s).
+        <strong>Walk-only links</strong> fall back to <strong>4 km/h</strong>{" "}
+        (1.111 m/s), except for steps which use <strong>2 km/h</strong> (0.556
+        m/s).
       </>
     ),
   },
@@ -101,10 +117,11 @@ const FREESPEED_STEPS = [
     num: 4,
     body: (
       <>
-        <strong>All other links</strong> fall back to a default speed based on their road type
-        — so a motorway_link gets a lower default than a motorway, reflecting the slower
-        design speed of on/off-ramps. These defaults are baked into the network at conversion
-        time and are what MATSim reads directly as the freespeed for each link.
+        <strong>All other links</strong> fall back to a default speed based on
+        their road type — so a motorway_link gets a lower default than a
+        motorway, reflecting the slower design speed of on/off-ramps. These
+        defaults are baked into the network at conversion time and are what
+        MATSim reads directly as the freespeed for each link.
       </>
     ),
   },
@@ -112,9 +129,10 @@ const FREESPEED_STEPS = [
     num: 5,
     body: (
       <>
-        <strong>Freespeed ≠ Speed limit.</strong> Freespeed is the uncongested travel speed on an
-        unimpeded link. In MATSim, agents travel close to freespeed unless flow capacity is
-        exceeded, at which point vehicles are queued and travel time increases.
+        <strong>Freespeed ≠ Speed limit.</strong> Freespeed is the uncongested
+        travel speed on an unimpeded link. In MATSim, agents travel close to
+        freespeed unless flow capacity is exceeded, at which point vehicles are
+        queued and travel time increases.
       </>
     ),
   },
@@ -146,7 +164,9 @@ function RoadTypeHelpContent() {
     const el = gridRef.current;
     if (!el) return;
     const update = () => {
-      const cols = window.getComputedStyle(el).gridTemplateColumns.split(" ").length;
+      const cols = window
+        .getComputedStyle(el)
+        .gridTemplateColumns.split(" ").length;
       setNumCols(Math.max(1, cols));
     };
     update();
@@ -156,12 +176,13 @@ function RoadTypeHelpContent() {
   }, []);
 
   const handleSelect = useCallback(
-  (key: string) => setActiveKey((prev) => (prev === key ? null : key)),
-  []
-);
-  
+    (key: string) => setActiveKey((prev) => (prev === key ? null : key)),
+    [],
+  );
 
-  const activeIndex = activeKey ? entries.findIndex(([k]) => k === activeKey) : -1;
+  const activeIndex = activeKey
+    ? entries.findIndex(([k]) => k === activeKey)
+    : -1;
   const activeRow = activeIndex >= 0 ? Math.floor(activeIndex / numCols) : -1;
 
   const gridItems = entries.flatMap(([key, info], idx) => {
@@ -176,11 +197,19 @@ function RoadTypeHelpContent() {
     );
     const rowIdx = Math.floor(idx / numCols);
     const isLastInRow = (idx + 1) % numCols === 0 || idx === entries.length - 1;
-    if (isLastInRow && rowIdx === activeRow && activeKey && ROAD_TYPE_INFO[activeKey]) {
+    if (
+      isLastInRow &&
+      rowIdx === activeRow &&
+      activeKey &&
+      ROAD_TYPE_INFO[activeKey]
+    ) {
       return [
         card,
         <div key="__detail" style={{ gridColumn: "1 / -1" }}>
-          <RoadTypeDetail typeKey={activeKey} info={ROAD_TYPE_INFO[activeKey]!} />
+          <RoadTypeDetail
+            typeKey={activeKey}
+            info={ROAD_TYPE_INFO[activeKey]!}
+          />
         </div>,
       ];
     }
@@ -190,8 +219,9 @@ function RoadTypeHelpContent() {
   return (
     <div>
       <p className={styles.rtIntro}>
-        Each link's <code>roadType</code> comes from the OSM <code>highway=*</code> tag and sets
-        default freespeed, capacity, and allowed transport modes. Click a card for details.
+        Each link's <code>roadType</code> comes from the OSM{" "}
+        <code>highway=*</code> tag and sets default freespeed, capacity, and
+        allowed transport modes. Click a card for details.
       </p>
       <div ref={gridRef} className={styles.rtGrid}>
         {gridItems}
@@ -209,7 +239,11 @@ export function RoadTypeHelpModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function RoadTypeFieldLabel({ currentHighway }: { currentHighway?: string }) {
+export function RoadTypeFieldLabel({
+  currentHighway,
+}: {
+  currentHighway?: string;
+}) {
   const [showModal, setShowModal] = useState(false);
   const info = currentHighway ? ROAD_TYPE_INFO[currentHighway] : undefined;
 

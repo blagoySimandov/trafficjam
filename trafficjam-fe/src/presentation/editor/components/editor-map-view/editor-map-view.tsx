@@ -11,22 +11,23 @@ import {
   MIN_EDIT_ZOOM,
   type CityConfig,
 } from "@/constants";
-import { useMapInteractions } from "../../../hooks/use-map-interactions";
-import type { Building, Network, TrafficLink } from "../../../types";
-import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
-import { useNetworkExport } from "../hooks/use-network-export";
-import { useNodeAdd } from "../hooks/use-node-add";
-import { useNodeDrag } from "../hooks/use-node-drag";
+import { CombinedTooltip } from "@/components/combined-tooltip";
+import { getMaxBounds } from "@/utils";
+import { useMapInteractions } from "@/hooks";
+import type { Network, TrafficLink, Building } from "@/types";
 import { EditorControls } from "./editor-controls";
-
-import { CombinedTooltip } from "../../../components/combined-tooltip";
-import { getMaxBounds } from "../../../utils";
 import {
-  BuildingLayer,
   NetworkLayer,
   NodeLayer,
   TransportLayer,
+  BuildingLayer,
 } from "./layers";
+import {
+  useNetworkExport,
+  useAddNodeOnLink,
+  useNodeDrag,
+  useNodeAdd,
+} from "./hooks";
 
 interface EditorMapViewProps {
   network: Network | null;

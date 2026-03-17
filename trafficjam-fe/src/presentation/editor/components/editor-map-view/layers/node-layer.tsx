@@ -1,8 +1,8 @@
+import { useNodeLayerStyle } from "@/presentation/editor/hooks";
+import type { Network } from "@/types";
+import { mergeFilters } from "@/utils";
 import { useMemo } from "react";
 import { Source, Layer, type LayerProps } from "react-map-gl";
-import type { Network } from "../../../../types";
-import { useNodeLayerStyle } from "../../hooks/use-node-layer-style";
-import { mergeFilters } from "../../../../utils";
 
 interface NodeLayerProps {
   network: Network;

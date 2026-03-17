@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { Building, Network } from "../../types";
-import { BUILDING_TYPE_LABELS } from "../../constants";
 import styles from "./building-attribute-panel.module.css";
 import { ALL_AGENT_TYPES } from "./constants";
 import type { HotspotFormState, FormErrors } from "./types";
 import { initHotspotState, validateHotspot } from "./utils";
 import { HotspotFields } from "./components";
+import { BUILDING_TYPE_LABELS } from "@/constants";
+import type { Building, Network } from "@/types";
 
 export interface BuildingAttributePanelProps {
   building: Building;

@@ -1,3 +1,4 @@
+import { cn } from "@/utils";
 import {
   Upload,
   Trash2,
@@ -6,7 +7,6 @@ import {
   Pencil,
   Undo,
 } from "lucide-react";
-import { cn } from "../../../utils/cn";
 
 interface ControlButtonProps {
   title: string;

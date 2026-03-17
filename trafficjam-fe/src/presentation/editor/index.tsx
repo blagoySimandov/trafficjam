@@ -1,20 +1,14 @@
-import { useState, useCallback, useMemo, useRef } from "react";
-import { EditorMapView } from "./components/editor-map-view";
-import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
+import { LoadingScreen, SaveIndicator, StatusBar } from "@/components";
+import type { CityConfig } from "@/constants/cities";
+import { useAutoLoadMap } from "@/hooks/use-auto-load-map";
+import type { Building, Network, Run, Scenario, TrafficLink } from "@/types";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useUndoStack, useNetworkPersistence, useMultiSelect } from "./hooks";
+import { LinkAttributePanel, BuildingAttributePanel } from "./components";
+import { EditorMapView } from "./components";
 import { LaunchDialog } from "./components/run-simulation/launch-dialog/launch-dialog";
-import { LinkAttributePanel } from "../link-attribute-panel";
-import { BuildingAttributePanel } from "../building-attribute-panel";
-import { StatusBar } from "../../components/status-bar";
-import { SaveIndicator } from "../../components/save-indicator/save-indicator";
-import { LoadingScreen } from "../../components/loading-screen";
-import { useUndoStack } from "./hooks/use-undo-stack";
-import { useNetworkPersistence } from "./hooks/use-network-persistence";
-import { useMultiSelect } from "../link-attribute-panel/hooks/use-multi-select";
-import { useAutoLoadMap } from "../../hooks/use-auto-load-map";
-import { applyLinksDiff, applyBuildingsDiff } from "../../api/network-serializer";
-import type { TrafficLink, Network, Building } from "../../types";
-import type { Scenario, Run } from "../../api";
-import type { CityConfig } from "../../constants/cities";
+import { RunSimulationFab } from "./components/run-simulation/run-simulation-fab";
+import { applyLinksDiff, applyBuildingsDiff } from "@/api/network-serializer";
 
 interface EditorProps {
   city: CityConfig;
@@ -48,7 +42,9 @@ export function Editor({
   const [status, setStatus] = useState("");
   const [network, setNetwork] = useState<Network | null>(null);
   const [selectedLinks, setSelectedLinks] = useState<TrafficLink[]>([]);
-  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(
+    null,
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
 
   if (prevScenarioIdRef.current !== activeScenario?.id) {
@@ -216,40 +212,38 @@ export function Editor({
           onSelectAllWithSameName={handleSelectAllWithSameName}
         />
       )}
-      {
-        selectedBuilding && (
-          <BuildingAttributePanel
-            key={selectedBuilding.id}
-            building={selectedBuilding}
-            network={activeNetwork}
-            onClose={handleBuildingClose}
-            onSave={handleBuildingSave}
-          />
-        )
-      }
-      <SaveIndicator isDirty={isDirty} isSaving={isSaving} showSaved={showSaved} />
+      {selectedBuilding && (
+        <BuildingAttributePanel
+          key={selectedBuilding.id}
+          building={selectedBuilding}
+          network={activeNetwork}
+          onClose={handleBuildingClose}
+          onSave={handleBuildingSave}
+        />
+      )}
       <SaveIndicator
         isDirty={isDirty}
         isSaving={isSaving}
         showSaved={showSaved}
       />
-      {
-        status && !isDirty && !isSaving && !showSaved && (
-          <StatusBar message={status} />
-        )
-      }
+      <SaveIndicator
+        isDirty={isDirty}
+        isSaving={isSaving}
+        showSaved={showSaved}
+      />
+      {status && !isDirty && !isSaving && !showSaved && (
+        <StatusBar message={status} />
+      )}
       <RunSimulationFab onClick={() => setDialogOpen(true)} />
-      {
-        showDialog && (
-          <LaunchDialog
-            activeScenario={activeScenario}
-            network={activeNetwork}
-            onLaunch={handleLaunch}
-            onClose={handleCloseDialog}
-            initialValues={rerunInitialValues}
-          />
-        )
-      }
+      {showDialog && (
+        <LaunchDialog
+          activeScenario={activeScenario}
+          network={activeNetwork}
+          onLaunch={handleLaunch}
+          onClose={handleCloseDialog}
+          initialValues={rerunInitialValues}
+        />
+      )}
     </>
   );
 }

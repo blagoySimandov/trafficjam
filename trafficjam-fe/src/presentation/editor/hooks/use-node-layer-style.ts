@@ -1,8 +1,8 @@
+import { NODE_CIRCLE_LAYER, COLORS } from "@/constants";
+import type { Network } from "@/types";
+import { nodeToGeoJSON } from "@/utils";
 import { useMemo } from "react";
 import type { LayerProps } from "react-map-gl";
-import type { Network } from "../../../types";
-import { nodeToGeoJSON } from "../../../utils";
-import { NODE_CIRCLE_LAYER, COLORS } from "../../../constants";
 
 export function useNodeLayerStyle(
   network: Network,
