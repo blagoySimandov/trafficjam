@@ -1,10 +1,4 @@
-//TODO: create a class to manage this...
-export interface Trip {
-  id: string;
-  path: [number, number][];
-  timestamps: number[];
-  activityType?: string;
-}
+import type { Trip } from "../types";
 
 export function getTimeRange(trips: Trip[]): [number, number] {
   let min = Infinity,
@@ -16,8 +10,7 @@ export function getTimeRange(trips: Trip[]): [number, number] {
   }
   return [min, max];
 }
-
-//binary search to make the search faster...
+//binary search to make the search faster
 function findSegmentIndex(timestamps: number[], time: number): number {
   let lo = 0,
     hi = timestamps.length - 2;
@@ -29,7 +22,6 @@ function findSegmentIndex(timestamps: number[], time: number): number {
   return lo;
 }
 
-//given a time and an ar
 export function getVehiclePositions(
   trips: Trip[],
   time: number,

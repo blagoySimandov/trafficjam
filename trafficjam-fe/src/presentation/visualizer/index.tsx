@@ -2,8 +2,8 @@ import { DeckGL, TripsLayer, ScatterplotLayer, PathLayer } from "deck.gl";
 import { Map } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { MAPBOX_TOKEN } from "../../constants/map";
-import { getVehiclePositions } from "../../event-processing";
-import type { Trip } from "../../event-processing";
+import { getVehiclePositions } from "../../utils/trip-interpolation";
+import type { Trip } from "../../types";
 import {
   useSimulationTime,
   type SimulationTimeState,

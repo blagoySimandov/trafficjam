@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { Network } from "../../../types";
-import { networkToMatsim } from "../../../osm/matsim";
+import { networkToMatsim } from "../../../utils/matsim-serializer";
 
 interface UseNetworkExportOptions {
   onStatusChange: (status: string) => void;

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { CityConfig } from "../constants/cities";
-import { fetchOSMData } from "../osm";
+import { api } from "../api/client";
 
 function cityBoundsToLngLatBounds(bounds: CityConfig["bounds"]) {
   return {
@@ -14,7 +14,7 @@ function cityBoundsToLngLatBounds(bounds: CityConfig["bounds"]) {
 export function useAutoLoadMap(city: CityConfig) {
   return useQuery({
     queryKey: ["network", city.id],
-    queryFn: () => fetchOSMData(cityBoundsToLngLatBounds(city.bounds)),
+    queryFn: () => api.fetchNetwork(cityBoundsToLngLatBounds(city.bounds)),
     staleTime: Infinity,
   });
 }
