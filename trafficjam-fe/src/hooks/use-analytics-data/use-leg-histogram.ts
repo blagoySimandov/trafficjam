@@ -1,6 +1,6 @@
-import { api } from "../api/client";
+import { api } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
-import type { LegHistogramRow } from "../types";
+import type { LegHistogramRow } from "../../types";
 
 interface RawLegHistogramRow {
   [key: string]: number;
