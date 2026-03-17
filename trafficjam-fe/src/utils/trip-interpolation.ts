@@ -10,7 +10,7 @@ export function getTimeRange(trips: Trip[]): [number, number] {
   }
   return [min, max];
 }
-
+//binary search to make the search faster
 function findSegmentIndex(timestamps: number[], time: number): number {
   let lo = 0,
     hi = timestamps.length - 2;
