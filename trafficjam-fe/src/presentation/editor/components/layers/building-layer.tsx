@@ -1,14 +1,14 @@
-import { useMemo } from "react";
-import { Source, Layer } from "react-map-gl";
-import type { Building } from "../../types";
-import { buildingToGeoJSON } from "../../utils";
 import {
   BUILDING_SOURCE_ID,
   BUILDING_FILL_LAYER,
   BUILDING_OUTLINE_LAYER,
   BUILDING_HOTSPOT_FILL_LAYER,
   BUILDING_HOTSPOT_OUTLINE_LAYER,
-} from "../../constants";
+} from "@/constants";
+import type { Building } from "@/types";
+import { buildingToGeoJSON } from "@/utils";
+import { useMemo } from "react";
+import { Source, Layer } from "react-map-gl";
 
 interface BuildingLayerProps {
   buildings: Map<string, Building>;
