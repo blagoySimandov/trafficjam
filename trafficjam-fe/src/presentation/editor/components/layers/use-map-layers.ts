@@ -1,12 +1,7 @@
 import { useMemo } from "react";
 import type { LayerProps } from "react-map-gl";
-import {
-  glowLayer,
-  casingLayer,
-  mainLayer,
-  dividersLayer,
-} from "../../../constants";
-import { mergeFilters } from "../../../utils";
+import { glowLayer, casingLayer, mainLayer, dividersLayer } from "@/constants";
+import { mergeFilters } from "@/utils";
 
 interface UseMapEditorLayersParams {
   idPrefix: string;

@@ -1,29 +1,32 @@
-import { useState, useRef, useCallback } from "react";
-import Map from "react-map-gl";
-import type { MapRef, MapMouseEvent } from "react-map-gl";
-import { useHotkeys } from "react-hotkeys-hook";
 import "mapbox-gl/dist/mapbox-gl.css";
-import type { Network, TrafficLink, Building } from "../../../types";
+import { useCallback, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
+import type { MapMouseEvent, MapRef } from "react-map-gl";
+import Map from "react-map-gl";
 import {
+  HOTSPOT_PATTERN_ID,
+  INTERACTIVE_LAYER_IDS,
   MAP_STYLE,
   MAPBOX_TOKEN,
-  INTERACTIVE_LAYER_IDS,
   MIN_EDIT_ZOOM,
-  HOTSPOT_PATTERN_ID,
   type CityConfig,
-} from "../../../constants";
-import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
+} from "@/constants";
 import { useMapInteractions } from "../../../hooks/use-map-interactions";
+import type { Building, Network, TrafficLink } from "../../../types";
+import { useAddNodeOnLink } from "../hooks/use-add-node-on-link";
 import { useNetworkExport } from "../hooks/use-network-export";
-import { useNodeDrag } from "../hooks/use-node-drag";
 import { useNodeAdd } from "../hooks/use-node-add";
+import { useNodeDrag } from "../hooks/use-node-drag";
 import { EditorControls } from "./editor-controls";
-import { NetworkLayer } from "../../../components/layers/network-layer";
-import { TransportLayer } from "../../../components/layers/transport-layer";
-import { BuildingLayer } from "../../../components/layers/building-layer";
-import { NodeLayer } from "./layers/node-layer";
+
 import { CombinedTooltip } from "../../../components/combined-tooltip";
 import { getMaxBounds } from "../../../utils";
+import {
+  BuildingLayer,
+  NetworkLayer,
+  NodeLayer,
+  TransportLayer,
+} from "./layers";
 
 interface EditorMapViewProps {
   network: Network | null;
