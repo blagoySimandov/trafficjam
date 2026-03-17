@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
-import type { Trip } from "../utils/trip-interpolation";
+import type { Trip } from "../types";
 import type { StreamedEvent } from "../api/raw-types";
 
 const BATCH_SIZE = 50;

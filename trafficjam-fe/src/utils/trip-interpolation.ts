@@ -1,9 +1,4 @@
-export interface Trip {
-  id: string;
-  path: [number, number][];
-  timestamps: number[];
-  activityType?: string;
-}
+import type { Trip } from "../types";
 
 export function getTimeRange(trips: Trip[]): [number, number] {
   let min = Infinity,
