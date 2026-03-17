@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { Play, Pause } from "lucide-react";
 import { cn } from "../../../../utils/cn";
-import { formatSimulationTime } from "../../utils/format-time";
+import { formatSimulationTime } from "../../../../utils";
 import type { SimulationTimeState } from "../../hooks/use-simulation-time";
 import { SPEED_OPTIONS } from "../../hooks/use-simulation-time";
 import styles from "./playback-bar.module.css";

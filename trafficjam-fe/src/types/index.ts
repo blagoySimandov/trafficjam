@@ -20,3 +20,4 @@ export type {
   ScoreStatRow,
 } from "./insights";
 export type { AgentConfig, RunStatus, Run, Scenario } from "./scenarios";
+export type { Trip } from "./matsim-events";

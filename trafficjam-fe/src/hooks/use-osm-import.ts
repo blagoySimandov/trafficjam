@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import type { MapRef } from "react-map-gl";
 import type { Network } from "../types";
 import { MIN_IMPORT_ZOOM } from "../constants";
-import { fetchOSMData } from "../osm";
+import { api } from "../api/client";
 
 interface UseOSMImportOptions {
   onStatusChange: (status: string) => void;
@@ -35,7 +35,7 @@ export function useOSMImport(
         onStatusChange("Could not get map bounds");
         return;
       }
-      const data = await fetchOSMData(bounds);
+      const data = await api.fetchNetwork(bounds);
       onNetworkChange(data);
       onStatusChange(
         `Loaded: ${data.links.size} links, ${data.nodes.size} nodes`
