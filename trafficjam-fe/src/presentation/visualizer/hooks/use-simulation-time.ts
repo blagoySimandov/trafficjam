@@ -54,15 +54,18 @@ export function useSimulationTime(trips: Trip[]): SimulationTimeState {
   const seekTo = useCallback((t: number) => setTime(t), [setTime]);
 
   useEffect(() => {
+    const FRAME_MS = 1000 / 45; // cap at 30fps
     let prev = performance.now();
+    let lastFrame = performance.now();
     let id = requestAnimationFrame(function tick(now) {
-      if (isPlayingRef.current) {
+      if (isPlayingRef.current && now - lastFrame >= FRAME_MS) {
         const delta = (now - prev) / 1000;
         setTime((t) => {
           if (t < range[0]) return range[0];
           const next = t + delta * speedRef.current;
           return next > range[1] ? range[0] : next;
         });
+        lastFrame = now;
       }
       prev = now;
       id = requestAnimationFrame(tick);

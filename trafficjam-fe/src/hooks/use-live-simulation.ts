@@ -7,6 +7,39 @@ const BATCH_SIZE = 50;
 
 const VEHICLE_LINK_EVENTS = new Set(["entered link", "left link", "vehicle enters traffic", "vehicle leaves traffic"]);
 
+// Max allowed distance (in degrees) between consecutive trip points.
+// ~2km threshold: filters PT stop-to-stop jumps while keeping road network events.
+const MAX_SEGMENT_DEG = 0.018;
+
+function segmentTooLong(path: [number, number][], x: number, y: number): boolean {
+  if (path.length === 0) return false;
+  const [px, py] = path[path.length - 1];
+  const dx = x - px;
+  const dy = y - py;
+  return Math.sqrt(dx * dx + dy * dy) > MAX_SEGMENT_DEG;
+}
+
+// --- ALTERNATIVE APPROACH (ptAgents set) ---
+// Tracks agents currently riding a PT vehicle by ID comparison.
+// Assumes car vehicle IDs match the person ID (MATSim default).
+// NOTE: This broke car rendering when vehicle IDs differed from person IDs.
+// Kept here for reference in case vehicle ID format is ever standardised.
+//
+// function processEvent(event, tripsMap, vehicleToPersonMap, ptAgents) {
+//   if (event.type === "PersonEntersVehicle" && event.linkId) {
+//     vehicleToPersonMap.set(event.linkId, event.agentId);
+//     const isPtVehicle = event.linkId !== event.agentId;
+//     if (isPtVehicle) ptAgents.add(event.agentId);
+//     return;
+//   }
+//   if (event.type === "PersonLeavesVehicle") {
+//     ptAgents.delete(event.agentId);
+//     return;
+//   }
+//   ...
+//   if (ptAgents.has(personId)) return; // skip PT position events
+// }
+
 function processEvent(
   event: StreamedEvent,
   tripsMap: Map<string, Trip>,
@@ -30,6 +63,9 @@ function processEvent(
     trip = { id: personId, path: [], timestamps: [] };
     tripsMap.set(personId, trip);
   }
+
+  // Skip points that would create an unrealistically long segment (PT jumps)
+  if (segmentTooLong(trip.path, event.x, event.y)) return;
 
   trip.path.push([event.x, event.y]);
   trip.timestamps.push(event.time);
