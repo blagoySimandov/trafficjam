@@ -1,6 +1,6 @@
-import { api } from "../api/client";
+import { api } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
-import type { TripStat, PopulationTripStat } from "../types";
+import type { TripStat, PopulationTripStat } from "../../types";
 
 export function useTripStats(scenarioId: string, runId: string) {
   const tripStats = useQuery<TripStat[]>({

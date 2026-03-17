@@ -1,6 +1,6 @@
-import { api } from "../api/client";
+import { api } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
-import type { ModeUser } from "../types";
+import type { ModeUser } from "../../types";
 
 export function useModeShare(scenarioId: string, runId: string) {
   return useQuery<ModeUser[]>({

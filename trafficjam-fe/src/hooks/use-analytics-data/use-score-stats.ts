@@ -1,6 +1,6 @@
-import { api } from "../api/client";
+import { api } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
-import type { ScoreStatRow } from "../types";
+import type { ScoreStatRow } from "../../types";
 
 export function useScoreStats(scenarioId: string, runId: string) {
   return useQuery<ScoreStatRow[]>({

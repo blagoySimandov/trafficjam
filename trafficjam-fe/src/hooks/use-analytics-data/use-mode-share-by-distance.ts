@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../api/client";
+import { api } from "../../api/client";
 
-// Raw data from API
 interface ModeShareByDistanceRaw {
   dist_group: string;
   main_mode: string;
   share: number;
 }
 
-// Transformed data for chart
 export interface ModeShareByDistance {
   distanceBin: string;
   car: number;
@@ -47,9 +45,11 @@ export function useModeShareByDistance(scenarioId: string, runId: string) {
       "analysis/population/mode_share_per_dist.csv",
     ],
     queryFn: async ({ queryKey }) => {
-      const rawData = await api.getSimwrapperFile<
-        ModeShareByDistanceRaw[]
-      >(queryKey[0] as string, queryKey[1] as string, queryKey[2] as string);
+      const rawData = await api.getSimwrapperFile<ModeShareByDistanceRaw[]>(
+        queryKey[0] as string,
+        queryKey[1] as string,
+        queryKey[2] as string,
+      );
       return transformModeShareData(rawData);
     },
     staleTime: Infinity,

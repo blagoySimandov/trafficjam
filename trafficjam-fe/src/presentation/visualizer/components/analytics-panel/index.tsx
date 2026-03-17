@@ -5,13 +5,7 @@ import { TripStatsCards } from "./charts/trip-stats-cards";
 import { DeparturesArrivalsChart } from "./charts/departures-arrivals-chart";
 import { ModeShareDistanceChart } from "./charts/mode-share-distance-chart";
 import { ScoreConvergenceChart } from "./charts/score-convergence-chart";
-import {
-  useModeShare,
-  useTripStats,
-  useLegHistogram,
-  useModeShareByDistance,
-  useScoreStats,
-} from "../../../../hooks";
+import { useAnalyticsData } from "../../../../hooks";
 
 interface AnalyticsPanelProps {
   scenarioId: string;
@@ -24,11 +18,7 @@ export function AnalyticsPanel({
   runId,
   open,
 }: AnalyticsPanelProps) {
-  const modeShare = useModeShare(scenarioId, runId);
-  const { tripStats, populationTripStats } = useTripStats(scenarioId, runId);
-  const legHistogram = useLegHistogram(scenarioId, runId);
-  const modeShareByDistance = useModeShareByDistance(scenarioId, runId);
-  const scoreStats = useScoreStats(scenarioId, runId);
+  const { modeShare, tripStats, populationTripStats, legHistogram, modeShareByDistance, scoreStats } = useAnalyticsData(scenarioId, runId);
 
   return (
     <div className={`${styles.panel} ${open ? "" : styles.panelHidden}`}>
