@@ -12,8 +12,14 @@ function haversineMeters(a: [number, number], b: [number, number]) {
   const c =
     2 *
     Math.atan2(
-      Math.sqrt(sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
-      Math.sqrt(1 - (sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon)),
+      Math.sqrt(
+        sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon,
+      ),
+      Math.sqrt(
+        1 -
+          (sinDLat * sinDLat +
+            Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
+      ),
     );
   return R * c;
 }
@@ -31,11 +37,14 @@ function calculateCapacity(link: TrafficLink) {
 }
 
 function buildGeomNodes(link: TrafficLink) {
-  return link.geometry.slice(1, -1).filter((_, i) => i % 4 === 0).map(([lat, lng], i) => ({
-    id: `${link.id}_g${i}`,
-    x: lng,
-    y: lat,
-  }));
+  return link.geometry
+    .slice(1, -1)
+    .filter((_, i) => i % 4 === 0)
+    .map(([lat, lng], i) => ({
+      id: `${link.id}_g${i}`,
+      x: lng,
+      y: lat,
+    }));
 }
 
 function sampledGeom(link: TrafficLink): [number, number][] {
@@ -64,17 +73,27 @@ function buildRevSubLinks(link: TrafficLink, allIds: string[]): string[] {
   const reversed = [...allIds].reverse();
   const reversedGeom = [...sampledGeom(link)].reverse();
   return reversed.slice(0, -1).map((fromId, i) => {
-    const length = haversineMeters(reversedGeom[i], reversedGeom[i + 1]).toFixed(2);
+    const length = haversineMeters(
+      reversedGeom[i],
+      reversedGeom[i + 1],
+    ).toFixed(2);
     const linkAttrs = `length="${length}" freespeed="${freespeed}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
     return `    <link id="${link.id}_rev_${i}" from="${fromId}" to="${reversed[i + 1]}" ${linkAttrs} />`;
   });
 }
 
-function expandLink(l: TrafficLink, network: Network, nodesXml: string[], linksXml: string[]) {
+function expandLink(
+  l: TrafficLink,
+  network: Network,
+  nodesXml: string[],
+  linksXml: string[],
+) {
   if (!network.nodes.has(l.from) || !network.nodes.has(l.to)) return;
   const geomNodes = buildGeomNodes(l);
   for (const gn of geomNodes) {
-    nodesXml.push(`    <node id="${gn.id}" x="${gn.x.toFixed(6)}" y="${gn.y.toFixed(6)}" />`);
+    nodesXml.push(
+      `    <node id="${gn.id}" x="${gn.x.toFixed(6)}" y="${gn.y.toFixed(6)}" />`,
+    );
   }
   const allIds = [l.from, ...geomNodes.map((n) => n.id), l.to];
   for (const sl of buildSubLinks(l, allIds)) linksXml.push(sl);
@@ -94,7 +113,9 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
   for (const n of nodesArr) {
     const x = n.position[1];
     const y = n.position[0];
-    nodesXml.push(`    <node id="${n.id}" x="${x.toFixed(6)}" y="${y.toFixed(6)}" />`);
+    nodesXml.push(
+      `    <node id="${n.id}" x="${x.toFixed(6)}" y="${y.toFixed(6)}" />`,
+    );
   }
 
   const linksXml = ["  <links>"];
@@ -105,6 +126,8 @@ export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
   nodesXml.push("  </nodes>");
   linksXml.push("  </links>");
 
-  const body = [networkAttrs, ...nodesXml, ...linksXml, "</network>"].join("\n");
+  const body = [networkAttrs, ...nodesXml, ...linksXml, "</network>"].join(
+    "\n",
+  );
   return header + body;
 }
