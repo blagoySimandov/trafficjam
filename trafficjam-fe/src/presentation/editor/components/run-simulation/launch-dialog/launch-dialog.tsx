@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Play, Loader2 } from "lucide-react";
-import { networkToMatsim } from "../../../../../osm/matsim";
+import { networkToMatsim } from "../../../../../utils/matsim-serializer";
 import { calculateBounds } from "../../../../../utils/network-bounds";
 import { useSimulation } from "../../../../../hooks/use-simulation";
 import { Dialog } from "../../../../../components/dialog";

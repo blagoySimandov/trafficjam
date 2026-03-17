@@ -1,0 +1,110 @@
+import type { Network, TrafficLink } from "../types";
+
+function haversineMeters(a: [number, number], b: [number, number]) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(b[0] - a[0]);
+  const dLon = toRad(b[1] - a[1]);
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLon = Math.sin(dLon / 2);
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon),
+      Math.sqrt(1 - (sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon)),
+    );
+  return R * c;
+}
+
+function getFreespeedMs(link: TrafficLink) {
+  return (link.tags.maxspeed ?? 50) / 3.6;
+}
+
+function getLanes(link: TrafficLink) {
+  return link.tags.lanes ?? 1;
+}
+
+function calculateCapacity(link: TrafficLink) {
+  return Math.round(1200 * getLanes(link));
+}
+
+function buildGeomNodes(link: TrafficLink) {
+  return link.geometry.slice(1, -1).filter((_, i) => i % 4 === 0).map(([lat, lng], i) => ({
+    id: `${link.id}_g${i}`,
+    x: lng,
+    y: lat,
+  }));
+}
+
+function sampledGeom(link: TrafficLink): [number, number][] {
+  const inner = link.geometry.slice(1, -1).filter((_, i) => i % 4 === 0);
+  return [link.geometry[0], ...inner, link.geometry[link.geometry.length - 1]];
+}
+
+function buildSubLinks(link: TrafficLink, allIds: string[]): string[] {
+  const freespeed = getFreespeedMs(link).toFixed(2);
+  const capacity = calculateCapacity(link);
+  const modes = link.disabled ? "walk" : "car";
+  const lanes = getLanes(link);
+  const geom = sampledGeom(link);
+  return allIds.slice(0, -1).map((fromId, i) => {
+    const length = haversineMeters(geom[i], geom[i + 1]).toFixed(2);
+    const linkAttrs = `length="${length}" freespeed="${freespeed}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
+    return `    <link id="${link.id}_${i}" from="${fromId}" to="${allIds[i + 1]}" ${linkAttrs} />`;
+  });
+}
+
+function buildRevSubLinks(link: TrafficLink, allIds: string[]): string[] {
+  const freespeed = getFreespeedMs(link).toFixed(2);
+  const capacity = calculateCapacity(link);
+  const modes = link.disabled ? "walk" : "car";
+  const lanes = getLanes(link);
+  const reversed = [...allIds].reverse();
+  const reversedGeom = [...sampledGeom(link)].reverse();
+  return reversed.slice(0, -1).map((fromId, i) => {
+    const length = haversineMeters(reversedGeom[i], reversedGeom[i + 1]).toFixed(2);
+    const linkAttrs = `length="${length}" freespeed="${freespeed}" capacity="${capacity}" permlanes="${lanes}" oneway="1" modes="${modes}"`;
+    return `    <link id="${link.id}_rev_${i}" from="${fromId}" to="${reversed[i + 1]}" ${linkAttrs} />`;
+  });
+}
+
+function expandLink(l: TrafficLink, network: Network, nodesXml: string[], linksXml: string[]) {
+  if (!network.nodes.has(l.from) || !network.nodes.has(l.to)) return;
+  const geomNodes = buildGeomNodes(l);
+  for (const gn of geomNodes) {
+    nodesXml.push(`    <node id="${gn.id}" x="${gn.x.toFixed(6)}" y="${gn.y.toFixed(6)}" />`);
+  }
+  const allIds = [l.from, ...geomNodes.map((n) => n.id), l.to];
+  for (const sl of buildSubLinks(l, allIds)) linksXml.push(sl);
+  if (!l.tags.oneway) {
+    for (const sl of buildRevSubLinks(l, allIds)) linksXml.push(sl);
+  }
+}
+
+export function networkToMatsim(network: Network, crs = "EPSG:4326"): string {
+  const nodesArr = Array.from(network.nodes.values());
+  const linksArr = Array.from(network.links.values());
+
+  const header = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE network SYSTEM "http://www.matsim.org/files/dtd/network_v2.dtd">\n`;
+  const networkAttrs = `<network name="exported-network">\n  <attributes>\n    <attribute name="coordinateReferenceSystem" class="java.lang.String">${crs}</attribute>\n  </attributes>\n`;
+
+  const nodesXml = ["  <nodes>"];
+  for (const n of nodesArr) {
+    const x = n.position[1];
+    const y = n.position[0];
+    nodesXml.push(`    <node id="${n.id}" x="${x.toFixed(6)}" y="${y.toFixed(6)}" />`);
+  }
+
+  const linksXml = ["  <links>"];
+  for (const l of linksArr) {
+    expandLink(l, network, nodesXml, linksXml);
+  }
+
+  nodesXml.push("  </nodes>");
+  linksXml.push("  </links>");
+
+  const body = [networkAttrs, ...nodesXml, ...linksXml, "</network>"].join("\n");
+  return header + body;
+}

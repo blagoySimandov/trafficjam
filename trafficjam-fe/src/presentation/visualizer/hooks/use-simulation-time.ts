@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { getTimeRange } from "../../../event-processing";
-import type { Trip } from "../../../event-processing";
+import { getTimeRange } from "../../../utils/trip-interpolation";
+import type { Trip } from "../../../utils/trip-interpolation";
 import { useRafState } from "../../../hooks/use-raf-state";
 
 export const SPEED_OPTIONS = [30, 60, 120, 300, 600] as const;
