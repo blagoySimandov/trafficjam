@@ -7,9 +7,9 @@ interface RunSimulationFabProps {
 
 export function RunSimulationFab({ onClick }: RunSimulationFabProps) {
   return (
-    <button className={styles.fab} onClick={onClick}>
+    <button className={styles.fab} onClick={onClick} disabled>
       <Play size={18} />
-      Run Simulation
+      Run Simulation - disabled for now... :D
     </button>
   );
 }
