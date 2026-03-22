@@ -1,6 +1,6 @@
+import type { Network } from "@/types";
+import { networkToMatsim } from "@/utils/matsim-serializer";
 import { useCallback } from "react";
-import type { Network } from "../../../types";
-import { networkToMatsim } from "../../../utils/matsim-serializer";
 
 interface UseNetworkExportOptions {
   onStatusChange: (status: string) => void;
@@ -8,7 +8,7 @@ interface UseNetworkExportOptions {
 
 export function useNetworkExport(
   network: Network | null,
-  { onStatusChange }: UseNetworkExportOptions
+  { onStatusChange }: UseNetworkExportOptions,
 ) {
   const exportNetwork = useCallback(() => {
     if (!network) {
@@ -28,7 +28,7 @@ export function useNetworkExport(
       a.remove();
       URL.revokeObjectURL(url);
       onStatusChange(
-        `Exported ${network.links.size} links, ${network.nodes.size} nodes`
+        `Exported ${network.links.size} links, ${network.nodes.size} nodes`,
       );
     } catch (err) {
       console.error(err);

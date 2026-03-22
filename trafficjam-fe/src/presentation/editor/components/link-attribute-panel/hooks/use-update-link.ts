@@ -1,5 +1,5 @@
+import type { Network, TrafficLink } from "@/types";
 import { useCallback } from "react";
-import type { Network, TrafficLink } from "../../../types";
 
 export function useUpdateLink(
   network: Network | null,
@@ -19,7 +19,7 @@ export function useUpdateLink(
         links: updatedLinks,
       };
 
-      const message = `Updated ${linksToUpdate.length} link${linksToUpdate.length > 1 ? 's' : ''}`;
+      const message = `Updated ${linksToUpdate.length} link${linksToUpdate.length > 1 ? "s" : ""}`;
       onSave(updatedNetwork, message);
     },
     [network, onSave],
@@ -27,3 +27,4 @@ export function useUpdateLink(
 
   return { updateLinks };
 }
+

@@ -1,8 +1,19 @@
 import { useState, useRef, useCallback } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { CheckCircle2, XCircle, Loader2, Plus, Settings2, History, Trash2, RotateCcw, Clock, Pencil } from "lucide-react";
-import type { Scenario, Run } from "../../api";
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Plus,
+  Settings2,
+  History,
+  Trash2,
+  RotateCcw,
+  Clock,
+  Pencil,
+} from "lucide-react";
 import styles from "./sidebar.module.css";
+import type { Scenario, Run } from "@/types";
 
 interface SidebarProps {
   scenarios: Scenario[];
@@ -19,7 +30,11 @@ interface SidebarProps {
   onRerunRun: (run: Run) => void;
 }
 
-function InlineRenameInput({ defaultName, onConfirm, onCancel }: {
+function InlineRenameInput({
+  defaultName,
+  onConfirm,
+  onCancel,
+}: {
   defaultName: string;
   onConfirm: (name: string) => void;
   onCancel: () => void;
@@ -27,10 +42,13 @@ function InlineRenameInput({ defaultName, onConfirm, onCancel }: {
   const [value, setValue] = useState(defaultName);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter") onConfirm(value.trim() || defaultName);
-    if (e.key === "Escape") onCancel();
-  }, [value, defaultName, onConfirm, onCancel]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") onConfirm(value.trim() || defaultName);
+      if (e.key === "Escape") onCancel();
+    },
+    [value, defaultName, onConfirm, onCancel],
+  );
 
   return (
     <input
@@ -46,7 +64,12 @@ function InlineRenameInput({ defaultName, onConfirm, onCancel }: {
   );
 }
 
-function ScenarioActions({ isActive, onEdit, onConfigure, onDelete }: {
+function ScenarioActions({
+  isActive,
+  onEdit,
+  onConfigure,
+  onDelete,
+}: {
   isActive: boolean;
   onEdit: () => void;
   onConfigure: () => void;
@@ -55,13 +78,34 @@ function ScenarioActions({ isActive, onEdit, onConfigure, onDelete }: {
   if (!isActive) return null;
   return (
     <div className={styles.scenarioActions}>
-      <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); onEdit(); }} title="Rename">
+      <button
+        className={styles.iconBtn}
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit();
+        }}
+        title="Rename"
+      >
         <Pencil size={16} />
       </button>
-      <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); onConfigure(); }} title="Configure Agent Planner">
+      <button
+        className={styles.iconBtn}
+        onClick={(e) => {
+          e.stopPropagation();
+          onConfigure();
+        }}
+        title="Configure Agent Planner"
+      >
         <Settings2 size={16} />
       </button>
-      <button className={`${styles.iconBtn} ${styles.deleteBtn}`} onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Scenario">
+      <button
+        className={`${styles.iconBtn} ${styles.deleteBtn}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        title="Delete Scenario"
+      >
         <Trash2 size={16} />
       </button>
     </div>
@@ -69,10 +113,14 @@ function ScenarioActions({ isActive, onEdit, onConfigure, onDelete }: {
 }
 
 function RunStatusIcon({ status }: { status: string }) {
-  if (status === "pending") return <Clock size={14} className={styles.pending} />;
-  if (status === "running") return <Loader2 size={14} className={styles.spinner} />;
-  if (status === "completed") return <CheckCircle2 size={14} className={styles.success} />;
-  if (status === "failed") return <XCircle size={14} className={styles.error} />;
+  if (status === "pending")
+    return <Clock size={14} className={styles.pending} />;
+  if (status === "running")
+    return <Loader2 size={14} className={styles.spinner} />;
+  if (status === "completed")
+    return <CheckCircle2 size={14} className={styles.success} />;
+  if (status === "failed")
+    return <XCircle size={14} className={styles.error} />;
   return null;
 }
 
@@ -94,16 +142,23 @@ export function Sidebar({
   const activeScenario = scenarios.find((s) => s.id === activeScenarioId);
   const activeRuns = runs.filter((r) => r.scenarioId === activeScenarioId);
 
-  const handleRenameConfirm = useCallback((id: string, newName: string) => {
-    onRenameScenario(id, newName);
-    setEditingId(null);
-  }, [onRenameScenario]);
+  const handleRenameConfirm = useCallback(
+    (id: string, newName: string) => {
+      onRenameScenario(id, newName);
+      setEditingId(null);
+    },
+    [onRenameScenario],
+  );
 
   return (
     <aside className={styles.sidebar}>
       <header className={styles.header}>
         <h1 className={styles.logo}>TrafficJam</h1>
-        <button className={styles.newScenarioBtn} onClick={onCreateScenario} title="New Scenario">
+        <button
+          className={styles.newScenarioBtn}
+          onClick={onCreateScenario}
+          title="New Scenario"
+        >
           <Plus size={18} />
         </button>
       </header>
@@ -159,14 +214,21 @@ export function Sidebar({
                   <li className={styles.emptyMsg}>No runs yet</li>
                 ) : (
                   activeRuns.map((r) => (
-                    <li key={r.id} className={styles.runItem} onClick={() => onSelectRun(r)}>
+                    <li
+                      key={r.id}
+                      className={styles.runItem}
+                      onClick={() => onSelectRun(r)}
+                    >
                       <div className={styles.runStatus}>
                         <RunStatusIcon status={r.status} />
                       </div>
                       <div className={styles.runInfo}>
-                        <div className={styles.runNote}>{r.note || `Run ${r.id.slice(0, 4)}`}</div>
+                        <div className={styles.runNote}>
+                          {r.note || `Run ${r.id.slice(0, 4)}`}
+                        </div>
                         <div className={styles.runMeta}>
-                          {new Date(r.createdAt).toLocaleTimeString()} • {r.iterations} iter
+                          {new Date(r.createdAt).toLocaleTimeString()} •{" "}
+                          {r.iterations} iter
                         </div>
                       </div>
                       {(r.status === "completed" || r.status === "failed") && (
@@ -188,7 +250,10 @@ export function Sidebar({
             </section>
           )}
         </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar className={styles.scrollbar} orientation="vertical">
+        <ScrollArea.Scrollbar
+          className={styles.scrollbar}
+          orientation="vertical"
+        >
           <ScrollArea.Thumb className={styles.thumb} />
         </ScrollArea.Scrollbar>
       </ScrollArea.Root>

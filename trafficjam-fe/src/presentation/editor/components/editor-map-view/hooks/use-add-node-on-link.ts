@@ -1,9 +1,9 @@
 import { useCallback } from "react";
-import type { Network, TrafficLink, TrafficNode } from "../../../types";
 import nearestPointOnLine from "@turf/nearest-point-on-line";
 import lineSplit from "@turf/line-split";
 import { point, lineString } from "@turf/helpers";
 import type { Feature, LineString, Point, FeatureCollection } from "geojson";
+import type { Network, TrafficLink, TrafficNode } from "@/types";
 
 interface UseAddNodeOnLinkParams {
   network: Network | null;
@@ -18,7 +18,7 @@ function createNodeAtMidpoint(
   link: TrafficLink,
   baseNow: number,
   newNodes: Map<string, TrafficNode>,
-  newLinks: Map<string, TrafficLink>
+  newLinks: Map<string, TrafficLink>,
 ) {
   const geom = link.geometry;
   const midIdx = Math.floor(geom.length / 2);
@@ -67,7 +67,11 @@ export function useAddNodeOnLink({
   onLinkClick,
 }: UseAddNodeOnLinkParams) {
   return useCallback(
-    (link: TrafficLink, coords?: { lng: number; lat: number }, modKey?: boolean) => {
+    (
+      link: TrafficLink,
+      coords?: { lng: number; lat: number },
+      modKey?: boolean,
+    ) => {
       if (editorMode) {
         if (!network) {
           onStatusChange("No network loaded");
@@ -87,7 +91,10 @@ export function useAddNodeOnLink({
             const line = lineString(coordsArr);
             const pt = point([coords.lng, coords.lat]);
             const snapped = nearestPointOnLine(line, pt) as Feature<Point>;
-            const split = lineSplit(line, snapped) as FeatureCollection<LineString>;
+            const split = lineSplit(
+              line,
+              snapped,
+            ) as FeatureCollection<LineString>;
 
             if (split && split.features && split.features.length >= 2) {
               const leftCoords = split.features[0].geometry.coordinates.map(
@@ -97,12 +104,18 @@ export function useAddNodeOnLink({
                 (coord) => [coord[1], coord[0]] as [number, number],
               );
 
-              const snappedCoord = snapped.geometry.coordinates as [number, number];
+              const snappedCoord = snapped.geometry.coordinates as [
+                number,
+                number,
+              ];
               const newNodeId = `node-${baseNow}-${Math.random().toString(36).slice(2, 7)}`;
 
               const newNode = {
                 id: newNodeId,
-                position: [snappedCoord[1], snappedCoord[0]] as [number, number],
+                position: [snappedCoord[1], snappedCoord[0]] as [
+                  number,
+                  number,
+                ],
                 connectionCount: 2,
               };
 
@@ -169,6 +182,13 @@ export function useAddNodeOnLink({
         if (onLinkClick) onLinkClick(link as TrafficLink, modKey ?? false);
       }
     },
-    [editorMode, network, pushToUndoStack, setNetwork, onStatusChange, onLinkClick]
+    [
+      editorMode,
+      network,
+      pushToUndoStack,
+      setNetwork,
+      onStatusChange,
+      onLinkClick,
+    ],
   );
 }

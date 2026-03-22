@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
-import type { Network, TrafficNode, TrafficLink, LngLatTuple } from "../../../types";
-import { NODE_LAYER_ID } from "../../../constants";
-import { findSnapPoint } from "../../../utils/snap-to-network";
-import { safeQueryRenderedFeatures } from "../../../utils/feature-detection";
-import { useRafState } from "../../../hooks/use-raf-state";
+import { NODE_LAYER_ID } from "@/constants";
+import { safeQueryRenderedFeatures } from "@/utils";
+import { findSnapPoint } from "@/utils/snap-to-network";
+import { useRafState } from "react-use";
+import type { Network, LngLatTuple, TrafficNode, TrafficLink } from "@/types";
 
 interface UseNodeAddParams {
   network: Network | null;
@@ -24,8 +24,10 @@ export function useNodeAdd({
   onBeforeChange,
 }: UseNodeAddParams) {
   const [isAddingNode, setIsAddingNode] = useState(false);
-  const [tempNodePosition, setTempNodePosition] = useRafState<LngLatTuple | null>(null);
-  const [tempLinkEndPosition, setTempLinkEndPosition] = useRafState<LngLatTuple | null>(null);
+  const [tempNodePosition, setTempNodePosition] =
+    useRafState<LngLatTuple | null>(null);
+  const [tempLinkEndPosition, setTempLinkEndPosition] =
+    useRafState<LngLatTuple | null>(null);
   const tempNodeId = "temp-new-node";
   const isAddingRef = useRef(false);
 
@@ -54,35 +56,54 @@ export function useNodeAdd({
     return { ...network, nodes, links } as Network;
   }, [isAddingNode, tempNodePosition, tempLinkEndPosition, network]);
 
-  const handleMouseDown = useCallback((e: MapMouseEvent): boolean => {
-    if (!editorMode || !network) return false;
+  const handleMouseDown = useCallback(
+    (e: MapMouseEvent): boolean => {
+      if (!editorMode || !network) return false;
 
-    const map = mapRef.current;
-    if (!map) return false;
+      const map = mapRef.current;
+      if (!map) return false;
 
-    const zoom = map.getZoom();
-    if (zoom < minZoom) return false;
+      const zoom = map.getZoom();
+      if (zoom < minZoom) return false;
 
-    const features = safeQueryRenderedFeatures(map, e.point, [NODE_LAYER_ID, `static-${NODE_LAYER_ID}`, `draft-${NODE_LAYER_ID}`]);
-    if (features && features.length > 0) return false;
+      const features = safeQueryRenderedFeatures(map, e.point, [
+        NODE_LAYER_ID,
+        `static-${NODE_LAYER_ID}`,
+        `draft-${NODE_LAYER_ID}`,
+      ]);
+      if (features && features.length > 0) return false;
 
-    // Also check data-model snap to avoid creating duplicate nodes when visual check fails
-    const snapResult = findSnapPoint([e.lngLat.lat, e.lngLat.lng], network, []);
-    if (snapResult?.isNode) return false;
+      // Also check data-model snap to avoid creating duplicate nodes when visual check fails
+      const snapResult = findSnapPoint(
+        [e.lngLat.lat, e.lngLat.lng],
+        network,
+        [],
+      );
+      if (snapResult?.isNode) return false;
 
-    const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
-    setTempNodePosition(newPosition);
-    setTempLinkEndPosition(newPosition);
-    setIsAddingNode(true);
-    isAddingRef.current = true;
+      const newPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
+      setTempNodePosition(newPosition);
+      setTempLinkEndPosition(newPosition);
+      setIsAddingNode(true);
+      isAddingRef.current = true;
 
-    map.getMap().getCanvas().style.cursor = "crosshair";
-    if (map.dragPan) {
-      map.dragPan.disable();
-    }
+      map.getMap().getCanvas().style.cursor = "crosshair";
+      if (map.dragPan) {
+        map.dragPan.disable();
+      }
 
-    return true;
-  }, [editorMode, network, mapRef, minZoom, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
+      return true;
+    },
+    [
+      editorMode,
+      network,
+      mapRef,
+      minZoom,
+      setIsAddingNode,
+      setTempNodePosition,
+      setTempLinkEndPosition,
+    ],
+  );
 
   const handleMouseMove = useCallback(
     (e: MapMouseEvent): boolean => {
@@ -90,17 +111,18 @@ export function useNodeAdd({
 
       const currentPosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
       setTempLinkEndPosition(currentPosition);
-      
+
       return true;
     },
     [tempNodePosition, setTempLinkEndPosition],
   );
-   
-  const handleMouseUp = useCallback((e: MapMouseEvent): boolean => {
-    if (!isAddingRef.current || !tempNodePosition || !network) return false;
-    
-    const map = mapRef.current;
-    if (!map) return false;
+
+  const handleMouseUp = useCallback(
+    (e: MapMouseEvent): boolean => {
+      if (!isAddingRef.current || !tempNodePosition || !network) return false;
+
+      const map = mapRef.current;
+      if (!map) return false;
 
       const releasePosition: LngLatTuple = [e.lngLat.lat, e.lngLat.lng];
       const snapResult = findSnapPoint(releasePosition, network, []);
@@ -127,7 +149,7 @@ export function useNodeAdd({
             highway: "unclassified",
           },
         };
-        
+
         const updatedNodes = new Map(network.nodes);
         updatedNodes.set(newNodeId, newNode);
 
@@ -148,19 +170,30 @@ export function useNodeAdd({
           links: updatedLinks,
         });
       }
-      
-    isAddingRef.current = false;
-    setIsAddingNode(false);
-    setTempNodePosition(null);
-    setTempLinkEndPosition(null);
 
-    map.getMap().getCanvas().style.cursor = "";
-    if (map.dragPan) {
-      map.dragPan.enable();
-    }
-    
-    return true;
-  }, [network, onBeforeChange, onNetworkChange, tempNodePosition, mapRef, setIsAddingNode, setTempNodePosition, setTempLinkEndPosition]);
+      isAddingRef.current = false;
+      setIsAddingNode(false);
+      setTempNodePosition(null);
+      setTempLinkEndPosition(null);
+
+      map.getMap().getCanvas().style.cursor = "";
+      if (map.dragPan) {
+        map.dragPan.enable();
+      }
+
+      return true;
+    },
+    [
+      network,
+      onBeforeChange,
+      onNetworkChange,
+      tempNodePosition,
+      mapRef,
+      setIsAddingNode,
+      setTempNodePosition,
+      setTempLinkEndPosition,
+    ],
+  );
 
   return {
     isAddingNode,

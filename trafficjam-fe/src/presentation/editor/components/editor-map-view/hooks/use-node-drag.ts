@@ -1,16 +1,11 @@
+import { NODE_LAYER_ID } from "@/constants";
+import { useNodeSnap } from "@/presentation/editor/hooks";
+import type { Network, LngLatTuple, TrafficNode, TrafficLink } from "@/types";
+import { safeQueryRenderedFeatures } from "@/utils";
+import { findSnapPoint } from "@/utils/snap-to-network";
 import { useState, useRef, useCallback, useMemo } from "react";
 import type { MapRef, MapMouseEvent } from "react-map-gl";
-import type {
-  Network,
-  TrafficNode,
-  TrafficLink,
-  LngLatTuple,
-} from "../../../types";
-import { NODE_LAYER_ID } from "../../../constants";
-import { useNodeSnap } from "./use-node-snap";
-import { findSnapPoint } from "../../../utils/snap-to-network";
-import { safeQueryRenderedFeatures } from "../../../utils/feature-detection";
-import { useRafState } from "../../../hooks/use-raf-state";
+import { useRafState } from "react-use";
 
 interface UseNodeDragParams {
   network: Network | null;
@@ -74,7 +69,6 @@ export function useNodeDrag({
 
     const nodes = new Map<string, TrafficNode>();
     const links = new Map<string, TrafficLink>();
-
 
     const draggedNode = network.nodes.get(draggedNodeId);
     if (draggedNode) {

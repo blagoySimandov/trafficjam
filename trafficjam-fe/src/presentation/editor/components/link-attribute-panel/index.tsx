@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { X, Ban } from "lucide-react";
-import type { Network, TrafficLink } from "../../types";
-import { HIGHWAY_TYPES } from "../../constants";
 import { AttributeField } from "./components/attribute-field";
 import { DevToolsSection } from "./components/dev-tools-section";
 import { RoadTypeFieldLabel } from "./components/road-type-help";
 import { useUpdateLink } from "./hooks/use-update-link";
 import { LANE_OPTIONS, MAXSPEED_OPTIONS, ONEWAY_OPTIONS } from "./constants";
 import styles from "./link-attribute-panel.module.css";
+import { HIGHWAY_TYPES } from "@/constants";
+import type { TrafficLink, Network } from "@/types";
 
 const MIXED_VALUE = Symbol("mixed");
 
@@ -26,7 +26,9 @@ export function LinkAttributePanel({
   onSave,
   onSelectAllWithSameName,
 }: LinkAttributePanelProps) {
-  const [editedValues, setEditedValues] = useState<Partial<TrafficLink["tags"]>>({});
+  const [editedValues, setEditedValues] = useState<
+    Partial<TrafficLink["tags"]>
+  >({});
 
   const { updateLinks } = useUpdateLink(network, onSave);
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
@@ -118,7 +120,11 @@ export function LinkAttributePanel({
   return (
     <div className={styles.linkAttributePanel}>
       <div className={styles.panelHeader}>
-        <h3>{links.length === 1 ? "Link Attributes" : `${links.length} Links Selected`}</h3>
+        <h3>
+          {links.length === 1
+            ? "Link Attributes"
+            : `${links.length} Links Selected`}
+        </h3>
         <button
           className={styles.closeButton}
           onClick={onClose}
@@ -147,7 +153,11 @@ export function LinkAttributePanel({
           <input
             type="text"
             className={styles.attributeInput}
-            value={getDisplayValue("name") === MIXED_VALUE ? "" : (getDisplayValue("name") as string) || ""}
+            value={
+              getDisplayValue("name") === MIXED_VALUE
+                ? ""
+                : (getDisplayValue("name") as string) || ""
+            }
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder={mixedState.name ? "Mixed values" : "Not specified"}
           />
@@ -167,7 +177,11 @@ export function LinkAttributePanel({
         >
           <select
             className={styles.attributeSelect}
-            value={getDisplayValue("highway") === MIXED_VALUE ? "" : (getDisplayValue("highway") as string)}
+            value={
+              getDisplayValue("highway") === MIXED_VALUE
+                ? ""
+                : (getDisplayValue("highway") as string)
+            }
             onChange={(e) => handleHighwayChange(e.target.value)}
           >
             {mixedState.highway && <option value="">Mixed values</option>}
@@ -258,19 +272,28 @@ export function LinkAttributePanel({
         {!showDisableConfirm ? (
           <button
             className={allDisabled ? styles.enableButton : styles.disableButton}
-            onClick={() => allDisabled ? handleDisableToggle() : setShowDisableConfirm(true)}
+            onClick={() =>
+              allDisabled ? handleDisableToggle() : setShowDisableConfirm(true)
+            }
             type="button"
           >
             <Ban size={16} />
             {allDisabled
-              ? (isSingleLink ? "Re-enable Road" : `Re-enable ${links.length} Roads`)
-              : (isSingleLink ? "Disable Road" : `Disable ${links.length} Roads`)}
+              ? isSingleLink
+                ? "Re-enable Road"
+                : `Re-enable ${links.length} Roads`
+              : isSingleLink
+                ? "Disable Road"
+                : `Disable ${links.length} Roads`}
           </button>
         ) : (
           <div className={styles.confirmDialog}>
             <p className={styles.confirmText}>
-              This will close {isSingleLink ? "this road segment" : `these ${links.length} road segments`} to
-              car traffic. Vehicles in the simulation will be forced to find
+              This will close{" "}
+              {isSingleLink
+                ? "this road segment"
+                : `these ${links.length} road segments`}{" "}
+              to car traffic. Vehicles in the simulation will be forced to find
               alternative routes, which may increase congestion elsewhere.
             </p>
             <div className={styles.confirmActions}>
@@ -294,8 +317,14 @@ export function LinkAttributePanel({
       </div>
 
       <div className={styles.panelFooter}>
-        <button className={styles.saveButton} onClick={handleSave} type="button">
-          {isSingleLink ? 'Save Changes' : `Save Changes to ${links.length} Links`}
+        <button
+          className={styles.saveButton}
+          onClick={handleSave}
+          type="button"
+        >
+          {isSingleLink
+            ? "Save Changes"
+            : `Save Changes to ${links.length} Links`}
         </button>
       </div>
     </div>

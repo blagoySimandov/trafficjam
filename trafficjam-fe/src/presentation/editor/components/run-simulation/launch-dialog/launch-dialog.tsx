@@ -2,13 +2,12 @@ import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Play, Loader2 } from "lucide-react";
-import { networkToMatsim } from "../../../../../utils/matsim-serializer";
-import { calculateBounds } from "../../../../../utils/network-bounds";
-import { useSimulation } from "../../../../../hooks/use-simulation";
-import { Dialog } from "../../../../../components/dialog";
-import type { Network } from "../../../../../types";
-import type { Scenario } from "../../../../../api";
 import styles from "./launch-dialog.module.css";
+import { useSimulation } from "@/hooks/use-simulation";
+import type { Scenario, Network } from "@/types";
+import { calculateBounds } from "@/utils";
+import { networkToMatsim } from "@/utils/matsim-serializer";
+import { Dialog } from "@/components";
 
 interface LaunchInitialValues {
   iterations: number;
@@ -32,13 +31,23 @@ interface LaunchForm {
 
 function prepareSimulationData(network: Network) {
   const xml = networkToMatsim(network);
-  const networkFile = new File([xml], "network.xml", { type: "application/xml" });
-  const buildings = network.buildings ? Array.from(network.buildings.values()) : [];
+  const networkFile = new File([xml], "network.xml", {
+    type: "application/xml",
+  });
+  const buildings = network.buildings
+    ? Array.from(network.buildings.values())
+    : [];
   const bounds = calculateBounds(network);
   return { networkFile, buildings, bounds };
 }
 
-export function LaunchDialog({ activeScenario, network, onLaunch, onClose, initialValues }: LaunchDialogProps) {
+export function LaunchDialog({
+  activeScenario,
+  network,
+  onLaunch,
+  onClose,
+  initialValues,
+}: LaunchDialogProps) {
   const queryClient = useQueryClient();
   const start = useSimulation();
   const [error, setError] = useState<string | null>(null);
@@ -51,35 +60,52 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose, initi
     },
   });
 
-  const onSubmit = useCallback((data: LaunchForm) => {
-    if (!network || !activeScenario) return;
-    setError(null);
+  const onSubmit = useCallback(
+    (data: LaunchForm) => {
+      if (!network || !activeScenario) return;
+      setError(null);
 
-    try {
-      const { networkFile, buildings, bounds } = prepareSimulationData(network);
+      try {
+        const { networkFile, buildings, bounds } =
+          prepareSimulationData(network);
 
-      start.mutate(
-        {
-          scenarioId: activeScenario.id,
-          networkFile,
-          buildings,
-          bounds,
-          iterations: data.iterations,
-          randomSeed: (data.randomSeed !== undefined && !isNaN(data.randomSeed)) ? data.randomSeed : undefined,
-          note: data.note || undefined,
-        },
-        {
-          onSuccess: (responseData) => {
-            queryClient.invalidateQueries({ queryKey: ["runs"] });
-            onLaunch({ scenarioId: responseData.scenarioId, runId: responseData.runId });
+        start.mutate(
+          {
+            scenarioId: activeScenario.id,
+            networkFile,
+            buildings,
+            bounds,
+            iterations: data.iterations,
+            randomSeed:
+              data.randomSeed !== undefined && !isNaN(data.randomSeed)
+                ? data.randomSeed
+                : undefined,
+            note: data.note || undefined,
           },
-          onError: (err) => setError(err instanceof Error ? err.message : "Failed to start simulation"),
-        },
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to prepare simulation");
-    }
-  }, [network, activeScenario, start, onLaunch, queryClient]);
+          {
+            onSuccess: (responseData) => {
+              queryClient.invalidateQueries({ queryKey: ["runs"] });
+              onLaunch({
+                scenarioId: responseData.scenarioId,
+                runId: responseData.runId,
+              });
+            },
+            onError: (err) =>
+              setError(
+                err instanceof Error
+                  ? err.message
+                  : "Failed to start simulation",
+              ),
+          },
+        );
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Failed to prepare simulation",
+        );
+      }
+    },
+    [network, activeScenario, start, onLaunch, queryClient],
+  );
 
   const dialogTitle = (
     <>
@@ -90,7 +116,9 @@ export function LaunchDialog({ activeScenario, network, onLaunch, onClose, initi
 
   const dialogFooter = (
     <>
-      <button className={styles.cancelButton} onClick={onClose} type="button">Cancel</button>
+      <button className={styles.cancelButton} onClick={onClose} type="button">
+        Cancel
+      </button>
       <button
         className={styles.launchButton}
         onClick={handleSubmit(onSubmit)}

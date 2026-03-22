@@ -1,4 +1,4 @@
-import type { Building } from "../../types";
+import type { Building } from "@/types";
 import { ALL_AGENT_TYPES } from "./constants";
 import type { HotspotFormState, FormErrors, AgentType } from "./types";
 
