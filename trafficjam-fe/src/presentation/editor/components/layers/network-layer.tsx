@@ -1,8 +1,8 @@
+import type { Network, CombinedHoverInfo } from "@/types";
+import { networkToGeoJSON } from "@/utils";
 import { useMemo } from "react";
 import { Source, Layer } from "react-map-gl";
-import type { CombinedHoverInfo, Network } from "../../types";
-import { networkToGeoJSON } from "../../utils";
-import { useMapEditorLayers } from "../../presentation/editor/hooks/use-map-editor-layers";
+import { useMapEditorLayers } from "./use-map-layers";
 
 interface NetworkLayerProps {
   network: Network;
